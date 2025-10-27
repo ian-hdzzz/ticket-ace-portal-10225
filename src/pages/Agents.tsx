@@ -23,6 +23,10 @@ import {
   X,
   Phone,
   MessageSquare,
+  Upload,
+  FileText,
+  Database,
+  Trash,
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +36,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Agent {
   id: string;
@@ -43,6 +48,12 @@ interface Agent {
   systemPrompt: string;
   assignmentRules: string;
   lastUpdated: string;
+  documents?: string[];
+  databaseConfig?: {
+    type: "csv" | "external" | "none";
+    connectionString?: string;
+    files?: string[];
+  };
 }
 
 const defaultAgents: Agent[] = [
@@ -55,6 +66,11 @@ const defaultAgents: Agent[] = [
     systemPrompt: "Eres un asistente virtual de CEA Querétaro. Tu objetivo es ayudar a los ciudadanos con sus consultas sobre servicios de agua, reportar problemas y proporcionar información sobre facturación.",
     assignmentRules: "Tickets generales de consulta",
     lastUpdated: "Hace 2 días",
+    documents: ["manual-servicios.pdf", "preguntas-frecuentes.pdf"],
+    databaseConfig: {
+      type: "csv",
+      files: ["tarifas-2024.csv"],
+    },
   },
   {
     id: "agent-2",
@@ -66,6 +82,10 @@ const defaultAgents: Agent[] = [
     systemPrompt: "Eres un agente especializado en emergencias de agua. Debes recopilar información crítica sobre fugas, inundaciones o problemas urgentes de manera rápida y eficiente.",
     assignmentRules: "Tickets urgentes y emergencias",
     lastUpdated: "Hace 1 semana",
+    documents: [],
+    databaseConfig: {
+      type: "none",
+    },
   },
 ];
 
@@ -103,8 +123,58 @@ export default function Agents() {
       systemPrompt: "",
       assignmentRules: "",
       lastUpdated: "",
+      documents: [],
+      databaseConfig: {
+        type: "none",
+      },
     });
     setIsDialogOpen(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !editingAgent) return;
+
+    const fileNames = Array.from(files).map(f => f.name);
+    setEditingAgent({
+      ...editingAgent,
+      documents: [...(editingAgent.documents || []), ...fileNames],
+    });
+  };
+
+  const handleRemoveDocument = (fileName: string) => {
+    if (!editingAgent) return;
+    setEditingAgent({
+      ...editingAgent,
+      documents: (editingAgent.documents || []).filter(d => d !== fileName),
+    });
+  };
+
+  const handleDatabaseFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !editingAgent) return;
+
+    const fileNames = Array.from(files).map(f => f.name);
+    setEditingAgent({
+      ...editingAgent,
+      databaseConfig: {
+        ...editingAgent.databaseConfig,
+        type: "csv",
+        files: [...(editingAgent.databaseConfig?.files || []), ...fileNames],
+      },
+    });
+  };
+
+  const handleRemoveDatabaseFile = (fileName: string) => {
+    if (!editingAgent) return;
+    setEditingAgent({
+      ...editingAgent,
+      databaseConfig: {
+        ...editingAgent.databaseConfig,
+        type: "csv",
+        files: (editingAgent.databaseConfig?.files || []).filter(f => f !== fileName),
+      },
+    });
   };
 
   return (
@@ -329,6 +399,175 @@ export default function Agents() {
                     }
                     placeholder="Ej: Tickets urgentes y emergencias"
                   />
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Base de Conocimiento</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Agrega documentos y datos para que el agente pueda responder con información específica
+                    </p>
+                  </div>
+
+                  <Tabs defaultValue="documents" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="documents">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Documentos
+                      </TabsTrigger>
+                      <TabsTrigger value="database">
+                        <Database className="mr-2 h-4 w-4" />
+                        Base de Datos
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="documents" className="space-y-4">
+                      <div className="rounded-lg border border-dashed p-6 text-center">
+                        <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                        <Label
+                          htmlFor="document-upload"
+                          className="cursor-pointer text-sm font-medium hover:underline"
+                        >
+                          Haz clic para cargar documentos
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          PDF, DOCX, TXT, CSV (máx. 10MB por archivo)
+                        </p>
+                        <Input
+                          id="document-upload"
+                          type="file"
+                          className="hidden"
+                          multiple
+                          accept=".pdf,.docx,.txt,.csv"
+                          onChange={handleFileUpload}
+                        />
+                      </div>
+
+                      {editingAgent.documents && editingAgent.documents.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Documentos Cargados</Label>
+                          {editingAgent.documents.map((doc, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between rounded-lg border p-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm">{doc}</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveDocument(doc)}
+                              >
+                                <Trash className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="database" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="db-type">Tipo de Base de Datos</Label>
+                        <Select
+                          value={editingAgent.databaseConfig?.type || "none"}
+                          onValueChange={(value: "csv" | "external" | "none") =>
+                            setEditingAgent({
+                              ...editingAgent,
+                              databaseConfig: { ...editingAgent.databaseConfig, type: value },
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Ninguna</SelectItem>
+                            <SelectItem value="csv">Archivos CSV</SelectItem>
+                            <SelectItem value="external">Base de Datos Externa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {editingAgent.databaseConfig?.type === "csv" && (
+                        <div className="space-y-4">
+                          <div className="rounded-lg border border-dashed p-6 text-center">
+                            <Database className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                            <Label
+                              htmlFor="csv-upload"
+                              className="cursor-pointer text-sm font-medium hover:underline"
+                            >
+                              Cargar archivos CSV
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Archivos CSV con datos estructurados
+                            </p>
+                            <Input
+                              id="csv-upload"
+                              type="file"
+                              className="hidden"
+                              multiple
+                              accept=".csv"
+                              onChange={handleDatabaseFileUpload}
+                            />
+                          </div>
+
+                          {editingAgent.databaseConfig.files && editingAgent.databaseConfig.files.length > 0 && (
+                            <div className="space-y-2">
+                              <Label>Archivos CSV Cargados</Label>
+                              {editingAgent.databaseConfig.files.map((file, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center justify-between rounded-lg border p-3"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <Database className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm">{file}</span>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemoveDatabaseFile(file)}
+                                  >
+                                    <Trash className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {editingAgent.databaseConfig?.type === "external" && (
+                        <div className="space-y-2">
+                          <Label htmlFor="connection-string">Cadena de Conexión</Label>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            URL de conexión a tu base de datos (PostgreSQL, MySQL, etc.)
+                          </p>
+                          <Input
+                            id="connection-string"
+                            type="password"
+                            value={editingAgent.databaseConfig?.connectionString || ""}
+                            onChange={(e) =>
+                              setEditingAgent({
+                                ...editingAgent,
+                                databaseConfig: {
+                                  ...editingAgent.databaseConfig,
+                                  type: "external",
+                                  connectionString: e.target.value,
+                                },
+                              })
+                            }
+                            placeholder="postgresql://user:password@host:port/database"
+                          />
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </div>
 
