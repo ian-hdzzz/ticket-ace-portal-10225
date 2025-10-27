@@ -8,6 +8,20 @@ import {
   AlertCircle,
   TrendingUp,
 } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const recentTickets = [
   {
@@ -37,6 +51,34 @@ const recentTickets = [
     assignedTo: "Carlos Ramírez",
     createdAt: "Ayer",
   },
+];
+
+const ticketTrendData = [
+  { day: "Lun", tickets: 45, resueltos: 38 },
+  { day: "Mar", tickets: 52, resueltos: 42 },
+  { day: "Mié", tickets: 48, resueltos: 45 },
+  { day: "Jue", tickets: 61, resueltos: 48 },
+  { day: "Vie", tickets: 55, resueltos: 51 },
+  { day: "Sáb", tickets: 38, resueltos: 35 },
+  { day: "Dom", tickets: 32, resueltos: 30 },
+];
+
+const categoryData = [
+  { category: "Infraestructura", count: 89 },
+  { category: "Facturación", count: 67 },
+  { category: "Medidores", count: 45 },
+  { category: "Atención", count: 34 },
+  { category: "Emergencias", count: 13 },
+];
+
+const resolutionData = [
+  { time: "00:00", tasa: 68 },
+  { time: "04:00", tasa: 72 },
+  { time: "08:00", tasa: 75 },
+  { time: "12:00", tasa: 76 },
+  { time: "16:00", tasa: 78 },
+  { time: "20:00", tasa: 76 },
+  { time: "23:59", tasa: 76 },
 ];
 
 export default function Dashboard() {
@@ -78,7 +120,107 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Tendencia de Tickets</CardTitle>
+            <CardDescription>Tickets creados vs resueltos (última semana)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={ticketTrendData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="day" className="text-muted-foreground" />
+                <YAxis className="text-muted-foreground" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="tickets"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  name="Tickets"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="resueltos"
+                  stroke="hsl(var(--success))"
+                  strokeWidth={2}
+                  name="Resueltos"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tickets por Categoría</CardTitle>
+            <CardDescription>Distribución de tickets por tipo</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={categoryData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="category" className="text-muted-foreground" />
+                <YAxis className="text-muted-foreground" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                  }}
+                />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} name="Tickets" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Tasa de Resolución en Tiempo Real</CardTitle>
+            <CardDescription>Evolución de la tasa de resolución hoy</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={resolutionData}>
+                <defs>
+                  <linearGradient id="colorTasa" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="time" className="text-muted-foreground" />
+                <YAxis className="text-muted-foreground" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="tasa"
+                  stroke="hsl(var(--success))"
+                  fillOpacity={1}
+                  fill="url(#colorTasa)"
+                  name="Tasa %"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Tickets Recientes</h2>
@@ -97,55 +239,6 @@ export default function Dashboard() {
                 onClick={() => navigate(`/tickets/${ticket.id}`)}
               />
             ))}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Estadísticas del Mes</h2>
-          <div className="rounded-lg border bg-card p-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Tasa de Resolución</p>
-                  <p className="text-2xl font-bold">76%</p>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-card">
-                  <TrendingUp className="h-6 w-6 text-success" />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Resueltos</span>
-                    <span className="font-medium">189</span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full w-[76%] bg-gradient-primary rounded-full" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">En Progreso</span>
-                    <span className="font-medium">45</span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full w-[18%] bg-warning rounded-full" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pendientes</span>
-                    <span className="font-medium">14</span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full w-[6%] bg-destructive rounded-full" />
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
