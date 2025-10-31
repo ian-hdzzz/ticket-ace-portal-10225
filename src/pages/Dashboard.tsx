@@ -1,5 +1,5 @@
-import { StatCard } from "@/components/StatCard";
-import { TicketCard } from "@/components/TicketCard";
+import { StatCard } from "@/components/features/StatCard";
+import { TicketCard } from "@/components/features/TicketCard";
 import { useNavigate } from "react-router-dom";
 import {
   Ticket,

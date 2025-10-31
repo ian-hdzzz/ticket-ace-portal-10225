@@ -1,73 +1,237 @@
-# Welcome to your Lovable project
+# Ticket Ace Portal
 
-## Project info
+A modern, customizable UI layer built on top of Chatwoot — a powerful customer support platform. This frontend provides visualization and customization capabilities while Chatwoot handles all backend functionality, including data persistence, authentication, and business logic.
 
-**URL**: https://lovable.dev/projects/0bccde49-8a6c-44a9-afb3-442512ff4f4c
+## Architecture
 
-## How can I edit this code?
+**Frontend (This Project)**
+- React + TypeScript + Vite
+- Shadcn-ui + Tailwind CSS for UI components
+- React Query for data fetching and state management
+- React Router for navigation
+- Acts as a visualization and customization layer
 
-There are several ways of editing your application.
+**Backend (Chatwoot)**
+- Self-hosted Chatwoot instance (Ruby on Rails)
+- PostgreSQL database (included with Chatwoot)
+- Redis for job queuing
+- REST API for all operations
+- Handles all business logic, authentication, and data management
 
-**Use Lovable**
+This architecture allows you to:
+- **Customize the UI** to match your brand and workflow
+- **Visualize data** from Chatwoot in your preferred layout
+- **Extend functionality** through the Chatwoot API
+- **Leverage Chatwoot's features** without rebuilding them
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0bccde49-8a6c-44a9-afb3-442512ff4f4c) and start prompting.
+## Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: Vite + React + TypeScript
+- **UI Framework**: Shadcn-ui + Tailwind CSS
+- **State Management**: React Query (TanStack Query)
+- **Routing**: React Router DOM
+- **Backend**: Chatwoot (self-hosted)
+- **Database**: PostgreSQL (via Chatwoot)
+- **Deployment**: Docker Compose (for Chatwoot)
 
-**Use your preferred IDE**
+## Project Structure
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```
+├── src/
+│   ├── api/                    # Chatwoot API integration layer
+│   │   ├── tickets.ts          # Conversation/ticket operations
+│   │   └── agents.ts           # Agent/user operations
+│   ├── components/
+│   │   ├── ui/                 # Shadcn UI base components
+│   │   ├── features/           # Feature-specific components
+│   │   └── layout/             # Layout components
+│   ├── hooks/                  # Custom React hooks
+│   ├── lib/                    # Utilities and client setup
+│   │   ├── chatwootClient.ts   # Chatwoot API client
+│   │   └── utils.ts            # Helper functions
+│   ├── pages/                  # Page components
+│   └── types/                  # TypeScript type definitions
+├── infra/                      # Chatwoot Docker infrastructure
+│   ├── docker-compose.chatwoot.upstream.yaml
+│   ├── docker-compose.chatwoot.local.yaml
+│   └── chatwoot.env
+├── scripts/                    # Utility scripts
+│   ├── chatwoot-start.sh
+│   ├── chatwoot-stop.sh
+│   └── chatwoot-init.sh
+└── third_party/                # External dependencies
+    └── chatwoot/               # Chatwoot upstream (git submodule)
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+For detailed documentation, see the [docs/](./docs/) folder or start with the [Documentation Index](./docs/README.md):
+- [Architecture Diagrams](./docs/ARCHITECTURE.md) - System architecture, data flow, and component hierarchy
+- [Folder Structure](./docs/FOLDER_STRUCTURE.md) - Detailed project organization
+- [CI/CD Pipeline](./docs/CI_CD.md) - Continuous Integration and Deployment setup
+- [Cleanup Summary](./docs/CLEANUP_SUMMARY.md) - Project cleanup documentation
 
-Follow these steps:
+## Setup
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Prerequisites
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Node.js 20+ and npm
+- Docker and Docker Compose
+- Git (for submodule)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### 1. Install Dependencies
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
+```
+
+### 2. Set Up Chatwoot Backend
+
+Chatwoot runs in Docker and provides the backend API for this frontend.
+
+#### Start Chatwoot
+
+```bash
+cd infra
+
+# Start Chatwoot services (Postgres, Redis, Rails, Sidekiq)
+docker compose \
+  --env-file .env \
+  -f docker-compose.chatwoot.upstream.yaml \
+  -f docker-compose.chatwoot.local.yaml \
+  up -d postgres redis rails sidekiq
+```
+
+The first time, you need to prepare the database:
+
+```bash
+docker compose \
+  --env-file .env \
+  -f docker-compose.chatwoot.upstream.yaml \
+  -f docker-compose.chatwoot.local.yaml \
+  run --rm rails bundle exec rails db:chatwoot_prepare
+```
+
+#### Configure Chatwoot
+
+1. Open `http://localhost:3000` in your browser
+2. Sign up for an account (signup is enabled by default in local setup)
+3. After login, go to **Settings → Applications → Access Tokens**
+4. Create a personal access token
+5. Note your **Account ID** from the URL (e.g., `http://localhost:3000/app/accounts/1/...`) or from Settings
+
+#### Stop Chatwoot
+
+```bash
+cd infra
+docker compose \
+  --env-file .env \
+  -f docker-compose.chatwoot.upstream.yaml \
+  -f docker-compose.chatwoot.local.yaml \
+  down
+```
+
+### 3. Configure Frontend
+
+Create a `.env` file in the project root:
+
+```bash
+cp env.example .env
+```
+
+Edit `.env` with your Chatwoot credentials:
+
+```env
+VITE_CHATWOOT_BASE_URL=http://localhost:3000
+VITE_CHATWOOT_ACCESS_TOKEN=your-access-token-here
+VITE_CHATWOOT_ACCOUNT_ID=1
+```
+
+### 4. Start Development Server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173` (or the port Vite assigns).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Development
 
-**Use GitHub Codespaces**
+### Available Scripts
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run lint` - Run ESLint
+- `npm run preview` - Preview production build
 
-## What technologies are used for this project?
+### Adding New Features
 
-This project is built with:
+1. **Data Layer**: Add functions in `src/api/` to interact with Chatwoot API
+2. **Components**: Create reusable UI components in `src/components/`
+3. **Pages**: Add new pages in `src/pages/` and register routes in `src/App.tsx`
+4. **Types**: Define TypeScript interfaces in `src/types/` to match your data structures
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Chatwoot API Integration
 
-## How can I deploy this project?
+All API calls go through `src/lib/chatwootClient.ts`, which handles:
+- Base URL configuration
+- Authentication headers
+- Error handling
 
-Simply open [Lovable](https://lovable.dev/projects/0bccde49-8a6c-44a9-afb3-442512ff4f4c) and click on Share -> Publish.
+See [Chatwoot API Documentation](https://www.chatwoot.com/developers/api/) for available endpoints.
 
-## Can I connect a custom domain to my Lovable project?
+## Customization
 
-Yes, you can!
+This frontend is designed to be highly customizable:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **UI Components**: Modify components in `src/components/` or add new Shadcn-ui components
+- **Styling**: Tailwind CSS configuration in `tailwind.config.ts`
+- **Data Mapping**: Adjust how Chatwoot data maps to your UI in `src/api/tickets.ts` and `src/api/agents.ts`
+- **Layout**: Customize page layouts in `src/components/DashboardLayout.tsx`
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Production Deployment
+
+### Frontend
+
+Build the frontend:
+
+```bash
+npm run build
+```
+
+Deploy the `dist/` folder to your preferred static hosting (Vercel, Netlify, etc.).
+
+### Chatwoot Backend
+
+For production Chatwoot deployment, refer to the [official Chatwoot deployment guide](https://www.chatwoot.com/docs/self-hosted/deployment/docker).
+
+**Important**: Update `VITE_CHATWOOT_BASE_URL` in your frontend `.env` to point to your production Chatwoot instance.
+
+## Troubleshooting
+
+### Chatwoot Not Starting
+
+- Check Docker logs: `docker compose -f infra/docker-compose.chatwoot.upstream.yaml logs`
+- Ensure Postgres is ready before starting Rails: `docker compose exec postgres pg_isready`
+- Reset volumes if needed: `docker compose down -v`
+
+### API Errors
+
+- Verify `VITE_CHATWOOT_ACCESS_TOKEN` is set correctly
+- Ensure `VITE_CHATWOOT_ACCOUNT_ID` matches your account
+- Check Chatwoot logs for API errors
+
+### Build Errors
+
+- Run `npm install` to ensure dependencies are installed
+- Clear `node_modules` and reinstall if needed: `rm -rf node_modules package-lock.json && npm install`
+
+## Resources
+
+- [Chatwoot Documentation](https://www.chatwoot.com/docs/)
+- [Chatwoot API Reference](https://www.chatwoot.com/developers/api/)
+- [Chatwoot GitHub](https://github.com/chatwoot/chatwoot)
+- [Shadcn-ui Components](https://ui.shadcn.com/)
+- [React Query Docs](https://tanstack.com/query/latest)
+
+## License
+
+See LICENSE file for details.

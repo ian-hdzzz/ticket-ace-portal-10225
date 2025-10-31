@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { listAgents, createAgent, updateAgent } from "@/api/agents";
 
 interface Agent {
   id: string;
@@ -56,55 +58,62 @@ interface Agent {
   };
 }
 
-const defaultAgents: Agent[] = [
-  {
-    id: "agent-1",
-    name: "Asistente de Atención al Cliente",
-    type: "chat",
-    status: "active",
-    model: "google/gemini-2.5-flash",
-    systemPrompt: "Eres un asistente virtual de CEA Querétaro. Tu objetivo es ayudar a los ciudadanos con sus consultas sobre servicios de agua, reportar problemas y proporcionar información sobre facturación.",
-    assignmentRules: "Tickets generales de consulta",
-    lastUpdated: "Hace 2 días",
-    documents: ["manual-servicios.pdf", "preguntas-frecuentes.pdf"],
-    databaseConfig: {
-      type: "csv",
-      files: ["tarifas-2024.csv"],
-    },
-  },
-  {
-    id: "agent-2",
-    name: "Agente de Emergencias",
-    type: "voice",
-    status: "active",
-    model: "google/gemini-2.5-pro",
-    voice: "alloy",
-    systemPrompt: "Eres un agente especializado en emergencias de agua. Debes recopilar información crítica sobre fugas, inundaciones o problemas urgentes de manera rápida y eficiente.",
-    assignmentRules: "Tickets urgentes y emergencias",
-    lastUpdated: "Hace 1 semana",
-    documents: [],
-    databaseConfig: {
-      type: "none",
-    },
-  },
-];
+const defaultAgents: Agent[] = [];
 
 export default function Agents() {
   const [agents, setAgents] = useState<Agent[]>(defaultAgents);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleSaveAgent = () => {
+  const { data } = useQuery({ queryKey: ["agents"], queryFn: listAgents });
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setAgents(
+        data.map((a) => ({
+          id: a.id,
+          name: a.name,
+          type: a.type,
+          status: a.status,
+          model: a.model || "",
+          voice: a.voice || undefined,
+          systemPrompt: a.system_prompt || "",
+          assignmentRules: a.assignment_rules || "",
+          lastUpdated: a.last_updated || "",
+          documents: [],
+          databaseConfig: { type: "none" },
+        }))
+      );
+    }
+  }, [data]);
+
+  const handleSaveAgent = async () => {
     if (!editingAgent) return;
 
     if (editingAgent.id.startsWith("new-")) {
-      // New agent
-      setAgents([...agents, { ...editingAgent, id: `agent-${Date.now()}`, lastUpdated: "Justo ahora" }]);
+      await createAgent({
+        name: editingAgent.name,
+        type: editingAgent.type,
+        status: editingAgent.status,
+        model: editingAgent.model,
+        voice: editingAgent.voice || null,
+        system_prompt: editingAgent.systemPrompt,
+        assignment_rules: editingAgent.assignmentRules,
+      });
     } else {
-      // Update existing
-      setAgents(agents.map(a => a.id === editingAgent.id ? { ...editingAgent, lastUpdated: "Justo ahora" } : a));
+      await updateAgent(editingAgent.id, {
+        name: editingAgent.name,
+        type: editingAgent.type,
+        status: editingAgent.status,
+        model: editingAgent.model,
+        voice: editingAgent.voice || null,
+        system_prompt: editingAgent.systemPrompt,
+        assignment_rules: editingAgent.assignmentRules,
+      } as any);
     }
-    
+
+    await queryClient.invalidateQueries({ queryKey: ["agents"] });
     setIsDialogOpen(false);
     setEditingAgent(null);
   };

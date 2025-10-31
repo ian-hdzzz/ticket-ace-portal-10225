@@ -1,0 +1,7 @@
+version: '3'
+services:
+  postgres:
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-chatwoot_production}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { TicketCard } from "@/components/TicketCard";
+import { useMemo, useState } from "react";
+import { TicketCard } from "@/components/features/TicketCard";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,69 +11,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Plus, Filter } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { listTickets, createTicket } from "@/api/tickets";
+import type { Ticket } from "@/types/entities";
 
-const allTickets = [
-  {
-    id: "TKT-1234",
-    title: "Fuga de agua en Av. Constituyentes",
-    description: "Reporte de fuga importante en la zona centro, requiere atención inmediata",
-    status: "en_progreso" as const,
-    priority: "urgente" as const,
-    assignedTo: "Juan Pérez",
-    createdAt: "Hace 2 horas",
-  },
-  {
-    id: "TKT-1235",
-    title: "Baja presión de agua",
-    description: "Vecinos reportan baja presión en Col. Jardines",
-    status: "abierto" as const,
-    priority: "media" as const,
-    assignedTo: "María González",
-    createdAt: "Hace 5 horas",
-  },
-  {
-    id: "TKT-1236",
-    title: "Solicitud de nuevo medidor",
-    description: "Cliente solicita instalación de medidor en nueva construcción",
-    status: "resuelto" as const,
-    priority: "baja" as const,
-    assignedTo: "Carlos Ramírez",
-    createdAt: "Ayer",
-  },
-  {
-    id: "TKT-1237",
-    title: "Facturación incorrecta",
-    description: "Cliente reporta cobro excesivo en último recibo",
-    status: "abierto" as const,
-    priority: "alta" as const,
-    assignedTo: "Ana López",
-    createdAt: "Hace 1 día",
-  },
-  {
-    id: "TKT-1238",
-    title: "Corte de servicio programado",
-    description: "Solicitud de información sobre corte programado",
-    status: "cerrado" as const,
-    priority: "baja" as const,
-    assignedTo: "Luis Torres",
-    createdAt: "Hace 2 días",
-  },
-  {
-    id: "TKT-1239",
-    title: "Cambio de titular",
-    description: "Solicitud de cambio de titular en contrato",
-    status: "en_progreso" as const,
-    priority: "media" as const,
-    assignedTo: "Pedro Sánchez",
-    createdAt: "Hace 3 días",
-  },
-];
+function mapStatus(status: string): "abierto" | "en_progreso" | "resuelto" | "cerrado" {
+  if (status === "open") return "abierto";
+  if (status === "in_progress") return "en_progreso";
+  if (status === "resolved") return "resuelto";
+  if (status === "closed") return "cerrado";
+  return "abierto";
+}
 
 export default function Tickets() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [priorityFilter, setPriorityFilter] = useState<string>("todos");
+
+  const { data: ticketsData, isLoading } = useQuery({
+    queryKey: ["tickets"],
+    queryFn: listTickets,
+  });
+  const queryClient = useQueryClient();
+
+  const allTickets = useMemo(() => {
+    const list = (ticketsData ?? []).map((t: Ticket) => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      status: mapStatus(t.status),
+      priority: t.priority,
+      assignedTo: t.agent_id ?? "Sin asignar",
+      createdAt: new Date(t.created_at).toLocaleString(),
+    }));
+    return list;
+  }, [ticketsData]);
 
   const filteredTickets = allTickets.filter((ticket) => {
     const matchesSearch =
@@ -93,7 +66,19 @@ export default function Tickets() {
             Gestiona todos los tickets del sistema
           </p>
         </div>
-        <Button className="gap-2">
+        <Button
+          className="gap-2"
+          onClick={async () => {
+            await createTicket({
+              title: "Nuevo ticket",
+              description: "Creado desde la UI",
+              status: "open",
+              priority: "medium",
+              agent_id: null,
+            });
+            queryClient.invalidateQueries({ queryKey: ["tickets"] });
+          }}
+        >
           <Plus className="h-4 w-4" />
           Nuevo Ticket
         </Button>
@@ -141,7 +126,7 @@ export default function Tickets() {
       </div>
 
       <div className="text-sm text-muted-foreground">
-        Mostrando {filteredTickets.length} de {allTickets.length} tickets
+        {isLoading ? "Cargando tickets..." : `Mostrando ${filteredTickets.length} de ${allTickets.length} tickets`}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
