@@ -1,47 +1,83 @@
-import { chatwootFetch, type ChatwootAgent } from "@/lib/chatwootClient";
 import type { Agent } from "@/types/entities";
 
-const accountId = import.meta.env.VITE_CHATWOOT_ACCOUNT_ID;
-
-if (!accountId) {
-  console.warn("VITE_CHATWOOT_ACCOUNT_ID is not set. Chatwoot API calls will fail.");
-}
-
-function mapChatwootAgentToAgent(cwAgent: ChatwootAgent): Agent {
-  return {
-    id: String(cwAgent.id),
-    name: cwAgent.available_name || cwAgent.name,
-    type: "chat", // Chatwoot agents can do both, defaulting to chat
-    status: "active", // We'd need to check availability status separately
-    model: null,
+// Mock data storage (in a real app, this would be replaced with your backend API)
+let mockAgents: Agent[] = [
+  {
+    id: "1",
+    name: "Juan Pérez",
+    type: "chat",
+    status: "active",
+    model: "gpt-4",
     voice: null,
-    system_prompt: null,
-    assignment_rules: null,
-    last_updated: null,
-  };
-}
+    system_prompt: "Eres un asistente amable y profesional",
+    assignment_rules: "Tickets urgentes y de alta prioridad",
+    last_updated: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    name: "María González",
+    type: "chat",
+    status: "active",
+    model: "gpt-3.5-turbo",
+    voice: null,
+    system_prompt: "Eres especialista en facturación y atención al cliente",
+    assignment_rules: "Tickets relacionados con facturación",
+    last_updated: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    name: "Carlos Ramírez",
+    type: "voice",
+    status: "active",
+    model: "whisper",
+    voice: "es-ES",
+    system_prompt: "Eres un asistente de voz profesional",
+    assignment_rules: "Llamadas de emergencia",
+    last_updated: new Date().toISOString(),
+  },
+  {
+    id: "4",
+    name: "Ana Martínez",
+    type: "chat",
+    status: "inactive",
+    model: "gpt-4",
+    voice: null,
+    system_prompt: "Eres un asistente técnico",
+    assignment_rules: "Tickets técnicos y de infraestructura",
+    last_updated: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
+// Simulate API delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function listAgents(): Promise<Agent[]> {
-  if (!accountId) throw new Error("Missing VITE_CHATWOOT_ACCOUNT_ID");
-  const res = await chatwootFetch(`/accounts/${accountId}/agents`);
-  const cwAgents: ChatwootAgent[] = await res.json();
-  return cwAgents.filter(a => a.role === "agent" || a.role === "administrator").map(mapChatwootAgentToAgent);
+  await delay(300);
+  return [...mockAgents].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function createAgent(partial: Omit<Agent, "id" | "last_updated">): Promise<Agent> {
-  // Chatwoot agents are users created via admin API
-  // Use Chatwoot UI or admin API to create users/agents
-  throw new Error("Creating Chatwoot agents requires user creation via admin API. Use Chatwoot UI or create users first.");
+  await delay(300);
+  const agent: Agent = {
+    id: String(Date.now()),
+    last_updated: new Date().toISOString(),
+    ...partial,
+  };
+  mockAgents.push(agent);
+  return agent;
 }
 
 export async function updateAgent(id: string, changes: Partial<Agent>): Promise<Agent> {
-  if (!accountId) throw new Error("Missing VITE_CHATWOOT_ACCOUNT_ID");
-  // Chatwoot user updates via user API
-  // For now, fetch and return the existing agent
-  // In production, you'd call PUT /accounts/{account_id}/agents/{id} to update
-  const res = await chatwootFetch(`/accounts/${accountId}/agents/${id}`);
-  const cwAgent: ChatwootAgent = await res.json();
-  return mapChatwootAgentToAgent(cwAgent);
+  await delay(300);
+  const index = mockAgents.findIndex((a) => a.id === id);
+  if (index === -1) {
+    throw new Error("Agent not found");
+  }
+  const updated: Agent = {
+    ...mockAgents[index],
+    ...changes,
+    last_updated: new Date().toISOString(),
+  };
+  mockAgents[index] = updated;
+  return updated;
 }
-
-

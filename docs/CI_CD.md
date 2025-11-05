@@ -104,18 +104,16 @@ GitHub Actions workflows are located in `.github/workflows/`:
 
 1. **Required Secrets** (Repository Settings → Secrets and variables → Actions):
 
-   **For Production**:
+   **For Production** (if connecting to a backend):
    ```
-   VITE_CHATWOOT_BASE_URL
-   VITE_CHATWOOT_ACCESS_TOKEN
-   VITE_CHATWOOT_ACCOUNT_ID
+   VITE_API_BASE_URL
+   VITE_API_TOKEN (optional)
    ```
 
-   **For Staging**:
+   **For Staging** (if connecting to a backend):
    ```
-   VITE_CHATWOOT_BASE_URL_STAGING
-   VITE_CHATWOOT_ACCESS_TOKEN_STAGING
-   VITE_CHATWOOT_ACCOUNT_ID_STAGING
+   VITE_API_BASE_URL_STAGING
+   VITE_API_TOKEN_STAGING (optional)
    ```
 
    **Platform-specific secrets** (choose one):
@@ -159,9 +157,8 @@ GitLab CI configuration is in `.gitlab-ci.yml` at the repository root.
 1. **Required Variables** (Settings → CI/CD → Variables):
 
    ```
-   VITE_CHATWOOT_BASE_URL
-   VITE_CHATWOOT_ACCESS_TOKEN
-   VITE_CHATWOOT_ACCOUNT_ID
+   VITE_API_BASE_URL (optional, if connecting to a backend)
+   VITE_API_TOKEN (optional, if connecting to a backend)
    DEPLOY_URL (production URL)
    DEPLOY_URL_STAGING (staging URL)
    ```
@@ -313,15 +310,16 @@ This runs:
 ### Development
 Set in `.env` file (not committed):
 ```env
-VITE_CHATWOOT_BASE_URL=http://localhost:3000
-VITE_CHATWOOT_ACCESS_TOKEN=your-token
-VITE_CHATWOOT_ACCOUNT_ID=1
+VITE_API_BASE_URL=http://localhost:3000
+VITE_API_TOKEN=your-token (optional)
 ```
 
 ### Production/Staging
 Set as secrets in your CI/CD platform. The build process injects these at build time (Vite requirement).
 
 **Important**: Environment variables prefixed with `VITE_` are embedded in the build at compile time. They are not available at runtime.
+
+**Note**: The application currently uses mock data by default. To connect to a backend, update the API functions in `src/api/` to use these environment variables.
 
 ## Branch Strategy
 

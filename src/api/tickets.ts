@@ -1,58 +1,97 @@
-import { chatwootFetch, type ChatwootConversation } from "@/lib/chatwootClient";
 import type { Ticket } from "@/types/entities";
 
-const accountId = import.meta.env.VITE_CHATWOOT_ACCOUNT_ID;
+// Mock data storage (in a real app, this would be replaced with your backend API)
+let mockTickets: Ticket[] = [
+  {
+    id: "1",
+    title: "Fuga de agua en Av. Constituyentes",
+    description: "Reporte de fuga importante en la zona centro, requiere atención inmediata",
+    status: "open",
+    priority: "urgent",
+    agent_id: null,
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    updated_at: null,
+  },
+  {
+    id: "2",
+    title: "Baja presión de agua",
+    description: "Vecinos reportan baja presión en Col. Jardines",
+    status: "in_progress",
+    priority: "high",
+    agent_id: "1",
+    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "3",
+    title: "Solicitud de nuevo medidor",
+    description: "Cliente solicita instalación de medidor en nueva construcción",
+    status: "resolved",
+    priority: "medium",
+    agent_id: "2",
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "4",
+    title: "Consulta sobre facturación",
+    description: "Cliente tiene dudas sobre el monto de su factura",
+    status: "open",
+    priority: "low",
+    agent_id: null,
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+    updated_at: null,
+  },
+  {
+    id: "5",
+    title: "Reporte de medidor defectuoso",
+    description: "El medidor no registra correctamente el consumo",
+    status: "in_progress",
+    priority: "high",
+    agent_id: "1",
+    created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+  },
+];
 
-if (!accountId) {
-  console.warn("VITE_CHATWOOT_ACCOUNT_ID is not set. Chatwoot API calls will fail.");
-}
-
-function mapChatwootConversationToTicket(conv: ChatwootConversation): Ticket {
-  return {
-    id: String(conv.id),
-    title: conv.contact.name || `Conversation ${conv.id}`,
-    description: `Conversation with ${conv.contact.name}`,
-    status: conv.status === "resolved" ? "resolved" : conv.status === "closed" ? "closed" : conv.status === "pending" ? "open" : "in_progress",
-    priority: conv.priority === "urgent" ? "urgent" : conv.priority === "high" ? "high" : conv.priority === "low" ? "low" : "medium",
-    created_at: conv.created_at,
-    updated_at: conv.updated_at,
-    agent_id: conv.meta?.sender?.id ? String(conv.meta.sender.id) : null,
-  };
-}
+// Simulate API delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function listTickets(): Promise<Ticket[]> {
-  if (!accountId) throw new Error("Missing VITE_CHATWOOT_ACCOUNT_ID");
-  const res = await chatwootFetch(`/accounts/${accountId}/conversations`);
-  const convs: ChatwootConversation[] = await res.json();
-  return convs.map(mapChatwootConversationToTicket);
+  await delay(300); // Simulate network delay
+  return [...mockTickets].sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 }
 
 export async function getTicketById(id: string): Promise<Ticket | null> {
-  if (!accountId) throw new Error("Missing VITE_CHATWOOT_ACCOUNT_ID");
-  const res = await chatwootFetch(`/accounts/${accountId}/conversations/${id}`);
-  const conv: ChatwootConversation = await res.json();
-  return mapChatwootConversationToTicket(conv);
+  await delay(200);
+  return mockTickets.find((t) => t.id === id) || null;
 }
 
 export async function createTicket(partial: Omit<Ticket, "id" | "created_at" | "updated_at">): Promise<Ticket> {
-  if (!accountId) throw new Error("Missing VITE_CHATWOOT_ACCOUNT_ID");
-  // Chatwoot creates conversations via inbox + contact
-  // For a real implementation, you'd need inbox_id and contact_id
-  throw new Error("Creating conversations via API requires inbox and contact setup. Use Chatwoot UI or set up inbox/contact first.");
+  await delay(300);
+  const ticket: Ticket = {
+    id: String(Date.now()),
+    created_at: new Date().toISOString(),
+    updated_at: null,
+    ...partial,
+  };
+  mockTickets.push(ticket);
+  return ticket;
 }
 
 export async function updateTicket(id: string, changes: Partial<Ticket>): Promise<Ticket> {
-  if (!accountId) throw new Error("Missing VITE_CHATWOOT_ACCOUNT_ID");
-  const payload: Record<string, unknown> = {};
-  if (changes.status) payload.status = changes.status;
-  if (changes.priority) payload.priority = changes.priority;
-  if (changes.agent_id) payload.assignee_id = Number(changes.agent_id);
-  const res = await chatwootFetch(`/accounts/${accountId}/conversations/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-  const conv: ChatwootConversation = await res.json();
-  return mapChatwootConversationToTicket(conv);
+  await delay(300);
+  const index = mockTickets.findIndex((t) => t.id === id);
+  if (index === -1) {
+    throw new Error("Ticket not found");
+  }
+  const updated: Ticket = {
+    ...mockTickets[index],
+    ...changes,
+    updated_at: new Date().toISOString(),
+  };
+  mockTickets[index] = updated;
+  return updated;
 }
-
-

@@ -1,28 +1,16 @@
 # Ticket Ace Portal
 
-A modern, customizable UI layer built on top of Chatwoot — a powerful customer support platform. This frontend provides visualization and customization capabilities while Chatwoot handles all backend functionality, including data persistence, authentication, and business logic.
+A modern, customizable React UI application for ticket management and agent administration. Built with a clean, modular architecture that can be easily connected to any backend API.
 
-## Architecture
+## Features
 
-**Frontend (This Project)**
-- React + TypeScript + Vite
-- Shadcn-ui + Tailwind CSS for UI components
-- React Query for data fetching and state management
-- React Router for navigation
-- Acts as a visualization and customization layer
-
-**Backend (Chatwoot)**
-- Self-hosted Chatwoot instance (Ruby on Rails)
-- PostgreSQL database (included with Chatwoot)
-- Redis for job queuing
-- REST API for all operations
-- Handles all business logic, authentication, and data management
-
-This architecture allows you to:
-- **Customize the UI** to match your brand and workflow
-- **Visualize data** from Chatwoot in your preferred layout
-- **Extend functionality** through the Chatwoot API
-- **Leverage Chatwoot's features** without rebuilding them
+- 🎨 **Modern UI** - Built with Shadcn-ui and Tailwind CSS
+- 📊 **Dashboard** - Overview of tickets, agents, and metrics
+- 🎫 **Ticket Management** - Create, view, update, and track tickets
+- 👥 **Agent Management** - Manage AI agents and their configurations
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
+- ⚡ **Fast & Performant** - Built with Vite and React
+- 🔄 **Real-time Ready** - Uses React Query for efficient data fetching
 
 ## Tech Stack
 
@@ -30,207 +18,172 @@ This architecture allows you to:
 - **UI Framework**: Shadcn-ui + Tailwind CSS
 - **State Management**: React Query (TanStack Query)
 - **Routing**: React Router DOM
-- **Backend**: Chatwoot (self-hosted)
-- **Database**: PostgreSQL (via Chatwoot)
-- **Deployment**: Docker Compose (for Chatwoot)
+- **Build Tool**: Vite
 
 ## Project Structure
 
 ```
 ├── src/
-│   ├── api/                    # Chatwoot API integration layer
-│   │   ├── tickets.ts          # Conversation/ticket operations
-│   │   └── agents.ts           # Agent/user operations
+│   ├── api/                    # API integration layer
+│   │   ├── tickets.ts          # Ticket operations
+│   │   └── agents.ts           # Agent operations
 │   ├── components/
 │   │   ├── ui/                 # Shadcn UI base components
 │   │   ├── features/           # Feature-specific components
 │   │   └── layout/             # Layout components
 │   ├── hooks/                  # Custom React hooks
-│   ├── lib/                    # Utilities and client setup
-│   │   ├── chatwootClient.ts   # Chatwoot API client
+│   ├── lib/                    # Utilities
 │   │   └── utils.ts            # Helper functions
 │   ├── pages/                  # Page components
 │   └── types/                  # TypeScript type definitions
-├── infra/                      # Chatwoot Docker infrastructure
-│   ├── docker-compose.chatwoot.upstream.yaml
-│   ├── docker-compose.chatwoot.local.yaml
-│   └── chatwoot.env
-├── scripts/                    # Utility scripts
-│   ├── chatwoot-start.sh
-│   ├── chatwoot-stop.sh
-│   └── chatwoot-init.sh
-└── third_party/                # External dependencies
-    └── chatwoot/               # Chatwoot upstream (git submodule)
+└── docs/                       # Documentation
 ```
 
 For detailed documentation, see the [docs/](./docs/) folder or start with the [Documentation Index](./docs/README.md):
 - [Architecture Diagrams](./docs/ARCHITECTURE.md) - System architecture, data flow, and component hierarchy
 - [Folder Structure](./docs/FOLDER_STRUCTURE.md) - Detailed project organization
 - [CI/CD Pipeline](./docs/CI_CD.md) - Continuous Integration and Deployment setup
-- [Cleanup Summary](./docs/CLEANUP_SUMMARY.md) - Project cleanup documentation
 
-## Setup
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 20+ and npm
-- Docker and Docker Compose
-- Git (for submodule)
 
-### 1. Install Dependencies
+### Installation
 
-```bash
-npm install
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd ticket-ace-portal-10225
+   ```
 
-### 2. Set Up Chatwoot Backend
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-Chatwoot runs in Docker and provides the backend API for this frontend.
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-#### Start Chatwoot
-
-```bash
-cd infra
-
-# Start Chatwoot services (Postgres, Redis, Rails, Sidekiq)
-docker compose \
-  --env-file .env \
-  -f docker-compose.chatwoot.upstream.yaml \
-  -f docker-compose.chatwoot.local.yaml \
-  up -d postgres redis rails sidekiq
-```
-
-The first time, you need to prepare the database:
-
-```bash
-docker compose \
-  --env-file .env \
-  -f docker-compose.chatwoot.upstream.yaml \
-  -f docker-compose.chatwoot.local.yaml \
-  run --rm rails bundle exec rails db:chatwoot_prepare
-```
-
-#### Configure Chatwoot
-
-1. Open `http://localhost:3000` in your browser
-2. Sign up for an account (signup is enabled by default in local setup)
-3. After login, go to **Settings → Applications → Access Tokens**
-4. Create a personal access token
-5. Note your **Account ID** from the URL (e.g., `http://localhost:3000/app/accounts/1/...`) or from Settings
-
-#### Stop Chatwoot
-
-```bash
-cd infra
-docker compose \
-  --env-file .env \
-  -f docker-compose.chatwoot.upstream.yaml \
-  -f docker-compose.chatwoot.local.yaml \
-  down
-```
-
-### 3. Configure Frontend
-
-Create a `.env` file in the project root:
-
-```bash
-cp env.example .env
-```
-
-Edit `.env` with your Chatwoot credentials:
-
-```env
-VITE_CHATWOOT_BASE_URL=http://localhost:3000
-VITE_CHATWOOT_ACCESS_TOKEN=your-access-token-here
-VITE_CHATWOOT_ACCOUNT_ID=1
-```
-
-### 4. Start Development Server
-
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:5173` (or the port Vite assigns).
+4. **Open your browser**
+   Navigate to `http://localhost:8080` (or the port shown in the terminal)
 
 ## Development
 
 ### Available Scripts
 
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server with hot reload
 - `npm run build` - Build for production
+- `npm run build:dev` - Build in development mode
 - `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint issues automatically
+- `npm run typecheck` - Check TypeScript types
 - `npm run preview` - Preview production build
+- `npm run ci` - Run full CI pipeline locally (lint + typecheck + build)
+
+### Project Structure
+
+- **`src/api/`** - API integration functions (currently using mock data)
+- **`src/components/ui/`** - Reusable UI components from Shadcn-ui
+- **`src/components/features/`** - Feature-specific components (TicketCard, StatCard)
+- **`src/components/layout/`** - Layout components (DashboardLayout, AppSidebar)
+- **`src/pages/`** - Page components (Dashboard, Tickets, Agents, Settings)
+- **`src/types/`** - TypeScript type definitions
 
 ### Adding New Features
 
-1. **Data Layer**: Add functions in `src/api/` to interact with Chatwoot API
-2. **Components**: Create reusable UI components in `src/components/`
-3. **Pages**: Add new pages in `src/pages/` and register routes in `src/App.tsx`
-4. **Types**: Define TypeScript interfaces in `src/types/` to match your data structures
+1. **New Page**: Add route in `src/App.tsx`, create component in `src/pages/`
+2. **New Component**: Add to `src/components/features/` or `src/components/layout/`
+3. **New API Endpoint**: Add function in `src/api/` and replace mock data with real API calls
+4. **New Type**: Add to `src/types/entities.ts`
 
-### Chatwoot API Integration
+## Connecting to a Backend
 
-All API calls go through `src/lib/chatwootClient.ts`, which handles:
-- Base URL configuration
-- Authentication headers
-- Error handling
+Currently, the application uses mock data. To connect to a real backend:
 
-See [Chatwoot API Documentation](https://www.chatwoot.com/developers/api/) for available endpoints.
+1. **Update API functions** in `src/api/tickets.ts` and `src/api/agents.ts`
+2. **Replace mock data** with actual API calls using `fetch` or your preferred HTTP client
+3. **Configure environment variables** in `.env` file (see `env.example`)
+4. **Update API base URL** if needed
+
+Example:
+```typescript
+// src/api/tickets.ts
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+export async function listTickets(): Promise<Ticket[]> {
+  const response = await fetch(`${API_BASE_URL}/api/tickets`);
+  return response.json();
+}
+```
 
 ## Customization
 
-This frontend is designed to be highly customizable:
+This UI is designed to be highly customizable:
 
 - **UI Components**: Modify components in `src/components/` or add new Shadcn-ui components
 - **Styling**: Tailwind CSS configuration in `tailwind.config.ts`
-- **Data Mapping**: Adjust how Chatwoot data maps to your UI in `src/api/tickets.ts` and `src/api/agents.ts`
-- **Layout**: Customize page layouts in `src/components/DashboardLayout.tsx`
+- **Theme**: Customize colors and theme in `src/index.css` (CSS variables)
+- **Layout**: Customize page layouts in `src/components/layout/DashboardLayout.tsx`
 
 ## Production Deployment
 
-### Frontend
-
-Build the frontend:
+### Build
 
 ```bash
 npm run build
 ```
 
-Deploy the `dist/` folder to your preferred static hosting (Vercel, Netlify, etc.).
+This creates a `dist/` folder with production-ready static files.
 
-### Chatwoot Backend
+### Deploy
 
-For production Chatwoot deployment, refer to the [official Chatwoot deployment guide](https://www.chatwoot.com/docs/self-hosted/deployment/docker).
+Deploy the `dist/` folder to any static hosting service:
 
-**Important**: Update `VITE_CHATWOOT_BASE_URL` in your frontend `.env` to point to your production Chatwoot instance.
+- **Vercel**: `vercel --prod`
+- **Netlify**: `netlify deploy --prod --dir=dist`
+- **AWS S3**: Upload `dist/` contents to S3 bucket
+- **Any static host**: Upload `dist/` folder contents
+
+See [CI/CD Pipeline Documentation](./docs/CI_CD.md) for automated deployment options.
+
+## Environment Variables
+
+Create a `.env` file in the project root (see `env.example`):
+
+```env
+# Backend API URL (if connecting to a backend)
+VITE_API_BASE_URL=http://localhost:3000
+```
 
 ## Troubleshooting
-
-### Chatwoot Not Starting
-
-- Check Docker logs: `docker compose -f infra/docker-compose.chatwoot.upstream.yaml logs`
-- Ensure Postgres is ready before starting Rails: `docker compose exec postgres pg_isready`
-- Reset volumes if needed: `docker compose down -v`
-
-### API Errors
-
-- Verify `VITE_CHATWOOT_ACCESS_TOKEN` is set correctly
-- Ensure `VITE_CHATWOOT_ACCOUNT_ID` matches your account
-- Check Chatwoot logs for API errors
 
 ### Build Errors
 
 - Run `npm install` to ensure dependencies are installed
-- Clear `node_modules` and reinstall if needed: `rm -rf node_modules package-lock.json && npm install`
+- Clear `node_modules` and reinstall: `rm -rf node_modules package-lock.json && npm install`
+- Check TypeScript errors: `npm run typecheck`
+
+### Linting Errors
+
+- Auto-fix issues: `npm run lint:fix`
+- Check ESLint configuration in `eslint.config.js`
+
+### Development Server Issues
+
+- Ensure port 8080 is available (or change in `vite.config.ts`)
+- Check for conflicting processes: `lsof -i :8080`
 
 ## Resources
 
-- [Chatwoot Documentation](https://www.chatwoot.com/docs/)
-- [Chatwoot API Reference](https://www.chatwoot.com/developers/api/)
-- [Chatwoot GitHub](https://github.com/chatwoot/chatwoot)
+- [React Documentation](https://react.dev/)
+- [Vite Documentation](https://vitejs.dev/)
 - [Shadcn-ui Components](https://ui.shadcn.com/)
 - [React Query Docs](https://tanstack.com/query/latest)
+- [Tailwind CSS Docs](https://tailwindcss.com/)
 
 ## License
 

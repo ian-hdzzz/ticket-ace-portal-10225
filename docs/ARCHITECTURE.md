@@ -2,7 +2,7 @@
 
 ## Overview
 
-Ticket Ace Portal is a modern React frontend that serves as a visualization and customization layer on top of Chatwoot, a self-hosted customer support platform. This architecture leverages Chatwoot's robust backend capabilities while providing a fully customizable user interface.
+Ticket Ace Portal is a modern React frontend application for ticket management and agent administration. Built with a clean, modular architecture that uses mock data by default but can be easily connected to any backend API.
 
 ## System Architecture
 
@@ -18,36 +18,23 @@ Ticket Ace Portal is a modern React frontend that serves as a visualization and 
 │  │  └──────────────────┬─────────────────────────────────┘  │  │
 │  │                     │                                     │  │
 │  │  ┌──────────────────▼─────────────────────────────────┐  │  │
-│  │  │  API Layer (src/api/)                              │  │  │
-│  │  │  - tickets.ts, agents.ts                           │  │  │
+│  │  │  React Query (State Management)                    │  │  │
+│  │  │  - Data fetching, caching, synchronization        │  │  │
 │  │  └──────────────────┬─────────────────────────────────┘  │  │
 │  │                     │                                     │  │
 │  │  ┌──────────────────▼─────────────────────────────────┐  │  │
-│  │  │  Chatwoot Client (src/lib/chatwootClient.ts)      │  │  │
-│  │  │  - HTTP client, authentication, error handling    │  │  │
+│  │  │  API Layer (src/api/)                              │  │  │
+│  │  │  - tickets.ts, agents.ts                           │  │  │
+│  │  │  - Currently uses mock data                        │  │  │
 │  │  └──────────────────┬─────────────────────────────────┘  │  │
 │  └──────────────────────┼───────────────────────────────────┘  │
-│                         │ REST API (HTTPS)                      │
+│                         │ (Optional: Replace with API calls)   │
 └─────────────────────────┼──────────────────────────────────────┘
                           │
-┌─────────────────────────▼──────────────────────────────────────┐
-│              Chatwoot Backend (Docker)                          │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  Rails Application                                       │  │
-│  │  - REST API endpoints                                    │  │
-│  │  - Business logic                                        │  │
-│  │  - Authentication & Authorization                        │  │
-│  └────┬─────────────────────────────┬──────────────────────┘  │
-│       │                             │                          │
-│  ┌────▼─────┐                 ┌─────▼─────┐                  │
-│  │PostgreSQL│                 │   Redis   │                  │
-│  │ Database │                 │   Queue   │                  │
-│  │          │                 │           │                  │
-│  │ - Tickets│                 │ - Jobs    │                  │
-│  │ - Agents │                 │ - Cache   │                  │
-│  │ - Users  │                 │           │                  │
-│  └──────────┘                 └───────────┘                  │
-└───────────────────────────────────────────────────────────────┘
+                  ┌───────▼────────┐
+                  │  Backend API   │
+                  │  (Your choice) │
+                  └────────────────┘
 ```
 
 ## Frontend Architecture
@@ -57,8 +44,8 @@ Ticket Ace Portal is a modern React frontend that serves as a visualization and 
 ```
 src/
 ├── api/                    # API integration layer
-│   ├── tickets.ts         # Ticket/Conversation operations
-│   └── agents.ts          # Agent/User operations
+│   ├── tickets.ts         # Ticket operations (mock data)
+│   └── agents.ts          # Agent operations (mock data)
 │
 ├── components/            # React components
 │   ├── ui/               # Shadcn UI components (base components)
@@ -73,8 +60,7 @@ src/
 │   ├── use-mobile.tsx
 │   └── use-toast.ts
 │
-├── lib/                   # Utilities and clients
-│   ├── chatwootClient.ts # Chatwoot API client
+├── lib/                   # Utilities
 │   └── utils.ts          # Helper functions
 │
 ├── pages/                 # Page components
@@ -112,21 +98,9 @@ src/
 ┌────▼──────────────┐
 │  API Layer        │
 │  (src/api/*.ts)   │
-└────┬──────────────┘
-     │
-     │ chatwootFetch()
-     │
-┌────▼──────────────────┐
-│  Chatwoot Client      │
-│  (chatwootClient.ts)  │
-└────┬──────────────────┘
-     │
-     │ HTTP Request
-     │
-┌────▼──────────┐
-│  Chatwoot API │
-│  (Backend)    │
-└───────────────┘
+│  - Mock data      │
+│  - Or API calls   │
+└───────────────────┘
 ```
 
 ## Component Hierarchy
@@ -150,88 +124,42 @@ App
 │                       └── Settings
 ```
 
-## Backend Architecture (Chatwoot)
-
-### Services
-
-```
-┌─────────────────────────────────────────┐
-│      Docker Compose Stack               │
-│                                         │
-│  ┌─────────────┐  ┌─────────────┐     │
-│  │   Rails     │  │   Sidekiq   │     │
-│  │  (Web)      │  │  (Worker)   │     │
-│  │  Port:3000  │  │             │     │
-│  └──────┬──────┘  └──────┬──────┘     │
-│         │                │             │
-│  ┌──────▼───────────────▼───────┐     │
-│  │      PostgreSQL              │     │
-│  │      Port:5432               │     │
-│  └──────────────────────────────┘     │
-│                                         │
-│  ┌──────────────────────────────┐     │
-│  │      Redis                   │     │
-│  │      Port:6379               │     │
-│  └──────────────────────────────┘     │
-└─────────────────────────────────────────┘
-```
-
-### Key Concepts
-
-1. **Conversations** (Chatwoot) = **Tickets** (Our UI)
-   - Chatwoot uses "conversations" as the core entity
-   - We map these to "tickets" in our UI
-
-2. **Users/Agents** (Chatwoot) = **Agents** (Our UI)
-   - Chatwoot users with agent/admin roles
-   - Displayed as agents in our interface
-
-3. **Accounts**
-   - Multi-tenant structure
-   - Each account has its own conversations, users, and settings
-
 ## API Integration
 
-### Authentication
+### Current Implementation: Mock Data
 
+The application currently uses in-memory mock data for development and demonstration purposes. This allows the UI to function independently without requiring a backend.
+
+**Mock Data Storage**:
+- Data is stored in module-level arrays (`mockTickets`, `mockAgents`)
+- Simulated network delays using `delay()` function
+- All CRUD operations work with mock data
+
+### Connecting to a Backend
+
+To connect to a real backend API:
+
+1. **Update API functions** in `src/api/tickets.ts` and `src/api/agents.ts`
+2. **Replace mock data** with actual API calls using `fetch` or your preferred HTTP client
+3. **Configure environment variables** in `.env` file
+4. **Update API base URL** as needed
+
+**Example**:
 ```typescript
-// Headers sent with every request
-{
-  "Content-Type": "application/json",
-  "api_access_token": "<VITE_CHATWOOT_ACCESS_TOKEN>"
-}
-```
+// src/api/tickets.ts
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-### Endpoints Used
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/v1/accounts/{id}/conversations` | GET | List all conversations |
-| `/api/v1/accounts/{id}/conversations/{id}` | GET | Get conversation details |
-| `/api/v1/accounts/{id}/conversations/{id}` | PUT | Update conversation |
-| `/api/v1/accounts/{id}/agents` | GET | List agents |
-
-### Data Mapping
-
-**Chatwoot Conversation → Our Ticket**
-```typescript
-{
-  id: number → string
-  status: string → "open" | "in_progress" | "resolved" | "closed"
-  priority: string → "low" | "medium" | "high" | "urgent"
-  contact.name → title
-  created_at → created_at
-  updated_at → updated_at
-  meta.sender.id → agent_id
-}
-```
-
-**Chatwoot Agent → Our Agent**
-```typescript
-{
-  id: number → string
-  name / available_name → name
-  role → mapped to status/type
+export async function listTickets(): Promise<Ticket[]> {
+  const response = await fetch(`${API_BASE_URL}/api/tickets`, {
+    headers: {
+      'Authorization': `Bearer ${import.meta.env.VITE_API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
 }
 ```
 
@@ -279,7 +207,7 @@ npm run dev
     ↓
 Vite Dev Server (HMR)
     ↓
-Proxy requests to Chatwoot API
+Mock data (no backend required)
 ```
 
 ### Production
@@ -291,17 +219,15 @@ Static files (dist/)
     ↓
 Deploy to CDN/Static Host
     ↓
-Environment variables (.env)
-    ↓
-API requests to Chatwoot instance
+(Optional: Connect to backend API)
 ```
 
 ## Security Considerations
 
-1. **API Tokens**: Stored in environment variables (not committed)
-2. **CORS**: Configured on Chatwoot backend
+1. **API Tokens**: Store in environment variables (not committed)
+2. **CORS**: Configure on backend if needed
 3. **HTTPS**: Required for production
-4. **Authentication**: Handled by Chatwoot backend
+4. **Authentication**: Handled by backend (if applicable)
 
 ## Scalability
 
@@ -309,67 +235,36 @@ API requests to Chatwoot instance
 - Stateless components
 - Client-side caching (React Query)
 - Code splitting (Vite)
+- Lazy loading support
 
-### Backend (Chatwoot)
-- Horizontal scaling via Docker
-- PostgreSQL replication
-- Redis clustering
-- Load balancing
+### Backend Integration
+- RESTful API patterns
+- Environment-based configuration
+- Error handling and retry logic
+- Request/response typing
 
 ## Extension Points
 
 ### Adding New Features
 
 1. **New Page**: Add route in `App.tsx`, create component in `pages/`
-2. **New API Endpoint**: Add function in `src/api/`, use in components
+2. **New API Endpoint**: Add function in `src/api/`, replace mock with API calls
 3. **New Component**: Add to `components/features/` or `components/layout/`
 4. **New Type**: Add to `types/entities.ts`
 
-### Integrating Chatwoot Features
+### Integrating a Backend
 
-Chatwoot provides a comprehensive API. To integrate new features:
-
-1. Review [Chatwoot API Docs](https://www.chatwoot.com/developers/api/)
-2. Add client function in `src/lib/chatwootClient.ts` if needed
-3. Add API wrapper in `src/api/`
-4. Create UI components
-5. Add to pages
-
-## Troubleshooting Architecture
-
-### Frontend Issues
-
-```
-Component not rendering
-    ↓
-Check React Query state
-    ↓
-Check API function
-    ↓
-Check Chatwoot client
-    ↓
-Check network requests (DevTools)
-```
-
-### Backend Issues
-
-```
-API error
-    ↓
-Check Chatwoot logs (Docker)
-    ↓
-Verify credentials (.env)
-    ↓
-Check Chatwoot API status
-    ↓
-Verify database connection
-```
+1. **Choose your backend**: REST API, GraphQL, gRPC, etc.
+2. **Create API client**: Add HTTP client in `src/lib/` if needed
+3. **Update API functions**: Replace mock data in `src/api/`
+4. **Configure environment**: Set `VITE_API_BASE_URL` in `.env`
+5. **Handle authentication**: Add auth headers/tokens as needed
 
 ## Future Considerations
 
-1. **WebSocket Integration**: Real-time updates via Chatwoot WebSockets
-2. **Custom Actions**: Extend Chatwoot with custom actions
-3. **Plugin System**: Modular feature additions
-4. **Mobile App**: React Native version using same API
-5. **Multi-language**: i18n support for UI
-
+1. **WebSocket Integration**: Real-time updates via WebSockets
+2. **Offline Support**: Service workers and offline-first patterns
+3. **Progressive Web App**: PWA features for mobile-like experience
+4. **Multi-language**: i18n support for UI
+5. **Testing**: Unit tests, integration tests, E2E tests
+6. **Performance**: Code splitting, lazy loading, optimization

@@ -7,16 +7,7 @@ This document outlines the project's folder organization after cleanup and reorg
 ```
 ticket-ace-portal-10225/
 ├── src/                          # Source code
-├── infra/                        # Infrastructure (Chatwoot Docker)
-│   ├── docker-compose.chatwoot.upstream.yaml
-│   ├── docker-compose.chatwoot.local.yaml
-│   └── chatwoot.env
-├── scripts/                      # Utility scripts
-│   ├── chatwoot-start.sh
-│   ├── chatwoot-stop.sh
-│   └── chatwoot-init.sh
-├── third_party/                  # External dependencies
-│   └── chatwoot/                 # Chatwoot upstream (git submodule)
+├── scripts/                      # Utility scripts (if needed)
 ├── public/                       # Static assets
 ├── node_modules/                 # Dependencies (generated)
 ├── dist/                         # Build output (generated)
@@ -60,8 +51,7 @@ src/
 │   ├── use-mobile.tsx          # Mobile detection hook
 │   └── use-toast.ts            # Toast notification hook
 │
-├── lib/                          # Utilities and clients
-│   ├── chatwootClient.ts       # Chatwoot API client
+├── lib/                          # Utilities
 │   └── utils.ts                # Helper functions (cn, etc.)
 │
 ├── pages/                        # Page components
@@ -86,11 +76,11 @@ src/
 ## Key Directories Explained
 
 ### `src/api/`
-**Purpose**: Data access layer that communicates with Chatwoot backend.
+**Purpose**: Data access layer (currently using mock data).
 
 - Functions return domain entities (Ticket, Agent)
-- Handles data transformation (Chatwoot → Our models)
-- Uses `chatwootClient.ts` for HTTP requests
+- Currently uses in-memory mock data
+- Can be replaced with real API calls to any backend
 - Used by React Query hooks in components
 
 **Example**:
@@ -131,9 +121,8 @@ export async function getTicketById(id: string): Promise<Ticket | null>
 - Examples: Dashboard, Tickets, Agents
 
 ### `src/lib/`
-**Purpose**: Shared utilities and external service clients.
+**Purpose**: Shared utilities.
 
-- **chatwootClient.ts**: Chatwoot API HTTP client
 - **utils.ts**: Helper functions (e.g., `cn` for className merging)
 
 ### `src/types/`
@@ -143,23 +132,9 @@ export async function getTicketById(id: string): Promise<Ticket | null>
 - API response types
 - Shared types across the application
 
-## Infrastructure (`infra/`)
-
-```
-infra/
-├── docker-compose.chatwoot.upstream.yaml  # Official Chatwoot compose
-├── docker-compose.chatwoot.local.yaml     # Local overrides (Postgres config)
-└── chatwoot.env                           # Chatwoot environment variables
-```
-
 ## Scripts (`scripts/`)
 
-```
-scripts/
-├── chatwoot-start.sh      # Start Chatwoot services
-├── chatwoot-stop.sh       # Stop Chatwoot services
-└── chatwoot-init.sh       # Initialize database (first-time setup)
-```
+Scripts directory is available for custom utility scripts if needed.
 
 ## Import Patterns
 
@@ -207,7 +182,7 @@ import { chatwootFetch } from "@/lib/chatwootClient";
 
 ### New API Endpoint
 1. Add function in `src/api/` (appropriate file or new file)
-2. Use `chatwootFetch` from `@/lib/chatwootClient`
+2. Replace mock data with real API calls using `fetch` or your HTTP client
 3. Define types in `src/types/entities.ts` if needed
 
 ### New Type

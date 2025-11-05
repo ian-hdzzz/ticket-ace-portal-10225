@@ -11,7 +11,7 @@ Complete system architecture documentation including:
 - Data flow diagrams
 - Component hierarchy
 - API integration patterns
-- Backend architecture (Chatwoot)
+- Backend integration patterns
 - State management
 - Styling architecture
 - Build & deployment
@@ -47,6 +47,4 @@ Complete CI/CD pipeline documentation including:
 ## Quick Links
 
 - Main [README](../README.md) - Project overview and setup instructions
-- [Chatwoot API Docs](https://www.chatwoot.com/developers/api/) - External API reference
-- [Chatwoot Self-Hosted Guide](https://www.chatwoot.com/docs/self-hosted) - Backend deployment guide
 

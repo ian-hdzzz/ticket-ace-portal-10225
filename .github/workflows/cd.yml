@@ -44,9 +44,8 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          VITE_CHATWOOT_BASE_URL: ${{ secrets.VITE_CHATWOOT_BASE_URL }}
-          VITE_CHATWOOT_ACCESS_TOKEN: ${{ secrets.VITE_CHATWOOT_ACCESS_TOKEN }}
-          VITE_CHATWOOT_ACCOUNT_ID: ${{ secrets.VITE_CHATWOOT_ACCOUNT_ID }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_API_TOKEN: ${{ secrets.VITE_API_TOKEN }}
 
       # Option 1: Deploy to Vercel
       - name: Deploy to Vercel
@@ -127,9 +126,8 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          VITE_CHATWOOT_BASE_URL: ${{ secrets.VITE_CHATWOOT_BASE_URL_STAGING }}
-          VITE_CHATWOOT_ACCESS_TOKEN: ${{ secrets.VITE_CHATWOOT_ACCESS_TOKEN_STAGING }}
-          VITE_CHATWOOT_ACCOUNT_ID: ${{ secrets.VITE_CHATWOOT_ACCOUNT_ID_STAGING }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL_STAGING }}
+          VITE_API_TOKEN: ${{ secrets.VITE_API_TOKEN_STAGING }}
 
       - name: Deploy to Vercel (Preview)
         id: deploy
