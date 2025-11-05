@@ -1,7 +1,7 @@
 import type { Ticket } from "@/types/entities";
 
 // Mock data storage (in a real app, this would be replaced with your backend API)
-let mockTickets: Ticket[] = [
+const mockTickets: Ticket[] = [
   {
     id: "1",
     title: "Fuga de agua en Av. Constituyentes",

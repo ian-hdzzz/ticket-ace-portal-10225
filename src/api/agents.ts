@@ -1,7 +1,7 @@
 import type { Agent } from "@/types/entities";
 
 // Mock data storage (in a real app, this would be replaced with your backend API)
-let mockAgents: Agent[] = [
+const mockAgents: Agent[] = [
   {
     id: "1",
     name: "Juan Pérez",

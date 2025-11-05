@@ -110,7 +110,7 @@ export default function Agents() {
         voice: editingAgent.voice || null,
         system_prompt: editingAgent.systemPrompt,
         assignment_rules: editingAgent.assignmentRules,
-      } as any);
+      });
     }
 
     await queryClient.invalidateQueries({ queryKey: ["agents"] });

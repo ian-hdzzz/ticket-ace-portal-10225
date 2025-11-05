@@ -18,7 +18,31 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ticketData: Record<string, any> = {
+interface Conversation {
+  id: number;
+  channel: "email" | "phone" | "chat" | "whatsapp" | "system";
+  type: "incoming" | "outgoing" | "internal" | "system";
+  from?: string;
+  to?: string;
+  subject?: string;
+  message: string;
+  timestamp: string;
+}
+
+interface TicketData {
+  id: string;
+  title: string;
+  description: string;
+  status: "abierto" | "en_progreso" | "resuelto" | "cerrado";
+  priority: "baja" | "media" | "alta" | "urgente";
+  assignedTo: string;
+  createdAt: string;
+  location: string;
+  category: string;
+  conversations: Conversation[];
+}
+
+const ticketData: Record<string, TicketData> = {
   "TKT-1234": {
     id: "TKT-1234",
     title: "Fuga de agua en Av. Constituyentes",
@@ -199,7 +223,7 @@ export default function TicketDetails() {
             </CardHeader>
             <CardContent>
               <div className="relative space-y-6 before:absolute before:left-5 before:top-2 before:h-[calc(100%-1rem)] before:w-0.5 before:bg-border">
-                {ticket.conversations.map((conversation: any) => {
+                {ticket.conversations.map((conversation) => {
                   const ChannelIcon = channelIcons[conversation.channel as keyof typeof channelIcons];
                   const channelColor = channelColors[conversation.channel as keyof typeof channelColors];
                   
