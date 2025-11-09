@@ -10,6 +10,7 @@ import TicketDetails from "./pages/TicketDetails";
 import Agents from "./pages/Agents";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import ChatwootWidget from "./components/features/ChatwootWidget";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <ChatwootWidget />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<DashboardLayout />}>
