@@ -25,8 +25,28 @@ const chatwootAPI = axios.create({
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-// Track which messages we've already responded to
+// System prompt focused on ticket creation for CEA Querétaro
+const SYSTEM_PROMPT = `
+Eres un agente de tickets de la CEA Querétaro. Tu función principal es ayudar a crear tickets claros y completos.
+Recopila SOLO los datos mínimos necesarios: nombre del solicitante, medio de contacto, ubicación/área, breve descripción,
+impacto (a cuántas personas/servicios afecta) y urgencia (inmediata, alta, normal, baja). Si falta un dato clave, haz
+una sola pregunta breve y opcionalmente da ejemplos. No inventes información, no prometas tiempos de solución.
+
+Al responder, si hay suficiente información, genera un borrador estructurado:
+- Título breve del ticket
+- Descripción clara (incluye datos aportados)
+- Categoría sugerida
+- Prioridad sugerida (basada en impacto + urgencia)
+- Pregunta faltante si aún falta un dato esencial
+
+Si el usuario hace preguntas generales que no son para crear ticket, orienta de forma breve y sugiere abrir ticket si corresponde.
+Mantén tono institucional, respetuoso y conciso.
+`;
+
+// Track which messages we've already responded to (per runtime)
 const respondedMessages = new Set();
+// Track messages currently being processed to prevent duplicate replies during overlapping polls
+const inFlightMessages = new Set();
 
 async function getOpenConversations() {
   try {
@@ -82,12 +102,14 @@ async function processConversation(conversation) {
   const lastCustomerMessage = customerMessages[customerMessages.length - 1];
   const messageId = lastCustomerMessage.id;
   
-  // Skip if we've already responded to this message
-  if (respondedMessages.has(messageId)) return;
+  // Skip if message is already being processed or already responded
+  if (inFlightMessages.has(messageId) || respondedMessages.has(messageId)) return;
   
   // Check if we've already replied after this message
-  const lastMessage = messages[messages.length - 1];
-  if (lastMessage.message_type === 1 && lastMessage.created_at > lastCustomerMessage.created_at) {
+  const hasAnyReplyAfter = messages.some(
+    (m) => m.message_type === 1 && m.created_at >= lastCustomerMessage.created_at
+  );
+  if (hasAnyReplyAfter) {
     respondedMessages.add(messageId);
     return;
   }
@@ -96,9 +118,12 @@ async function processConversation(conversation) {
   console.log(`   Customer: ${lastCustomerMessage.content}`);
   
   try {
+    // Mark as in-flight to prevent overlapping polls from duplicating the reply
+    inFlightMessages.add(messageId);
+
     // Generate AI response
     console.log('   🤔 Thinking...');
-    const result = await model.generateContent(lastCustomerMessage.content);
+  const result = await model.generateContent(`${SYSTEM_PROMPT}\n\nMensaje del usuario: ${lastCustomerMessage.content}\n\nGenera tu respuesta siguiendo las instrucciones del sistema.`);
     const response = await result.response;
     const aiResponse = response.text();
     
@@ -112,6 +137,10 @@ async function processConversation(conversation) {
     
   } catch (error) {
     console.error('   ✗ Error processing message:', error.message);
+    // Allow retry on next poll if send/generation failed
+    respondedMessages.delete(messageId);
+  } finally {
+    inFlightMessages.delete(messageId);
   }
 }
 
