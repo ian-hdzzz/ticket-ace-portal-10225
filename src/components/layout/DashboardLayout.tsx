@@ -48,14 +48,14 @@ export function DashboardLayout() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
-        <div className="flex flex-1 flex-col">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <header className="sticky top-0 z-10 flex h-16 flex-shrink-0 items-center gap-4 border-b bg-background px-6">
             <SidebarTrigger />
             <div className="flex-1" />
           </header>
-          <main className="flex-1 p-6">
+          <main className="flex-1 overflow-hidden p-6">
             <Outlet />
           </main>
         </div>

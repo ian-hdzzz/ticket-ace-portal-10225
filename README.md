@@ -63,13 +63,15 @@ For detailed documentation, see the [docs/](./docs/) folder or start with the [D
    npm install
    ```
 
-3. **Start development server**
+3. **Start development server** (No `.env` file needed for demo mode!)
    ```bash
    npm run dev
    ```
 
 4. **Open your browser**
    Navigate to `http://localhost:8080` (or the port shown in the terminal)
+
+**Note:** The application runs in **demo mode** by default with mock data. No configuration is required! See [Application Modes](#application-modes) section for production setup.
 
 ## Development
 
@@ -100,25 +102,34 @@ For detailed documentation, see the [docs/](./docs/) folder or start with the [D
 3. **New API Endpoint**: Add function in `src/api/` and replace mock data with real API calls
 4. **New Type**: Add to `src/types/entities.ts`
 
-## Connecting to a Backend
+## Application Modes
 
-Currently, the application uses mock data. To connect to a real backend:
+The application supports two modes: **Demo** and **Production**.
 
-1. **Update API functions** in `src/api/tickets.ts` and `src/api/agents.ts`
-2. **Replace mock data** with actual API calls using `fetch` or your preferred HTTP client
-3. **Configure environment variables** in `.env` file (see `env.example`)
-4. **Update API base URL** if needed
+### Demo Mode (Default)
 
-Example:
-```typescript
-// src/api/tickets.ts
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+Demo mode uses hardcoded mock data and requires **no configuration or `.env` file**. Perfect for development and demonstrations.
 
-export async function listTickets(): Promise<Ticket[]> {
-  const response = await fetch(`${API_BASE_URL}/api/tickets`);
-  return response.json();
-}
-```
+**To use Demo Mode:**
+1. **No setup required!** Just run `npm run dev`
+2. The application automatically defaults to demo mode
+3. All data is stored in-memory and resets on page refresh
+4. Works out of the box without any environment variables
+
+### Production Mode
+
+Production mode connects to a Supabase backend for persistent data storage.
+
+**To use Production Mode:**
+1. Set `VITE_APP_MODE=production` in your `.env` file
+2. Configure Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+3. Set up your Supabase database schema (see [Supabase Setup Guide](./docs/SUPABASE_SETUP.md))
+
+**See [Supabase Setup Guide](./docs/SUPABASE_SETUP.md) for detailed instructions.**
 
 ## Customization
 
@@ -155,9 +166,15 @@ See [CI/CD Pipeline Documentation](./docs/CI_CD.md) for automated deployment opt
 Create a `.env` file in the project root (see `env.example`):
 
 ```env
-# Backend API URL (if connecting to a backend)
-VITE_API_BASE_URL=http://localhost:3000
+# Application Mode: "demo" or "production"
+VITE_APP_MODE=demo
+
+# Supabase Configuration (Required for production mode)
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+**Note:** In demo mode, Supabase credentials are not required. The application will use mock data instead.
 
 ## Troubleshooting
 

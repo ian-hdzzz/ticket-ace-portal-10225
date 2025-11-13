@@ -16,7 +16,7 @@ const ChatwootWidget = () => {
       const websiteToken = import.meta.env.VITE_CHATWOOT_WEBSITE_TOKEN;
 
       if (!websiteToken) {
-        console.error('VITE_CHATWOOT_WEBSITE_TOKEN is not set. The Chatwoot widget will not be loaded.');
+        // Silently skip loading Chatwoot if token is not set (optional feature)
         return;
       }
 

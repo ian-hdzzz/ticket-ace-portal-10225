@@ -1,6 +1,10 @@
 import type { Agent } from "@/types/entities";
+import { isDemoMode } from "@/lib/config";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
-// Mock data storage (in a real app, this would be replaced with your backend API)
+// ============================================================================
+// DEMO MODE: Mock data storage
+// ============================================================================
 const mockAgents: Agent[] = [
   {
     id: "1",
@@ -48,15 +52,23 @@ const mockAgents: Agent[] = [
   },
 ];
 
-// Simulate API delay
+// Simulate API delay for demo mode
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function listAgents(): Promise<Agent[]> {
+// ============================================================================
+// DEMO MODE: Mock API functions
+// ============================================================================
+async function listAgentsDemo(): Promise<Agent[]> {
   await delay(300);
   return [...mockAgents].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function createAgent(partial: Omit<Agent, "id" | "last_updated">): Promise<Agent> {
+async function getAgentByIdDemo(id: string): Promise<Agent | null> {
+  await delay(200);
+  return mockAgents.find((a) => a.id === id) || null;
+}
+
+async function createAgentDemo(partial: Omit<Agent, "id" | "last_updated">): Promise<Agent> {
   await delay(300);
   const agent: Agent = {
     id: String(Date.now()),
@@ -67,7 +79,7 @@ export async function createAgent(partial: Omit<Agent, "id" | "last_updated">): 
   return agent;
 }
 
-export async function updateAgent(id: string, changes: Partial<Agent>): Promise<Agent> {
+async function updateAgentDemo(id: string, changes: Partial<Agent>): Promise<Agent> {
   await delay(300);
   const index = mockAgents.findIndex((a) => a.id === id);
   if (index === -1) {
@@ -80,4 +92,143 @@ export async function updateAgent(id: string, changes: Partial<Agent>): Promise<
   };
   mockAgents[index] = updated;
   return updated;
+}
+
+async function deleteAgentDemo(id: string): Promise<boolean> {
+  await delay(300);
+  const index = mockAgents.findIndex((a) => a.id === id);
+  if (index === -1) {
+    return false;
+  }
+  mockAgents.splice(index, 1);
+  return true;
+}
+
+// ============================================================================
+// PRODUCTION MODE: Supabase API functions
+// ============================================================================
+async function listAgentsProduction(): Promise<Agent[]> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase client not available. Check your configuration.");
+  }
+
+  const { data, error } = await supabase
+    .from("agents")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to fetch agents: ${error.message}`);
+  }
+
+  return (data || []) as Agent[];
+}
+
+async function getAgentByIdProduction(id: string): Promise<Agent | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase client not available. Check your configuration.");
+  }
+
+  const { data, error } = await supabase
+    .from("agents")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null;
+    }
+    throw new Error(`Failed to fetch agent: ${error.message}`);
+  }
+
+  return data as Agent;
+}
+
+async function createAgentProduction(partial: Omit<Agent, "id" | "last_updated">): Promise<Agent> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase client not available. Check your configuration.");
+  }
+
+  const { data, error } = await supabase
+    .from("agents")
+    .insert({
+      ...partial,
+      last_updated: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to create agent: ${error.message}`);
+  }
+
+  return data as Agent;
+}
+
+async function updateAgentProduction(id: string, changes: Partial<Agent>): Promise<Agent> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase client not available. Check your configuration.");
+  }
+
+  const { data, error } = await supabase
+    .from("agents")
+    .update({
+      ...changes,
+      last_updated: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update agent: ${error.message}`);
+  }
+
+  return data as Agent;
+}
+
+async function deleteAgentProduction(id: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    throw new Error("Supabase client not available. Check your configuration.");
+  }
+
+  const { error } = await supabase
+    .from("agents")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`Failed to delete agent: ${error.message}`);
+  }
+
+  return true;
+}
+
+// ============================================================================
+// PUBLIC API: Mode-aware functions
+// ============================================================================
+export async function listAgents(): Promise<Agent[]> {
+  return isDemoMode() ? listAgentsDemo() : listAgentsProduction();
+}
+
+export async function getAgentById(id: string): Promise<Agent | null> {
+  return isDemoMode() ? getAgentByIdDemo(id) : getAgentByIdProduction(id);
+}
+
+export async function createAgent(partial: Omit<Agent, "id" | "last_updated">): Promise<Agent> {
+  return isDemoMode() ? createAgentDemo(partial) : createAgentProduction(partial);
+}
+
+export async function updateAgent(id: string, changes: Partial<Agent>): Promise<Agent> {
+  return isDemoMode() ? updateAgentDemo(id, changes) : updateAgentProduction(id, changes);
+}
+
+export async function deleteAgent(id: string): Promise<boolean> {
+  return isDemoMode() ? deleteAgentDemo(id) : deleteAgentProduction(id);
 }

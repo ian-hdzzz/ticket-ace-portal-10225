@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAgents, createAgent, updateAgent } from "@/api/agents";
+import { listAgents, createAgent, updateAgent, deleteAgent } from "@/api/agents";
 
 interface Agent {
   id: string;
@@ -118,8 +118,14 @@ export default function Agents() {
     setEditingAgent(null);
   };
 
-  const handleDeleteAgent = (id: string) => {
-    setAgents(agents.filter(a => a.id !== id));
+  const handleDeleteAgent = async (id: string) => {
+    try {
+      await deleteAgent(id);
+      await queryClient.invalidateQueries({ queryKey: ["agents"] });
+    } catch (error) {
+      console.error("Failed to delete agent:", error);
+      // You might want to show a toast notification here
+    }
   };
 
   const handleCreateNew = () => {
