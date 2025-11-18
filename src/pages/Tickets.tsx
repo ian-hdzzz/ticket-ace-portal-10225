@@ -117,7 +117,8 @@ export default function Tickets() {
             nombre,
             nombre_completo
           )
-        `);
+        `)
+        .order('created_at', { ascending: false }); // Ordenar por fecha de creación, más recientes primero
       
       console.log('Datos de Supabase con JOIN - Total registros:', result.data?.length);
       
@@ -127,7 +128,8 @@ export default function Tickets() {
         // Si falla el JOIN, hacer consulta simple
         const simpleResult = await supabase
           .from('tickets')
-          .select('*');
+          .select('*')
+          .order('created_at', { ascending: false }); // También ordenar aquí
           
         if (simpleResult.error) {
           throw simpleResult.error;
