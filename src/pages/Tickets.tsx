@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import type { Ticket, UserType, ContactChannel, AssignmentGroup } from "@/types/
 import { mapStatus, mapPriority, mapPriorityToApi, mapChannel, mapAssignmentGroup } from "@/lib/mappers";
 import { getVisibleFields, FIELD_LABELS, getUserTypeDisplayName, type TicketField } from "@/lib/fieldVisibility";
 import { allUserTypes } from "@/lib/userTypes";
+import { supabase } from '../supabase/client.ts'
 
 export default function Tickets() {
   const navigate = useNavigate();
@@ -44,6 +45,8 @@ export default function Tickets() {
   const [priorityFilter, setPriorityFilter] = useState<string>("todos");
   const [selectedUserType, setSelectedUserType] = useState<UserType>("admin");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [supabaseTickets, setSupabaseTickets] = useState<any[]>([]);
+  const [isLoadingSupabase, setIsLoadingSupabase] = useState(false);
   const [newTicket, setNewTicket] = useState<{
     descripcion_breve: string;
     titular: string;
@@ -69,10 +72,11 @@ export default function Tickets() {
     asignado_a: null,
   });
 
-  const { data: ticketsData, isLoading } = useQuery({
-    queryKey: ["tickets"],
-    queryFn: listTickets,
-  });
+  // Comentamos temporalmente la query original para usar Supabase
+  // const { data: ticketsData, isLoading } = useQuery({
+  //   queryKey: ["tickets"],
+  //   queryFn: listTickets,
+  // });
 
   const { data: agentsData } = useQuery({
     queryKey: ["agents"],
@@ -85,43 +89,44 @@ export default function Tickets() {
   const visibleFields = useMemo(() => getVisibleFields(selectedUserType), [selectedUserType]);
 
   const filteredTickets = useMemo(() => {
-    if (!ticketsData) return [];
+    if (!supabaseTickets) return [];
     
-    return ticketsData.filter((ticket: Ticket) => {
+    return supabaseTickets.filter((ticket) => {
       const matchesSearch =
-        ticket.numero_ticket.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.descripcion_breve.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.titular.toLowerCase().includes(searchQuery.toLowerCase());
+        (ticket.numero_ticket?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+        (ticket.descripcion_breve?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+        (ticket.titular?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
       const matchesStatus = statusFilter === "todos" || ticket.estado === statusFilter;
-      const priorityApiValue = priorityFilter === "todos" ? "todos" : mapPriorityToApi(priorityFilter);
-      const matchesPriority = priorityFilter === "todos" || ticket.prioridad === priorityApiValue;
+      const matchesPriority = priorityFilter === "todos" || ticket.prioridad === priorityFilter;
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [ticketsData, searchQuery, statusFilter, priorityFilter]);
+  }, [supabaseTickets, searchQuery, statusFilter, priorityFilter]);
 
-  const getFieldValue = (ticket: Ticket, field: TicketField): string => {
+  const getFieldValue = (ticket: any, field: TicketField): string => {
     switch (field) {
       case "numero_ticket":
-        return ticket.numero_ticket;
+        return ticket.numero_ticket || "-";
       case "numero_reporte_cea_app":
         return ticket.numero_reporte_cea_app || "-";
       case "descripcion_breve":
-        return ticket.descripcion_breve;
+        return ticket.descripcion_breve || "-";
       case "titular":
-        return ticket.titular;
+        return ticket.titular || "-";
       case "canal":
-        return mapChannel(ticket.canal);
+        return mapChannel(ticket.canal) || "-";
       case "estado":
-        return mapStatus(ticket.estado);
+        return mapStatus(ticket.estado) || "-";
       case "prioridad":
-        return mapPriority(ticket.prioridad);
+        return mapPriority(ticket.prioridad) || "-";
       case "grupo_asignacion":
-        return mapAssignmentGroup(ticket.grupo_asignacion);
+        return mapAssignmentGroup(ticket.grupo_asignacion) || "-";
       case "asignado_a":
         return ticket.asignado_a || "Sin asignar";
       case "actualizado":
         return ticket.actualizado
           ? new Date(ticket.actualizado).toLocaleString("es-MX")
+          : ticket.created_at
+          ? new Date(ticket.created_at).toLocaleString("es-MX")
           : "-";
       case "numero_contrato":
         return ticket.numero_contrato || "-";
@@ -169,6 +174,29 @@ export default function Tickets() {
         return "default";
     }
   };
+  // Función mejorada para traer datos del backend
+  const getTickets = async () => {
+    setIsLoadingSupabase(true);
+    try {
+      const result = await supabase
+      .from('tickets')
+      .select('*');
+      console.log('Datos de Supabase:', result.data[0]);
+      if (result.data) {
+        setSupabaseTickets(result.data);
+      }
+    } catch (e) {
+      console.log('Error al obtener tickets:', e);
+    } finally {
+      setIsLoadingSupabase(false);
+    }
+  };
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    getTickets();
+  }, []);  
+  
 
   return (
     <div className="flex h-full flex-col overflow-hidden -m-6">
@@ -180,13 +208,23 @@ export default function Tickets() {
               Gestiona todos los tickets del sistema
             </p>
           </div>
-          <Button
-            className="gap-2"
-            onClick={() => setIsDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            Nuevo Ticket
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={getTickets}
+              disabled={isLoadingSupabase}
+              className="gap-2"
+            >
+              {isLoadingSupabase ? "� Cargando..." : "🔌 Actualizar Datos"}
+            </Button>
+            <Button
+              className="gap-2"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Nuevo Ticket
+            </Button>
+          </div>
         </div>
 
         {/* User Type Switcher */}
@@ -254,7 +292,7 @@ export default function Tickets() {
         </div>
 
         <div className="text-sm text-muted-foreground">
-          {isLoading ? "Cargando tickets..." : `Mostrando ${filteredTickets.length} tickets`}
+          {isLoadingSupabase ? "Cargando tickets desde Supabase..." : `Mostrando ${filteredTickets.length} tickets`}
         </div>
       </div>
 
@@ -273,20 +311,20 @@ export default function Tickets() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {isLoadingSupabase ? (
                   <TableRow>
                     <TableCell colSpan={visibleFields.length} className="text-center py-8">
-                      Cargando tickets...
+                      Cargando tickets desde Supabase...
                     </TableCell>
                   </TableRow>
                 ) : filteredTickets.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={visibleFields.length} className="text-center py-8">
-                      No se encontraron tickets
+                      {supabaseTickets.length === 0 ? "No hay tickets en la base de datos" : "No se encontraron tickets que coincidan con los filtros"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTickets.map((ticket: Ticket) => (
+                  filteredTickets.map((ticket) => (
                     <TableRow
                       key={ticket.id}
                       className="cursor-pointer"
