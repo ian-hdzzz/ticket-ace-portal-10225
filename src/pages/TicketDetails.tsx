@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +16,10 @@ import {
   Phone,
   Check,
   X as CloseIcon,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from '../supabase/client.ts';
 
 interface Conversation {
   id: number;
@@ -152,23 +155,225 @@ const channelLabels = {
 export default function TicketDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const ticket = ticketData[id || ""];
+  
+  // Estados para manejo de datos de Supabase
+  const [ticket, setTicket] = useState<any>(null);
+  const [isLoadingTicket, setIsLoadingTicket] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!ticket) {
+  // Función para obtener ticket específico desde Supabase
+  const getTicketById = async (ticketId: string) => {
+    setIsLoadingTicket(true);
+    setError(null);
+    
+    try {
+      console.log('🔍 Buscando ticket con ID:', ticketId);
+      
+      const result = await supabase
+        .from('tickets')
+        .select('*')
+        .eq('id', ticketId)
+        .single();
+
+      console.log('📊 Resultado completo de Supabase:', result);
+
+      if (result.error) {
+        console.error('❌ Error de Supabase:', result.error);
+        setError(`No se pudo cargar el ticket: ${result.error.message}`);
+        return;
+      }
+
+      if (!result.data) {
+        console.log('⚠️ No se encontraron datos para el ticket:', ticketId);
+        setError('Ticket no encontrado en la base de datos');
+        return;
+      }
+
+      console.log('✅ Ticket encontrado:', result.data);
+      console.log('🔍 Campos disponibles en result.data:', Object.keys(result.data));
+      
+      // Transformar datos para compatibilidad con la UI
+      const transformedTicket = {
+        id: result.data.id,
+        folio: result.data.folio || `FOLIO-${result.data.id}`,
+        title: result.data.titulo || `Ticket ${result.data.folio || result.data.id}`,
+        description: result.data.descripcion || 'Este ticket no tiene descripción disponible. Se recomienda agregar más detalles.',
+        status: mapStatusFromDB(result.data.status),
+        priority: mapPriorityFromDB(result.data.priority),
+        assignedTo: result.data.assigned_to || 'Sin asignar',
+        createdAt: result.data.created_at 
+          ? new Date(result.data.created_at).toLocaleString("es-MX")
+          : 'No disponible',
+        location: 'No especificada', // No hay campo específico para ubicación  
+        category: result.data.service_type || result.data.ticket_type || 'General',
+        channel: result.data.channel,
+        customer_id: result.data.customer_id,
+        assigned_at: result.data.assigned_at,
+        escalated_to: result.data.escalated_to,
+        escalated_at: result.data.escalated_at,
+        resolution_notes: result.data.resolution_notes,
+        resolved_at: result.data.resolved_at,
+        closed_at: result.data.closed_at,
+        sla_deadline: result.data.sla_deadline,
+        sla_breached: result.data.sla_breached,
+        tags: Array.isArray(result.data.tags) ? result.data.tags : [],
+        metadata: result.data.metadata || {},
+        conversations: [] // Por ahora vacío, se puede implementar después
+      };
+
+      console.log('🔄 TRANSFORMED TICKET COMPLETO:', transformedTicket);
+      console.log('🔄 Title:', transformedTicket.title);
+      console.log('🔄 Description:', transformedTicket.description);
+      console.log('🔄 Status:', transformedTicket.status);
+      console.log('🔄 Priority:', transformedTicket.priority);
+      setTicket(transformedTicket);
+      console.log('✅ SetTicket llamado exitosamente');
+      
+    } catch (e) {
+      console.error('💥 Error al obtener ticket:', e);
+      setError(`Error al cargar el ticket: ${e.message || 'Error desconocido'}`);
+    } finally {
+      setIsLoadingTicket(false);
+      console.log('🏁 Loading terminado, isLoadingTicket ahora es false');
+    }
+  };
+
+  // Funciones de mapeo para compatibilidad
+  const mapStatusFromDB = (status: string) => {
+    console.log('🏷️ Mapeando estado:', status);
+    const statusMap: { [key: string]: "abierto" | "en_progreso" | "resuelto" | "cerrado" } = {
+      'abierto': 'abierto',
+      'en_progreso': 'en_progreso',
+      'resuelto': 'resuelto',
+      'cerrado': 'cerrado'
+    };
+    const mappedStatus = statusMap[status] || 'abierto';
+    console.log('📋 Estado mapeado:', mappedStatus);
+    return mappedStatus;
+  };
+
+  const mapPriorityFromDB = (priority: string) => {
+    console.log('⚡ Mapeando prioridad:', priority);
+    const priorityMap: { [key: string]: "baja" | "media" | "alta" | "urgente" } = {
+      'baja': 'baja',
+      'media': 'media',
+      'alta': 'alta',
+      'urgente': 'urgente'
+    };
+    const mappedPriority = priorityMap[priority] || 'media';
+    console.log('🎯 Prioridad mapeada:', mappedPriority);
+    return mappedPriority;
+  };
+
+  // Función para actualizar estado del ticket
+  const updateTicketStatus = async (newStatus: "abierto" | "en_progreso" | "resuelto" | "cerrado") => {
+    if (!ticket?.id) return;
+
+    try {
+      console.log(`Actualizando ticket ${ticket.id} a estado:`, newStatus);
+      
+      const updateData: any = { 
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      };
+
+      // Agregar timestamps específicos según el estado
+      if (newStatus === "resuelto") {
+        updateData.resolved_at = new Date().toISOString();
+      } else if (newStatus === "cerrado") {
+        updateData.closed_at = new Date().toISOString();
+      } else if (newStatus === "en_progreso" && !ticket.assigned_at) {
+        updateData.assigned_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('tickets')
+        .update(updateData)
+        .eq('id', ticket.id);
+
+      if (error) {
+        console.error('Error al actualizar estado:', error);
+        return;
+      }
+
+      // Recargar ticket para mostrar cambios
+      await getTicketById(ticket.id.toString());
+      console.log('Estado actualizado correctamente');
+      
+    } catch (e) {
+      console.error('Error al actualizar ticket:', e);
+    }
+  };
+
+  // Cargar ticket al montar el componente
+  useEffect(() => {
+    console.log('🚀 Componente montado, ID del ticket:', id);
+    if (id) {
+      getTicketById(id);
+    } else {
+      console.log('⚠️ No se proporcionó ID de ticket');
+      setError('No se proporcionó un ID de ticket válido');
+      setIsLoadingTicket(false);
+    }
+  }, [id]);
+
+  // Estados de carga y error
+  console.log('🎭 Estado del componente:', {
+    isLoadingTicket,
+    error,
+    hasTicket: !!ticket,
+    ticketId: id
+  });
+
+  if (isLoadingTicket) {
+    console.log('⏳ Estado: Cargando ticket...');
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold">Ticket no encontrado</h2>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <h2 className="text-2xl font-bold">Cargando ticket...</h2>
           <p className="text-muted-foreground mt-2">
-            El ticket que buscas no existe
+            Obteniendo información desde la base de datos
           </p>
-          <Button onClick={() => navigate("/tickets")} className="mt-4">
-            Volver a Tickets
-          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            ID: {id}
+          </p>
         </div>
       </div>
     );
   }
+
+  if (error || !ticket) {
+    console.log('❌ Estado: Error o sin ticket', { error, ticket });
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">
+            {error || 'Ticket no encontrado'}
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            {error || 'El ticket que buscas no existe en la base de datos'}
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            ID buscado: {id}
+          </p>
+          <div className="flex gap-2 justify-center mt-4">
+            <Button onClick={() => navigate("/tickets")}>
+              Volver a Tickets
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => id && getTicketById(id)}
+            >
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('✅ Renderizando ticket:', ticket);
 
   return (
     <div className="space-y-6">
@@ -182,7 +387,10 @@ export default function TicketDetails() {
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{ticket.title}</h1>
-          <p className="text-muted-foreground">#{ticket.id}</p>
+          <p className="text-muted-foreground">#{ticket.folio}</p>
+          {ticket.customer_id && (
+            <p className="text-sm text-muted-foreground">Cliente ID: {ticket.customer_id}</p>
+          )}
         </div>
         <div className="flex gap-2">
           <Badge variant={statusConfig[ticket.status].variant}>
@@ -349,6 +557,87 @@ export default function TicketDetails() {
                 </div>
                 <p className="text-sm font-medium ml-6">{ticket.category}</p>
               </div>
+
+              {ticket.channel && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>Canal de Contacto</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6 capitalize">{ticket.channel}</p>
+                  </div>
+                </>
+              )}
+
+              {ticket.sla_deadline && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>SLA Deadline</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6">
+                      {new Date(ticket.sla_deadline).toLocaleString("es-MX")}
+                      {ticket.sla_breached && (
+                        <Badge variant="destructive" className="ml-2 text-xs">SLA Incumplido</Badge>
+                      )}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {ticket.resolution_notes && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <FileText className="h-4 w-4" />
+                      <span>Notas de Resolución</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6">{ticket.resolution_notes}</p>
+                  </div>
+                </>
+              )}
+
+              {ticket.tags && ticket.tags.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <FileText className="h-4 w-4" />
+                      <span>Etiquetas</span>
+                    </div>
+                    <div className="ml-6 flex flex-wrap gap-1">
+                      {ticket.tags.map((tag: string, index: number) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {ticket.escalated_to && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      <span>Escalado a</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6">{ticket.escalated_to}</p>
+                    {ticket.escalated_at && (
+                      <p className="text-xs text-muted-foreground ml-6">
+                        Escalado el: {new Date(ticket.escalated_at).toLocaleString("es-MX")}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -358,25 +647,47 @@ export default function TicketDetails() {
             </CardHeader>
             <CardContent className="space-y-2">
               {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
-                <Button className="w-full gap-2" variant="default">
+                <Button 
+                  className="w-full gap-2" 
+                  variant="default"
+                  onClick={() => updateTicketStatus("resuelto")}
+                >
                   <Check className="h-4 w-4" />
                   Marcar como Resuelto
                 </Button>
               )}
               {ticket.status === "resuelto" && (
-                <Button className="w-full gap-2" variant="default">
+                <Button 
+                  className="w-full gap-2" 
+                  variant="default"
+                  onClick={() => updateTicketStatus("cerrado")}
+                >
                   <CloseIcon className="h-4 w-4" />
                   Cerrar Ticket
                 </Button>
               )}
-              <Button className="w-full" variant="outline">
-                Cambiar Estado
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => updateTicketStatus("en_progreso")}
+                disabled={ticket.status === "en_progreso"}
+              >
+                {ticket.status === "en_progreso" ? "En Progreso ✓" : "Marcar En Progreso"}
               </Button>
-              <Button className="w-full" variant="outline">
-                Reasignar
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => updateTicketStatus("abierto")}
+                disabled={ticket.status === "abierto"}
+              >
+                {ticket.status === "abierto" ? "Abierto ✓" : "Reabrir Ticket"}
               </Button>
-              <Button className="w-full" variant="outline">
-                Cambiar Prioridad
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => getTicketById(ticket.id.toString())}
+              >
+                🔄 Actualizar Datos
               </Button>
             </CardContent>
           </Card>

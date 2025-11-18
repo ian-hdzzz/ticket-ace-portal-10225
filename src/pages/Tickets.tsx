@@ -105,26 +105,28 @@ export default function Tickets() {
   const getFieldValue = (ticket: any, field: TicketField): string => {
     switch (field) {
       case "numero_ticket":
-        return ticket.numero_ticket || "-";
+        return ticket.numero_ticket || ticket.folio || "-";
       case "numero_reporte_cea_app":
         return ticket.numero_reporte_cea_app || "-";
       case "descripcion_breve":
-        return ticket.descripcion_breve || "-";
+        return ticket.descripcion_breve || ticket.descripcion || ticket.titulo || "-";
       case "titular":
-        return ticket.titular || "-";
+        return ticket.titular || ticket.customer_id || "-";
       case "canal":
-        return mapChannel(ticket.canal) || "-";
+        return mapChannel(ticket.canal || ticket.channel) || "-";
       case "estado":
-        return mapStatus(ticket.estado) || "-";
+        return mapStatus(ticket.estado || ticket.status) || "-";
       case "prioridad":
-        return mapPriority(ticket.prioridad) || "-";
+        return mapPriority(ticket.prioridad || ticket.priority) || "-";
       case "grupo_asignacion":
-        return mapAssignmentGroup(ticket.grupo_asignacion) || "-";
+        return mapAssignmentGroup(ticket.grupo_asignacion || ticket.service_type || ticket.ticket_type) || "-";
       case "asignado_a":
-        return ticket.asignado_a || "Sin asignar";
+        return ticket.asignado_a || ticket.assigned_to || "Sin asignar";
       case "actualizado":
         return ticket.actualizado
           ? new Date(ticket.actualizado).toLocaleString("es-MX")
+          : ticket.updated_at
+          ? new Date(ticket.updated_at).toLocaleString("es-MX")
           : ticket.created_at
           ? new Date(ticket.created_at).toLocaleString("es-MX")
           : "-";
@@ -135,7 +137,7 @@ export default function Tickets() {
       case "direccion":
         return ticket.direccion || "-";
       case "observaciones_internas":
-        return ticket.observaciones_internas || "-";
+        return ticket.observaciones_internas || ticket.resolution_notes || "-";
       case "administracion":
         return ticket.administracion || "-";
       case "numero_orden_aquacis":
@@ -179,18 +181,48 @@ export default function Tickets() {
     setIsLoadingSupabase(true);
     try {
       const result = await supabase
-      .from('tickets')
-      .select('*');
-      console.log('Datos de Supabase:', result.data[0]);
-      if (result.data) {
-        setSupabaseTickets(result.data);
+        .from('tickets')
+        .select('*');
+      
+      console.log('Datos de Supabase - Total registros:', result.data?.length);
+      
+      if (result.data && result.data.length > 0) {
+        // Procesar cada ticket individualmente
+        const processedTickets = result.data.map((ticket, index) => {
+          console.log(`Procesando ticket ${index + 1}:`, ticket);
+          
+          // Aquí puedes agregar cualquier transformación necesaria
+          return {
+            ...ticket,
+            // Asegurar que los campos requeridos existan con los nombres correctos de la DB
+            numero_ticket: ticket.folio || `TKT-${ticket.id}`,
+            descripcion_breve: ticket.descripcion || ticket.titulo || `Ticket ${ticket.folio || ticket.id}`,
+            titular: ticket.customer_id || 'Sin cliente',
+            canal: ticket.channel || 'web',
+            estado: ticket.status || 'abierto',
+            prioridad: ticket.priority || 'media',
+            grupo_asignacion: ticket.service_type || ticket.ticket_type || 'general',
+            asignado_a: ticket.assigned_to || null,
+            created_at: ticket.created_at || new Date().toISOString(),
+            actualizado: ticket.updated_at || ticket.created_at
+          };
+        });
+
+        console.log('Tickets procesados:', processedTickets.length);
+        setSupabaseTickets(processedTickets);
+      } else {
+        console.log('No se encontraron tickets en la base de datos');
+        setSupabaseTickets([]);
       }
     } catch (e) {
-      console.log('Error al obtener tickets:', e);
+      console.error('Error al obtener tickets:', e);
+      setSupabaseTickets([]);
     } finally {
       setIsLoadingSupabase(false);
     }
   };
+
+
 
   // Cargar datos al montar el componente
   useEffect(() => {

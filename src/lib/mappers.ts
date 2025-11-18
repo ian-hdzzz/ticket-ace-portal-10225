@@ -6,10 +6,10 @@
  * Map status from English (API) to Spanish (UI)
  */
 export function mapStatus(status: string): "abierto" | "en_progreso" | "resuelto" | "cerrado" {
-  if (status === "open") return "abierto";
-  if (status === "in_progress") return "en_progreso";
-  if (status === "resolved") return "resuelto";
-  if (status === "closed") return "cerrado";
+  if (status === "open" || status === "abierto") return "abierto";
+  if (status === "in_progress" || status === "en_progreso") return "en_progreso";
+  if (status === "resolved" || status === "resuelto") return "resuelto";
+  if (status === "closed" || status === "cerrado") return "cerrado";
   return "abierto";
 }
 
@@ -28,10 +28,10 @@ export function mapStatusToApi(status: string): "open" | "in_progress" | "resolv
  * Map priority from English (API) to Spanish (UI)
  */
 export function mapPriority(priority: string): "baja" | "media" | "alta" | "urgente" {
-  if (priority === "low") return "baja";
-  if (priority === "medium") return "media";
-  if (priority === "high") return "alta";
-  if (priority === "urgent") return "urgente";
+  if (priority === "low" || priority === "baja") return "baja";
+  if (priority === "medium" || priority === "media") return "media";
+  if (priority === "high" || priority === "alta") return "alta";
+  if (priority === "urgent" || priority === "urgente") return "urgente";
   return "media";
 }
 
@@ -52,12 +52,15 @@ export function mapPriorityToApi(priority: string): "low" | "medium" | "high" | 
 export function mapChannel(channel: string): string {
   const map: Record<string, string> = {
     telefono: "Teléfono",
+    phone: "Teléfono",
     email: "Email",
     app: "App",
     presencial: "Presencial",
     web: "Web",
+    whatsapp: "WhatsApp",
+    chat: "Chat",
   };
-  return map[channel] || channel;
+  return map[channel] || channel || "Web";
 }
 
 /**
@@ -69,7 +72,9 @@ export function mapAssignmentGroup(group: string): string {
     atencion_cliente: "Atención al Cliente",
     call_center: "Call Center",
     comercial: "Comercial",
+    reportes_fugas: "Reportes de Fugas",
+    general: "General",
   };
-  return map[group] || group;
+  return map[group] || group || "General";
 }
 
