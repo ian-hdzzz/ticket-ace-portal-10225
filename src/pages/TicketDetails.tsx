@@ -43,76 +43,7 @@ interface TicketData {
   location: string;
   category: string;
   conversations: Conversation[];
-}
-
-const ticketData: Record<string, TicketData> = {
-  "TKT-1234": {
-    id: "TKT-1234",
-    title: "Fuga de agua en Av. Constituyentes",
-    description: "Reporte de fuga importante en la zona centro, requiere atención inmediata. El agua está saliendo por la banqueta y afectando el tráfico vehicular.",
-    status: "en_progreso",
-    priority: "urgente",
-    assignedTo: "Juan Pérez",
-    createdAt: "10 Oct 2025, 14:30",
-    location: "Av. Constituyentes #123, Centro",
-    category: "Infraestructura",
-    conversations: [
-      {
-        id: 1,
-        channel: "phone",
-        type: "incoming",
-        from: "Cliente: Roberto García",
-        to: "Sistema CEA",
-        message: "Buenos días, llamo para reportar una fuga de agua muy grande en Av. Constituyentes. El agua está saliendo por la banqueta.",
-        timestamp: "10 Oct 2025, 14:30",
-      },
-      {
-        id: 2,
-        channel: "system",
-        type: "system",
-        message: "Ticket TKT-1234 creado automáticamente y asignado a Juan Pérez",
-        timestamp: "10 Oct 2025, 14:31",
-      },
-      {
-        id: 3,
-        channel: "email",
-        type: "outgoing",
-        from: "Juan Pérez",
-        to: "roberto.garcia@email.com",
-        subject: "Confirmación de reporte #TKT-1234",
-        message: "Estimado Roberto, hemos recibido su reporte de fuga. Nuestro equipo técnico está revisando la situación y se dirigirá al lugar en breve.",
-        timestamp: "10 Oct 2025, 14:45",
-      },
-      {
-        id: 4,
-        channel: "chat",
-        type: "internal",
-        from: "Juan Pérez",
-        to: "Equipo Técnico",
-        message: "Equipo técnico ya está en camino al sitio. Es una fuga importante que requiere cierre temporal de calle.",
-        timestamp: "10 Oct 2025, 15:00",
-      },
-      {
-        id: 5,
-        channel: "whatsapp",
-        type: "outgoing",
-        from: "Sistema CEA",
-        to: "Roberto García",
-        message: "Hola Roberto 👋 Te informamos que nuestro equipo ya está en camino. Tiempo estimado de llegada: 20 minutos.",
-        timestamp: "10 Oct 2025, 15:15",
-      },
-      {
-        id: 6,
-        channel: "phone",
-        type: "outgoing",
-        from: "María González",
-        to: "Roberto García",
-        message: "Llamada para actualizar sobre el progreso. Se requiere cerrar la calle temporalmente para reparar la tubería.",
-        timestamp: "10 Oct 2025, 15:30",
-      },
-    ],
-  },
-};
+} 
 
 const statusConfig = {
   abierto: { label: "Abierto", variant: "default" as const },
@@ -167,7 +98,6 @@ export default function TicketDetails() {
     setError(null);
     
     try {
-      console.log('🔍 Buscando ticket con ID:', ticketId);
       
       const result = await supabase
         .from('tickets')
@@ -175,22 +105,6 @@ export default function TicketDetails() {
         .eq('id', ticketId)
         .single();
 
-      console.log('📊 Resultado completo de Supabase:', result);
-
-      if (result.error) {
-        console.error('❌ Error de Supabase:', result.error);
-        setError(`No se pudo cargar el ticket: ${result.error.message}`);
-        return;
-      }
-
-      if (!result.data) {
-        console.log('⚠️ No se encontraron datos para el ticket:', ticketId);
-        setError('Ticket no encontrado en la base de datos');
-        return;
-      }
-
-      console.log('✅ Ticket encontrado:', result.data);
-      console.log('🔍 Campos disponibles en result.data:', Object.keys(result.data));
       
       // Transformar datos para compatibilidad con la UI
       const transformedTicket = {
@@ -221,26 +135,20 @@ export default function TicketDetails() {
         conversations: [] // Por ahora vacío, se puede implementar después
       };
 
-      console.log('🔄 TRANSFORMED TICKET COMPLETO:', transformedTicket);
-      console.log('🔄 Title:', transformedTicket.title);
-      console.log('🔄 Description:', transformedTicket.description);
-      console.log('🔄 Status:', transformedTicket.status);
-      console.log('🔄 Priority:', transformedTicket.priority);
       setTicket(transformedTicket);
-      console.log('✅ SetTicket llamado exitosamente');
       
     } catch (e) {
-      console.error('💥 Error al obtener ticket:', e);
+      console.error('Error al obtener ticket:', e);
       setError(`Error al cargar el ticket: ${e.message || 'Error desconocido'}`);
     } finally {
       setIsLoadingTicket(false);
-      console.log('🏁 Loading terminado, isLoadingTicket ahora es false');
+      console.log('Loading terminado, isLoadingTicket ahora es false');
     }
   };
 
   // Funciones de mapeo para compatibilidad
   const mapStatusFromDB = (status: string) => {
-    console.log('🏷️ Mapeando estado:', status);
+    console.log('Mapeando estado:', status);
     const statusMap: { [key: string]: "abierto" | "en_progreso" | "resuelto" | "cerrado" } = {
       'abierto': 'abierto',
       'en_progreso': 'en_progreso',
@@ -248,7 +156,7 @@ export default function TicketDetails() {
       'cerrado': 'cerrado'
     };
     const mappedStatus = statusMap[status] || 'abierto';
-    console.log('📋 Estado mapeado:', mappedStatus);
+    console.log(' Estado mapeado:', mappedStatus);
     return mappedStatus;
   };
 
@@ -261,7 +169,7 @@ export default function TicketDetails() {
       'urgente': 'urgente'
     };
     const mappedPriority = priorityMap[priority] || 'media';
-    console.log('🎯 Prioridad mapeada:', mappedPriority);
+    console.log('Prioridad mapeada:', mappedPriority);
     return mappedPriority;
   };
 
@@ -307,18 +215,18 @@ export default function TicketDetails() {
 
   // Cargar ticket al montar el componente
   useEffect(() => {
-    console.log('🚀 Componente montado, ID del ticket:', id);
+    console.log(' Componente montado, ID del ticket:', id);
     if (id) {
       getTicketById(id);
     } else {
-      console.log('⚠️ No se proporcionó ID de ticket');
+      console.log(' No se proporcionó ID de ticket');
       setError('No se proporcionó un ID de ticket válido');
       setIsLoadingTicket(false);
     }
   }, [id]);
 
   // Estados de carga y error
-  console.log('🎭 Estado del componente:', {
+  console.log(' Estado del componente:', {
     isLoadingTicket,
     error,
     hasTicket: !!ticket,
@@ -326,7 +234,7 @@ export default function TicketDetails() {
   });
 
   if (isLoadingTicket) {
-    console.log('⏳ Estado: Cargando ticket...');
+    console.log(' Estado: Cargando ticket...');
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
@@ -344,7 +252,7 @@ export default function TicketDetails() {
   }
 
   if (error || !ticket) {
-    console.log('❌ Estado: Error o sin ticket', { error, ticket });
+    console.log(' Estado: Error o sin ticket', { error, ticket });
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
@@ -373,7 +281,7 @@ export default function TicketDetails() {
     );
   }
 
-  console.log('✅ Renderizando ticket:', ticket);
+  console.log('Renderizando ticket:', ticket);
 
   return (
     <div className="space-y-6">
@@ -557,6 +465,59 @@ export default function TicketDetails() {
                 </div>
                 <p className="text-sm font-medium ml-6">{ticket.category}</p>
               </div>
+
+              {/* Campos extraídos del metadata */}
+              {ticket.metadata && ticket.metadata.colonia && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>Colonia</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6">{ticket.metadata.colonia}</p>
+                  </div>
+                </>
+              )}
+
+              {ticket.metadata && ticket.metadata.ubicacion && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>Dirección</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6">{ticket.metadata.ubicacion}</p>
+                  </div>
+                </>
+              )}
+
+              {ticket.metadata && ticket.metadata.referencias && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>Referencias</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6">{ticket.metadata.referencias}</p>
+                  </div>
+                </>
+              )}
+
+              {ticket.metadata && ticket.metadata.tiempo_estimado && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>Tiempo Estimado</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6">{ticket.metadata.tiempo_estimado}</p>
+                  </div>
+                </>
+              )}
 
               {ticket.channel && (
                 <>

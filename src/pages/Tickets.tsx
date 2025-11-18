@@ -101,17 +101,136 @@ export default function Tickets() {
       return matchesSearch && matchesStatus && matchesPriority;
     });
   }, [supabaseTickets, searchQuery, statusFilter, priorityFilter]);
+  // Función mejorada para traer datos del backend
+  const getTickets = async () => {
+    setIsLoadingSupabase(true);
+    try {
+      // Obtener tickets con datos de clientes si existe tabla separada
+      const result = await supabase
+        .from('tickets')
+        .select(`
+          *,
+          customer:customer_id (
+            id,
+            name,
+            full_name,
+            nombre,
+            nombre_completo
+          )
+        `);
+      
+      console.log('🔍 Datos de Supabase con JOIN - Total registros:', result.data?.length);
+      
+      if (result.error) {
+        console.log('⚠️ Error en JOIN, intentando consulta simple...', result.error);
+        
+        // Si falla el JOIN, hacer consulta simple
+        const simpleResult = await supabase
+          .from('tickets')
+          .select('*');
+          
+        if (simpleResult.error) {
+          throw simpleResult.error;
+        }
+        
+        result.data = simpleResult.data;
+      }
+      
+      if (result.data && result.data.length > 0) {
+        // Procesar cada ticket individualmente con transformación completa
+        const processedTickets = result.data.map((ticket, index) => {
+          
+          // Extraer nombre del cliente de múltiples fuentes
+          let customerName = 'Sin titular';
+          
+          if (ticket.customer) {
+            customerName = ticket.customer.full_name || ticket.customer.nombre_completo || 
+                          ticket.customer.name || ticket.customer.nombre || 
+                          ticket.customer.id;
+          } else {
+            customerName = ticket.customer_name || ticket.titular || ticket.contact_name || 
+                          (ticket.metadata && ticket.metadata.titular) || 
+                          (ticket.metadata && ticket.metadata.nombre_cliente) ||
+                          (ticket.metadata && ticket.metadata.customer_name) ||
+                            ticket.customer_id || 'Sin titular';
+            }
+            
+            console.log(`👥 Nombre del cliente determinado: "${customerName}"`);
+            
+            const transformedTicket = {
+              // Mantener todos los campos originales de la DB
+              ...ticket,
+              
+              // Campos transformados para la UI
+              id: ticket.id,
+              folio: ticket.folio || `FOLIO-${ticket.id}`,
+              titulo: ticket.titulo || `Ticket ${ticket.folio || ticket.id}`,
+              numero_ticket: ticket.folio || `TKT-${ticket.id}`,
+              descripcion_breve: ticket.descripcion || `Ticket ${ticket.folio || ticket.id}`,
+              canal: ticket.channel || 'web',
+              estado: ticket.status || 'open',
+              prioridad: ticket.priority || 'medium',
+              grupo_asignacion: ticket.service_type || ticket.ticket_type || 'general',
+              asignado_a: ticket.assigned_to || null,
+              
+              assignedTo: ticket.assigned_to || 'Sin asignar',
+              createdAt: ticket.created_at 
+                ? new Date(ticket.created_at).toLocaleString("es-MX")
+                : 'No disponible',
+              actualizado: ticket.updated_at || ticket.created_at,
+              location: 'No especificada', 
+              category: ticket.service_type || ticket.ticket_type || 'General',
+              channel: ticket.channel,
+              customer_id: ticket.customer_id,
+              customer_name: ticket.customer_name,
+              assigned_at: ticket.assigned_at,
+              escalated_to: ticket.escalated_to,
+              escalated_at: ticket.escalated_at,
+              resolution_notes: ticket.resolution_notes,
+              resolved_at: ticket.resolved_at,
+              closed_at: ticket.closed_at,
+              sla_deadline: ticket.sla_deadline,
+              sla_breached: ticket.sla_breached,
+              tags: Array.isArray(ticket.tags) ? ticket.tags : [],
+              metadata: ticket.metadata || {},
+              conversations: [] 
+            };
+            
+            console.log(`✅ Ticket transformado ${index + 1} - titular final: "${transformedTicket.titular}", numero_ticket: "${transformedTicket.numero_ticket}"`);
+            return transformedTicket;
+          });
+
+          console.log('Tickets procesados:', processedTickets.length);
+          setSupabaseTickets(processedTickets);
+        } else {
+          console.log('No se encontraron tickets en la base de datos');
+          setSupabaseTickets([]);
+        }
+      } catch (e) {
+        console.error('Error al obtener tickets:', e);
+        setSupabaseTickets([]);
+      } finally {
+        setIsLoadingSupabase(false);
+      }
+    };
+
+
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    getTickets();
+  }, []);  
 
   const getFieldValue = (ticket: any, field: TicketField): string => {
     switch (field) {
       case "numero_ticket":
-        return ticket.numero_ticket || ticket.folio || "-";
+        return ticket.numero_ticket || ticket.folio || `TKT-${ticket.id}` || "-";
       case "numero_reporte_cea_app":
         return ticket.numero_reporte_cea_app || "-";
       case "descripcion_breve":
-        return ticket.descripcion_breve || ticket.descripcion || ticket.titulo || "-";
+        return ticket.descripcion_breve || ticket.titulo || ticket.descripcion || "-";
       case "titular":
-        return ticket.titular || ticket.customer_id || "-";
+        return ticket.titulo || "Sin titular";
       case "canal":
         return mapChannel(ticket.canal || ticket.channel) || "-";
       case "estado":
@@ -133,9 +252,9 @@ export default function Tickets() {
       case "numero_contrato":
         return ticket.numero_contrato || "-";
       case "colonia":
-        return ticket.colonia || "-";
+        return ticket.colonia || (ticket.metadata && ticket.metadata.colonia) || "-";
       case "direccion":
-        return ticket.direccion || "-";
+        return ticket.direccion || (ticket.metadata && ticket.metadata.ubicacion) || "-";
       case "observaciones_internas":
         return ticket.observaciones_internas || ticket.resolution_notes || "-";
       case "administracion":
@@ -176,58 +295,7 @@ export default function Tickets() {
         return "default";
     }
   };
-  // Función mejorada para traer datos del backend
-  const getTickets = async () => {
-    setIsLoadingSupabase(true);
-    try {
-      const result = await supabase
-        .from('tickets')
-        .select('*');
-      
-      console.log('Datos de Supabase - Total registros:', result.data?.length);
-      
-      if (result.data && result.data.length > 0) {
-        // Procesar cada ticket individualmente
-        const processedTickets = result.data.map((ticket, index) => {
-          console.log(`Procesando ticket ${index + 1}:`, ticket);
-          
-          // Aquí puedes agregar cualquier transformación necesaria
-          return {
-            ...ticket,
-            // Asegurar que los campos requeridos existan con los nombres correctos de la DB
-            numero_ticket: ticket.folio || `TKT-${ticket.id}`,
-            descripcion_breve: ticket.descripcion || ticket.titulo || `Ticket ${ticket.folio || ticket.id}`,
-            titular: ticket.customer_id || 'Sin cliente',
-            canal: ticket.channel || 'web',
-            estado: ticket.status || 'abierto',
-            prioridad: ticket.priority || 'media',
-            grupo_asignacion: ticket.service_type || ticket.ticket_type || 'general',
-            asignado_a: ticket.assigned_to || null,
-            created_at: ticket.created_at || new Date().toISOString(),
-            actualizado: ticket.updated_at || ticket.created_at
-          };
-        });
 
-        console.log('Tickets procesados:', processedTickets.length);
-        setSupabaseTickets(processedTickets);
-      } else {
-        console.log('No se encontraron tickets en la base de datos');
-        setSupabaseTickets([]);
-      }
-    } catch (e) {
-      console.error('Error al obtener tickets:', e);
-      setSupabaseTickets([]);
-    } finally {
-      setIsLoadingSupabase(false);
-    }
-  };
-
-
-
-  // Cargar datos al montar el componente
-  useEffect(() => {
-    getTickets();
-  }, []);  
   
 
   return (

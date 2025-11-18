@@ -49,13 +49,12 @@ export const FIELD_LABELS: Record<TicketField, string> = {
  * Each Gerencia and Coordinación sees only relevant fields based on their role
  */
 export function getVisibleFields(userType: UserType): TicketField[] {
-  // Admin sees everything
+  // Admin sees everything (except numero_reporte_cea_app which is hidden)
   if (userType === "admin") {
     return [
       "numero_ticket",
-      "numero_reporte_cea_app",
-      "descripcion_breve",
       "titular",
+      "descripcion_breve",
       "canal",
       "estado",
       "prioridad",
@@ -71,13 +70,12 @@ export function getVisibleFields(userType: UserType): TicketField[] {
     ];
   }
 
-  // Coordinación General Ejecutiva - nivel ejecutivo, ve todo
+  // Coordinación General Ejecutiva - nivel ejecutivo, ve todo (except numero_reporte_cea_app)
   if (userType === "coordinacion_general_ejecutiva") {
     return [
       "numero_ticket",
-      "numero_reporte_cea_app",
-      "descripcion_breve",
       "titular",
+      "descripcion_breve",
       "canal",
       "estado",
       "prioridad",
@@ -256,7 +254,6 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_infraestructura_informatica") {
     return [
       "numero_ticket",
-      "numero_reporte_cea_app",
       "descripcion_breve",
       "titular",
       "canal",
@@ -547,7 +544,6 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "subgerencia_soporte_tecnico") {
     return [
       "numero_ticket",
-      "numero_reporte_cea_app",
       "descripcion_breve",
       "titular",
       "canal",
@@ -562,8 +558,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   // Default: basic fields for any other user type
   return [
     "numero_ticket",
-    "descripcion_breve",
     "titular",
+    "descripcion_breve",
     "estado",
     "prioridad",
     "asignado_a",
