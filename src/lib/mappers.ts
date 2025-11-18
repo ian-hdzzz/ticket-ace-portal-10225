@@ -5,22 +5,30 @@
 /**
  * Map status from English (API) to Spanish (UI)
  */
-export function mapStatus(status: string): "abierto" | "en_progreso" | "resuelto" | "cerrado" {
+export function mapStatus(status: string): "abierto" | "en_proceso" | "resuelto" | "cerrado" | "cancelado" | "escalado" | "esperando_cliente" | "esperando_interno" {
   if (status === "open" || status === "abierto") return "abierto";
-  if (status === "in_progress" || status === "en_progreso") return "en_progreso";
+  if (status === "in_progress" || status === "en_progreso" || status === "en_proceso") return "en_proceso";
   if (status === "resolved" || status === "resuelto") return "resuelto";
   if (status === "closed" || status === "cerrado") return "cerrado";
+  if (status === "cancelado") return "cancelado";
+  if (status === "escalado") return "escalado";
+  if (status === "esperando_cliente") return "esperando_cliente";
+  if (status === "esperando_interno") return "esperando_interno";
   return "abierto";
 }
 
 /**
  * Map status from Spanish (UI) to English (API)
  */
-export function mapStatusToApi(status: string): "open" | "in_progress" | "resolved" | "closed" {
+export function mapStatusToApi(status: string): "open" | "in_progress" | "resolved" | "closed" | "cancelado" | "escalado" | "esperando_cliente" | "esperando_interno" {
   if (status === "abierto") return "open";
-  if (status === "en_progreso") return "in_progress";
+  if (status === "en_progreso" || status === "en_proceso") return "in_progress";
   if (status === "resuelto") return "resolved";
   if (status === "cerrado") return "closed";
+  if (status === "cancelado") return "cancelado";
+  if (status === "escalado") return "escalado";
+  if (status === "esperando_cliente") return "esperando_cliente";
+  if (status === "esperando_interno") return "esperando_interno";
   return "open";
 }
 

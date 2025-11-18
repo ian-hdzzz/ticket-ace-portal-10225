@@ -168,8 +168,8 @@ export default function Tickets() {
               numero_ticket: ticket.folio || `TKT-${ticket.id}`,
               descripcion_breve: ticket.descripcion || `Ticket ${ticket.folio || ticket.id}`,
               canal: ticket.channel || 'web',
-              estado: ticket.status || 'open',
-              prioridad: ticket.priority || 'medium',
+              estado: ticket.status || 'abierto', // Usar estado de DB directamente
+              prioridad: ticket.priority || 'media',
               grupo_asignacion: ticket.service_type || ticket.ticket_type || 'general',
               asignado_a: ticket.assigned_to || null,
               
@@ -270,12 +270,20 @@ export default function Tickets() {
     switch (status) {
       case "abierto":
         return "default";
-      case "en_progreso":
-        return "secondary";
-      case "resuelto":
+      case "en_proceso":
+        return "warning"; // Amarillo para en proceso
+      case "esperando_cliente":
         return "outline";
+      case "esperando_interno": 
+        return "outline";
+      case "escalado":
+        return "destructive";
+      case "resuelto":
+        return "success"; // Verde para resuelto
       case "cerrado":
-        return "secondary";
+        return "secondary"; // Gris para cerrado
+      case "cancelado":
+        return "destructive";
       default:
         return "default";
     }
@@ -368,10 +376,14 @@ export default function Tickets() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos los estados</SelectItem>
-                <SelectItem value="open">Abierto</SelectItem>
-                <SelectItem value="in_progress">En Progreso</SelectItem>
-                <SelectItem value="resolved">Resuelto</SelectItem>
-                <SelectItem value="closed">Cerrado</SelectItem>
+                <SelectItem value="abierto">Abierto</SelectItem>
+                <SelectItem value="en_proceso">En Proceso</SelectItem>
+                <SelectItem value="esperando_cliente">Esperando Cliente</SelectItem>
+                <SelectItem value="esperando_interno">Esperando Interno</SelectItem>
+                <SelectItem value="escalado">Escalado</SelectItem>
+                <SelectItem value="resuelto">Resuelto</SelectItem>
+                <SelectItem value="cerrado">Cerrado</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
               </SelectContent>
             </Select>
 

@@ -638,10 +638,10 @@ export default function TicketDetails() {
               <Button 
                 className="w-full" 
                 variant="outline"
-                onClick={() => updateTicketStatus("en_progreso")}
-                disabled={ticket.status === "en_progreso"}
+                onClick={() => updateTicketStatus("en_proceso")}
+                disabled={ticket.status === "en_proceso"}
               >
-                {ticket.status === "en_progreso" ? "En Progreso ✓" : "Marcar En Progreso"}
+                {ticket.status === "en_proceso" ? "En Proceso ✓" : "Marcar En Proceso"}
               </Button>
               <Button 
                 className="w-full" 
