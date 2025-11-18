@@ -36,7 +36,7 @@ interface TicketData {
   id: string;
   title: string;
   description: string;
-  status: "abierto" | "en_progreso" | "resuelto" | "cerrado";
+  status: "abierto" | "cancelado" | "cerrado" | "en_proceso" | "escalado" | "esperando_cliente" | "esperando_interno" | "resuelto";
   priority: "baja" | "media" | "alta" | "urgente";
   assignedTo: string;
   createdAt: string;
@@ -47,9 +47,13 @@ interface TicketData {
 
 const statusConfig = {
   abierto: { label: "Abierto", variant: "default" as const },
-  en_progreso: { label: "En Progreso", variant: "secondary" as const },
+  en_proceso: { label: "En Proceso", variant: "secondary" as const },
+  esperando_cliente: { label: "Esperando Cliente", variant: "outline" as const },
+  esperando_interno: { label: "Esperando Interno", variant: "outline" as const },
+  escalado: { label: "Escalado", variant: "destructive" as const },
   resuelto: { label: "Resuelto", variant: "success" as const },
   cerrado: { label: "Cerrado", variant: "secondary" as const },
+  cancelado: { label: "Cancelado", variant: "destructive" as const },
 };
 
 const priorityConfig = {
@@ -149,11 +153,15 @@ export default function TicketDetails() {
   // Funciones de mapeo para compatibilidad
   const mapStatusFromDB = (status: string) => {
     console.log('Mapeando estado:', status);
-    const statusMap: { [key: string]: "abierto" | "en_progreso" | "resuelto" | "cerrado" } = {
+    const statusMap: { [key: string]: "abierto" | "cancelado" | "cerrado" | "en_proceso" | "escalado" | "esperando_cliente" | "esperando_interno" | "resuelto" } = {
       'abierto': 'abierto',
-      'en_progreso': 'en_progreso',
+      'en_proceso': 'en_proceso',
+      'esperando_cliente': 'esperando_cliente',
+      'esperando_interno': 'esperando_interno',
+      'escalado': 'escalado',
       'resuelto': 'resuelto',
-      'cerrado': 'cerrado'
+      'cerrado': 'cerrado',
+      'cancelado': 'cancelado'
     };
     const mappedStatus = statusMap[status] || 'abierto';
     console.log(' Estado mapeado:', mappedStatus);
@@ -174,7 +182,7 @@ export default function TicketDetails() {
   };
 
   // Función para actualizar estado del ticket
-  const updateTicketStatus = async (newStatus: "abierto" | "en_progreso" | "resuelto" | "cerrado") => {
+  const updateTicketStatus = async (newStatus: "abierto" | "cancelado" | "cerrado" | "en_proceso" | "escalado" | "esperando_cliente" | "esperando_interno" | "resuelto") => {
     if (!ticket?.id) return;
 
     try {
@@ -190,7 +198,7 @@ export default function TicketDetails() {
         updateData.resolved_at = new Date().toISOString();
       } else if (newStatus === "cerrado") {
         updateData.closed_at = new Date().toISOString();
-      } else if (newStatus === "en_progreso" && !ticket.assigned_at) {
+      } else if (newStatus === "en_proceso" && !ticket.assigned_at) {
         updateData.assigned_at = new Date().toISOString();
       }
 

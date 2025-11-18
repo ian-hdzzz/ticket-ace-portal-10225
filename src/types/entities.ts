@@ -37,33 +37,34 @@ export interface User {
   email?: string;
 }
 
-// Tipos para Supabase tickets
+// Tipos para Supabase tickets (actualizados según la DB real)
 export type ServiceType = 
-  | "agua_potable"
-  | "drenaje"
-  | "saneamiento"
-  | "comercial"
-  | "tecnico"
-  | "administrativo";
+  | "aclaraciones"
+  | "actualizar_caso"
+  | "asesor_humano"
+  | "contratacion_cambio"
+  | "pago_recibo"
+  | "recibo_digital"
+  | "reportar_lectura"
+  | "reportes_fugas"
+  | "revision_recibo";
 
 export type TicketTypeCode = 
-  | "reporte_fuga"
-  | "falta_agua"
-  | "baja_presion"
-  | "agua_turbia"
-  | "tapon_drenaje"
-  | "facturacion"
-  | "cambio_nombre"
-  | "solicitud_factibilidad"
-  | "reconexion"
-  | "limitacion"
-  | "otro";
+  | "ACL"  // Aclaraciones
+  | "ACT"  // Actualizar
+  | "CON"  // Contratación
+  | "DIG"  // Digital
+  | "FUG"  // Fugas
+  | "LEC"  // Lectura
+  | "PAG"  // Pago
+  | "REV"  // Revisión
+  | "URG"; // Urgente
 
-export type TicketStatusSupabase = "abierto" | "en_proceso" | "resuelto" | "cerrado";
+export type TicketStatusSupabase = "abierto" | "cancelado" | "cerrado" | "en_proceso" | "escalado" | "esperando_cliente" | "esperando_interno" | "resuelto";
 
 export type PriorityLevel = "baja" | "media" | "alta" | "critica";
 
-export type ChannelType = "telefono" | "email" | "app" | "presencial" | "web" | "whatsapp";
+export type ChannelType = "app_movil" | "email" | "presencial" | "telefono" | "web_chat" | "whatsapp";
 
 // Interface para crear tickets nuevos
 export interface CreateTicketData {

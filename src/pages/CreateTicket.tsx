@@ -13,26 +13,27 @@ import { createTicket } from '@/api/ticketsSupabase';
 import { CreateTicketData, ServiceType, TicketTypeCode, PriorityLevel, ChannelType } from '@/types/entities';
 
 const serviceTypeOptions: { value: ServiceType; label: string }[] = [
-  { value: 'agua_potable', label: 'Agua Potable' },
-  { value: 'drenaje', label: 'Drenaje' },
-  { value: 'saneamiento', label: 'Saneamiento' },
-  { value: 'comercial', label: 'Comercial' },
-  { value: 'tecnico', label: 'Técnico' },
-  { value: 'administrativo', label: 'Administrativo' },
+  { value: 'aclaraciones', label: 'Aclaraciones' },
+  { value: 'actualizar_caso', label: 'Actualizar Caso' },
+  { value: 'asesor_humano', label: 'Asesor Humano' },
+  { value: 'contratacion_cambio', label: 'Contratación/Cambio' },
+  { value: 'pago_recibo', label: 'Pago de Recibo' },
+  { value: 'recibo_digital', label: 'Recibo Digital' },
+  { value: 'reportar_lectura', label: 'Reportar Lectura' },
+  { value: 'reportes_fugas', label: 'Reportes de Fugas' },
+  { value: 'revision_recibo', label: 'Revisión de Recibo' },
 ];
 
 const ticketTypeOptions: { value: TicketTypeCode; label: string }[] = [
-  { value: 'reporte_fuga', label: 'Reporte de Fuga' },
-  { value: 'falta_agua', label: 'Falta de Agua' },
-  { value: 'baja_presion', label: 'Baja Presión' },
-  { value: 'agua_turbia', label: 'Agua Turbia' },
-  { value: 'tapon_drenaje', label: 'Tapón de Drenaje' },
-  { value: 'facturacion', label: 'Facturación' },
-  { value: 'cambio_nombre', label: 'Cambio de Nombre' },
-  { value: 'solicitud_factibilidad', label: 'Solicitud de Factibilidad' },
-  { value: 'reconexion', label: 'Reconexión' },
-  { value: 'limitacion', label: 'Limitación' },
-  { value: 'otro', label: 'Otro' },
+  { value: 'ACL', label: 'Aclaraciones' },
+  { value: 'ACT', label: 'Actualizar Caso' },
+  { value: 'CON', label: 'Contratación' },
+  { value: 'DIG', label: 'Digital' },
+  { value: 'FUG', label: 'Reportes de Fugas' },
+  { value: 'LEC', label: 'Lectura' },
+  { value: 'PAG', label: 'Pago' },
+  { value: 'REV', label: 'Revisión' },
+  { value: 'URG', label: 'Urgente' },
 ];
 
 const priorityOptions: { value: PriorityLevel; label: string }[] = [
@@ -45,9 +46,9 @@ const priorityOptions: { value: PriorityLevel; label: string }[] = [
 const channelOptions: { value: ChannelType; label: string }[] = [
   { value: 'telefono', label: 'Teléfono' },
   { value: 'email', label: 'Email' },
-  { value: 'app', label: 'App Móvil' },
+  { value: 'app_movil', label: 'App Móvil' },
   { value: 'presencial', label: 'Presencial' },
-  { value: 'web', label: 'Portal Web' },
+  { value: 'web_chat', label: 'Chat Web' },
   { value: 'whatsapp', label: 'WhatsApp' },
 ];
 
@@ -60,8 +61,8 @@ export default function CreateTicket() {
     titulo: '',
     descripcion: '',
     customer_id: '',
-    service_type: 'agua_potable',
-    ticket_type: 'otro',
+    service_type: 'reportes_fugas',
+    ticket_type: 'FUG',
     priority: 'media',
     channel: 'telefono',
     tags: [],
@@ -95,21 +96,40 @@ export default function CreateTicket() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validar campos obligatorios
     if (!formData.titulo.trim()) {
       toast.error('El título es obligatorio');
+      return;
+    }
+
+    if (!formData.service_type) {
+      toast.error('El tipo de servicio es obligatorio');
+      return;
+    }
+
+    if (!formData.ticket_type) {
+      toast.error('El tipo de ticket es obligatorio');
+      return;
+    }
+
+    if (!formData.channel) {
+      toast.error('El canal es obligatorio');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      console.log('🚀 Enviando datos del ticket:', formData);
       const newTicket = await createTicket(formData);
+      console.log('✅ Ticket creado exitosamente:', newTicket);
+      
       toast.success('Ticket creado exitosamente', {
         description: `Folio: ${newTicket.folio}`
       });
       navigate('/tickets');
     } catch (error) {
-      console.error('Error creando ticket:', error);
+      console.error('❌ Error creando ticket:', error);
       toast.error('Error al crear el ticket', {
         description: error instanceof Error ? error.message : 'Error desconocido'
       });
@@ -169,13 +189,16 @@ export default function CreateTicket() {
 
               {/* Customer ID */}
               <div className="space-y-2">
-                <Label htmlFor="customer_id">ID del Cliente</Label>
+                <Label htmlFor="customer_id">ID del Cliente (opcional)</Label>
                 <Input
                   id="customer_id"
                   value={formData.customer_id}
                   onChange={(e) => handleInputChange('customer_id', e.target.value)}
-                  placeholder="ID del cliente (opcional)"
+                  placeholder="UUID del cliente (ej: 123e4567-e89b-12d3-a456-426614174000) - opcional"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Debe ser un UUID válido. Déjalo vacío si no tienes el ID del cliente.
+                </p>
               </div>
 
               {/* Tipo de Servicio y Tipo de Ticket */}

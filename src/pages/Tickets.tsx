@@ -119,10 +119,10 @@ export default function Tickets() {
           )
         `);
       
-      console.log('🔍 Datos de Supabase con JOIN - Total registros:', result.data?.length);
+      console.log('Datos de Supabase con JOIN - Total registros:', result.data?.length);
       
       if (result.error) {
-        console.log('⚠️ Error en JOIN, intentando consulta simple...', result.error);
+        console.log('Error en JOIN, intentando consulta simple...', result.error);
         
         // Si falla el JOIN, hacer consulta simple
         const simpleResult = await supabase
@@ -155,7 +155,7 @@ export default function Tickets() {
                             ticket.customer_id || 'Sin titular';
             }
             
-            console.log(`👥 Nombre del cliente determinado: "${customerName}"`);
+            console.log(`Nombre del cliente determinado: "${customerName}"`);
             
             const transformedTicket = {
               // Mantener todos los campos originales de la DB
@@ -196,7 +196,7 @@ export default function Tickets() {
               conversations: [] 
             };
             
-            console.log(`✅ Ticket transformado ${index + 1} - titular final: "${transformedTicket.titular}", numero_ticket: "${transformedTicket.numero_ticket}"`);
+            console.log(`Ticket transformado ${index + 1} - titular final: "${transformedTicket.titular}", numero_ticket: "${transformedTicket.numero_ticket}"`);
             return transformedTicket;
           });
 
