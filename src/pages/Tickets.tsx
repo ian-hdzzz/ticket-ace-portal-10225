@@ -315,11 +315,11 @@ export default function Tickets() {
               disabled={isLoadingSupabase}
               className="gap-2"
             >
-              {isLoadingSupabase ? "� Cargando..." : "🔌 Actualizar Datos"}
+              {isLoadingSupabase ? "� Cargando..." : "Actualizar Datos"}
             </Button>
             <Button
               className="gap-2"
-              onClick={() => setIsDialogOpen(true)}
+              onClick={() => navigate('/tickets/new')}
             >
               <Plus className="h-4 w-4" />
               Nuevo Ticket

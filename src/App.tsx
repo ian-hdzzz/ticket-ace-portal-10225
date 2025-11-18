@@ -7,6 +7,7 @@ import { DashboardLayout } from "./components/layout/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
 import TicketDetails from "./pages/TicketDetails";
+import CreateTicket from "./pages/CreateTicket";
 import Agents from "./pages/Agents";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="tickets" element={<Tickets />} />
+            <Route path="tickets/new" element={<CreateTicket />} />
             <Route path="tickets/:id" element={<TicketDetails />} />
             <Route path="agents" element={<Agents />} />
             <Route path="settings" element={<Settings />} />

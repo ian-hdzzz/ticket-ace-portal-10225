@@ -37,40 +37,72 @@ export interface User {
   email?: string;
 }
 
-// Ticket status and priority types
-export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
-export type TicketPriority = "low" | "medium" | "high" | "urgent";
-export type AssignmentGroup = "distribucion" | "atencion_cliente" | "call_center" | "comercial";
-export type ContactChannel = "telefono" | "email" | "app" | "presencial" | "web";
+// Tipos para Supabase tickets
+export type ServiceType = 
+  | "agua_potable"
+  | "drenaje"
+  | "saneamiento"
+  | "comercial"
+  | "tecnico"
+  | "administrativo";
 
-export interface Ticket {
+export type TicketTypeCode = 
+  | "reporte_fuga"
+  | "falta_agua"
+  | "baja_presion"
+  | "agua_turbia"
+  | "tapon_drenaje"
+  | "facturacion"
+  | "cambio_nombre"
+  | "solicitud_factibilidad"
+  | "reconexion"
+  | "limitacion"
+  | "otro";
+
+export type TicketStatusSupabase = "abierto" | "en_proceso" | "resuelto" | "cerrado";
+
+export type PriorityLevel = "baja" | "media" | "alta" | "critica";
+
+export type ChannelType = "telefono" | "email" | "app" | "presencial" | "web" | "whatsapp";
+
+// Interface para crear tickets nuevos
+export interface CreateTicketData {
+  titulo: string;
+  descripcion?: string;
+  customer_id?: string;
+  service_type: ServiceType;
+  ticket_type: TicketTypeCode;
+  priority?: PriorityLevel;
+  channel: ChannelType;
+  tags?: string[];
+  metadata?: Record<string, any>;
+}
+
+// Interface para tickets de Supabase
+export interface SupabaseTicket {
   id: string;
-  // Core fields
-  numero_ticket: string;
-  numero_reporte_cea_app: string | null;
-  descripcion_breve: string;
-  titular: string; // Persona haciendo el reporte
-  canal: ContactChannel;
-  estado: TicketStatus;
-  prioridad: TicketPriority;
-  grupo_asignacion: AssignmentGroup;
-  asignado_a: string | null; // ID del usuario asignado
-  actualizado: string | null; // updated_at
-  
-  // Location fields
-  numero_contrato: string | null;
-  colonia: string | null;
-  direccion: string | null;
-  administracion: string | null; // County
-  
-  // Internal fields
-  observaciones_internas: string | null;
-  numero_orden_aquacis: string | null; // Internal system for dispatch orders
-  
-  // Metadata
+  folio: string;
+  customer_id?: string;
+  service_type: ServiceType;
+  ticket_type: TicketTypeCode;
+  status: TicketStatusSupabase;
+  priority: PriorityLevel;
+  channel: ChannelType;
+  titulo: string;
+  descripcion?: string;
+  assigned_to?: string;
+  assigned_at?: string;
+  escalated_to?: string;
+  escalated_at?: string;
+  resolution_notes?: string;
+  resolved_at?: string;
+  closed_at?: string;
+  sla_deadline?: string;
+  sla_breached?: boolean;
+  tags?: string[];
+  metadata?: Record<string, any>;
   created_at: string;
-  updated_at: string | null;
-  agent_id: string | null; // Legacy field, keeping for compatibility
+  updated_at: string;
 }
 
 // Legacy fields for backward compatibility
