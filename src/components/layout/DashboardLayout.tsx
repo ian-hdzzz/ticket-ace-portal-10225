@@ -55,7 +55,7 @@ export function DashboardLayout() {
             <SidebarTrigger />
             <div className="flex-1" />
           </header>
-          <main className="flex-1 overflow-hidden p-6">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-6">
             <Outlet />
           </main>
         </div>

@@ -119,19 +119,20 @@ export default function CreateTicket() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/tickets')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Regresar
-          </Button>
-          <h1 className="text-3xl font-bold">Crear Nuevo Ticket</h1>
-        </div>
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="container mx-auto py-8 px-4 min-h-full max-w-4xl">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-4 mb-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/tickets')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Regresar
+            </Button>
+            <h1 className="text-3xl font-bold">Crear Nuevo Ticket</h1>
+          </div>
 
         <Card>
           <CardHeader>
@@ -322,6 +323,7 @@ export default function CreateTicket() {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
