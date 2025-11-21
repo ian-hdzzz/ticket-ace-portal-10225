@@ -19,8 +19,7 @@ export default function Auth() {
       {/* Left side - branding */}
       <div className="hidden md:flex flex-1 bg-[#2663EB] items-center justify-center">
         <div className="flex flex-col items-center">
-          <img src="/cea-logo.png" alt="CEA Querétaro" className="mb-8 w-32 rounded-lg" />
-          <h2 className="text-white text-2xl font-bold mb-2 text-center">Comisión Estatal de Agua</h2>
+          <img src="/cea-logo.png" alt="CEA Querétaro" className="mb-8 w-80 rounded-lg" />
           <p className="text-white text-lg text-center max-w-xs">Sistema de gestión de tickets</p>
         </div>
       </div>
