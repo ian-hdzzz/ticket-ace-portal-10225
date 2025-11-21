@@ -21,10 +21,10 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Tickets", url: "/tickets", icon: Ticket },
-  { title: "Agentes IA", url: "/agents", icon: Bot },
-  { title: "Configuración", url: "/settings", icon: Settings },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Tickets", url: "/dashboard/tickets", icon: Ticket },
+  { title: "Agentes IA", url: "/dashboard/agents", icon: Bot },
+  { title: "Configuración", url: "/dashboard/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
