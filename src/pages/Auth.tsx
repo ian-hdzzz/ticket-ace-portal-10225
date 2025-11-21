@@ -87,7 +87,7 @@ export default function Auth() {
               {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
             </button>
           </form>
-<div className="my-4 flex items-center justify-center">
+{/* <div className="my-4 flex items-center justify-center">
 
   <span className="text-xs text-[#bfcbe7] whitespace-nowrap">o continúa con</span>
 
@@ -116,7 +116,7 @@ export default function Auth() {
                               </svg>
             
             Google
-          </button>
+          </button> */}
         </div>
       </div>
     </div>
