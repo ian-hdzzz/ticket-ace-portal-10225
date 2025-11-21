@@ -12,7 +12,7 @@ import Agents from "./pages/Agents";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import ChatwootWidget from "./components/features/ChatwootWidget";
-
+import Auth from "./pages/Auth";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -23,7 +23,8 @@ const App = () => (
       <ChatwootWidget />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<DashboardLayout />}>
+          <Route path="/" element={<Auth />} />
+          <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="tickets" element={<Tickets />} />
             <Route path="tickets/new" element={<CreateTicket />} />

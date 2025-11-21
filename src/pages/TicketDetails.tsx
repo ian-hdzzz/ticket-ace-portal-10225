@@ -429,8 +429,59 @@ export default function TicketDetails() {
             </CardContent>
           </Card>
         </div>
+        
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Acciones</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
+                <Button 
+                  className="w-full gap-2" 
+                  variant="default"
+                  onClick={() => updateTicketStatus("resuelto")}
+                >
+                  <Check className="h-4 w-4" />
+                  Marcar como Resuelto
+                </Button>
+              )}
+              {ticket.status === "resuelto" && (
+                <Button 
+                  className="w-full gap-2" 
+                  variant="default"
+                  onClick={() => updateTicketStatus("cerrado")}
+                >
+                  <CloseIcon className="h-4 w-4" />
+                  Cerrar Ticket
+                </Button>
+              )}
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => updateTicketStatus("en_proceso")}
+                disabled={ticket.status === "en_proceso"}
+              >
+                {ticket.status === "en_proceso" ? "En Proceso ✓" : "Marcar En Proceso"}
+              </Button>
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => updateTicketStatus("abierto")}
+                disabled={ticket.status === "abierto"}
+              >
+                {ticket.status === "abierto" ? "Abierto ✓" : "Reabrir Ticket"}
+              </Button>
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => getTicketById(ticket.id.toString())}
+              >
+                🔄 Actualizar Datos
+              </Button>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Detalles</CardTitle>
@@ -610,56 +661,7 @@ export default function TicketDetails() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Acciones</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
-                <Button 
-                  className="w-full gap-2" 
-                  variant="default"
-                  onClick={() => updateTicketStatus("resuelto")}
-                >
-                  <Check className="h-4 w-4" />
-                  Marcar como Resuelto
-                </Button>
-              )}
-              {ticket.status === "resuelto" && (
-                <Button 
-                  className="w-full gap-2" 
-                  variant="default"
-                  onClick={() => updateTicketStatus("cerrado")}
-                >
-                  <CloseIcon className="h-4 w-4" />
-                  Cerrar Ticket
-                </Button>
-              )}
-              <Button 
-                className="w-full" 
-                variant="outline"
-                onClick={() => updateTicketStatus("en_proceso")}
-                disabled={ticket.status === "en_proceso"}
-              >
-                {ticket.status === "en_proceso" ? "En Proceso ✓" : "Marcar En Proceso"}
-              </Button>
-              <Button 
-                className="w-full" 
-                variant="outline"
-                onClick={() => updateTicketStatus("abierto")}
-                disabled={ticket.status === "abierto"}
-              >
-                {ticket.status === "abierto" ? "Abierto ✓" : "Reabrir Ticket"}
-              </Button>
-              <Button 
-                className="w-full" 
-                variant="outline"
-                onClick={() => getTicketById(ticket.id.toString())}
-              >
-                🔄 Actualizar Datos
-              </Button>
-            </CardContent>
-          </Card>
+          
         </div>
       </div>
     </div>
