@@ -120,14 +120,14 @@ export default function CreateTicket() {
     setIsSubmitting(true);
 
     try {
-      console.log('🚀 Enviando datos del ticket:', formData);
+      console.log(' Enviando datos del ticket:', formData);
       const newTicket = await createTicket(formData);
-      console.log('✅ Ticket creado exitosamente:', newTicket);
+      console.log(' Ticket creado exitosamente:', newTicket);
       
       toast.success('Ticket creado exitosamente', {
         description: `Folio: ${newTicket.folio}`
       });
-      navigate('/tickets');
+      navigate('/dashboard/tickets');
     } catch (error) {
       console.error('❌ Error creando ticket:', error);
       toast.error('Error al crear el ticket', {
@@ -146,7 +146,7 @@ export default function CreateTicket() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/tickets')}
+              onClick={() => navigate('/dashboard/tickets')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Regresar
@@ -327,7 +327,7 @@ export default function CreateTicket() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/tickets')}
+                  onClick={() => navigate('/dashboard/tickets')}
                   disabled={isSubmitting}
                 >
                   Cancelar
