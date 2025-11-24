@@ -225,7 +225,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Tickets Recientes</h2>
             <button
-              onClick={() => navigate("/tickets")}
+              onClick={() => navigate("/dashboard/tickets")}
               className="text-sm text-primary hover:underline"
             >
               Ver todos

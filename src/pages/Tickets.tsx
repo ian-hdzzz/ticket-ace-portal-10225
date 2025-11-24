@@ -329,7 +329,7 @@ export default function Tickets() {
             </Button>
             <Button
               className="gap-2"
-              onClick={() => navigate('/tickets/new')}
+              onClick={() => navigate('/dashboard/tickets/new')}
             >
               <Plus className="h-4 w-4" />
               Nuevo Ticket
@@ -442,7 +442,7 @@ export default function Tickets() {
                     <TableRow
                       key={ticket.id}
                       className="cursor-pointer"
-                      onClick={() => navigate(`/tickets/${ticket.id}`)}
+                      onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
                     >
                       {visibleFields.map((field) => {
                         const value = getFieldValue(ticket, field);

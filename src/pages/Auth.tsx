@@ -20,7 +20,7 @@ export default function Auth() {
       <div className="hidden md:flex flex-1 bg-[#2663EB] items-center justify-center">
         <div className="flex flex-col items-center">
 <img src="/cea-logo.png" alt="CEA Querétaro" className="mb-2 w-[420px] rounded-lg" />  
-          <p className="text-white text-xl text-center max-w-xs font-bold">Sistema de Gestión de Tickets</p>
+          <p className="text-white text-xl text-center max-w-xs ">Sistema de Gestión de Tickets</p>
         </div>
       </div>
       {/* Right side - auth form */}

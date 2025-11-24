@@ -274,7 +274,7 @@ export default function TicketDetails() {
             ID buscado: {id}
           </p>
           <div className="flex gap-2 justify-center mt-4">
-            <Button onClick={() => navigate("/tickets")}>
+            <Button onClick={() => navigate("/dashboard/tickets")}>
               Volver a Tickets
             </Button>
             <Button 
@@ -297,7 +297,7 @@ export default function TicketDetails() {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => navigate("/tickets")}
+          onClick={() => navigate("/dashboard/tickets")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -478,7 +478,7 @@ export default function TicketDetails() {
                 variant="outline"
                 onClick={() => getTicketById(ticket.id.toString())}
               >
-                🔄 Actualizar Datos
+                 Actualizar Datos
               </Button>
             </CardContent>
           </Card>
