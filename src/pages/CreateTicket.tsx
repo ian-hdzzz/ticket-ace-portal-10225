@@ -129,7 +129,7 @@ export default function CreateTicket() {
       });
       navigate('/dashboard/tickets');
     } catch (error) {
-      console.error('❌ Error creando ticket:', error);
+      console.error('Error creando ticket:', error);
       toast.error('Error al crear el ticket', {
         description: error instanceof Error ? error.message : 'Error desconocido'
       });

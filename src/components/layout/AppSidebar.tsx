@@ -5,6 +5,7 @@ import {
   Settings,
   Droplet,
   Bot,
+  User,
 } from "lucide-react";
 
 import {
@@ -24,6 +25,7 @@ const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Tickets", url: "/dashboard/tickets", icon: Ticket },
   { title: "Agentes IA", url: "/dashboard/agents", icon: Bot },
+  { title: "Admin", url: "/dashboard/admin", icon: User },
   { title: "Configuración", url: "/dashboard/settings", icon: Settings },
 ];
 
