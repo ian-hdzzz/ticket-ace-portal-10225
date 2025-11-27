@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FiCopy } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +30,7 @@ export default function Admin() {
   const [filterRole, setFilterRole] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", role: "" });
   const [tempPassword, setTempPassword] = useState("");
+  const [showPasswordStep, setShowPasswordStep] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
   const [roles, setRoles] = useState([]);
@@ -95,26 +97,68 @@ export default function Admin() {
     setForm({ ...form, role: e.target.value });
   };
 
-  // Handle user creation (Supabase)
-  const handleCreate = async () => {
-    const password = Math.random().toString(36).slice(-8);
+  // Generar contraseña aleatoria de 16 caracteres
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let pass = '';
+    for (let i = 0; i < 16; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pass;
+  };
+
+  // Paso previo: mostrar contraseña y disclaimer
+  const handleShowPasswordStep = () => {
+    const password = generatePassword();
     setTempPassword(password);
-    // Crear usuario en Supabase
+    setShowPasswordStep(true);
+  };
+
+  // Validación sencilla antes de crear usuario
+  const validateForm = () => {
+    if (!form.name.trim()) return "El nombre es obligatorio.";
+    if (!form.email.match(/^[^@]+@[^@]+\.[^@]+$/)) return "El correo no es válido.";
+    if (!tempPassword || tempPassword.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
+    if (!form.role) return "Debes asignar un rol.";
+    return null;
+  };
+
+  // Crear usuario en tabla users y asignar rol (sin Auth)
+  const handleCreate = async () => {
+    const errorMsg = validateForm();
+    if (errorMsg) {
+      window.alert(errorMsg);
+      return;
+    }
+    // Mostrar en consola los datos enviados a la tabla users
+    console.log('Datos enviados a tabla users:', {
+      full_name: form.name,
+      email: form.email,
+      phone: form.phone,
+      password: tempPassword
+    });
+    // 1. Crear usuario en tabla users
     const { data: userData, error: userError } = await supabase
       .from('users')
       .insert({
         full_name: form.name,
         email: form.email,
         phone: form.phone,
-        password: password // Si tienes el campo password en la tabla users
+        password: tempPassword // Guardar la contraseña generada
       })
       .select();
     if (userError || !userData || !userData[0]?.id) {
-      window.alert('Error creando usuario.');
+      window.alert('Error creando usuario en tabla users: ' + (userError?.message || ''));
       return;
     }
     const userId = userData[0].id;
-    // Asignar rol en users_roles
+    // Mostrar en consola los datos enviados a users_roles
+    console.log('Datos enviados a users_roles:', {
+      user_id: userId,
+      role_id: form.role,
+      assigned_by: null
+    });
+    // 2. Asignar rol en users_roles
     const { error: roleError } = await supabase
       .from('users_roles')
       .insert({
@@ -123,11 +167,13 @@ export default function Admin() {
         assigned_by: null // Puedes poner el id del admin actual si lo tienes
       });
     if (roleError) {
-      window.alert('Usuario creado, pero hubo un error asignando el rol.');
+      window.alert('Usuario creado, pero hubo un error asignando el rol: ' + (roleError?.message || ''));
     } else {
       window.alert('Usuario creado correctamente.');
     }
     setForm({ name: "", email: "", phone: "", role: roles[0]?.id || "" });
+    setTempPassword("");
+    setShowPasswordStep(false);
     // Refetch users from DB
     const fetchUsersWithRoles = async () => {
       const { data } = await supabase
@@ -156,7 +202,14 @@ export default function Admin() {
 
   // Handle user edit
   const handleEdit = (user) => {
-    setForm({ name: user.name, email: user.email, phone: user.phone || "", role: user.role });
+    // Buscar el id del rol por el nombre
+    const roleObj = roles.find(r => r.name === user.role);
+    setForm({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || "",
+      role: roleObj?.id || ""
+    });
     setEditingId(user.id);
   };
 
@@ -301,21 +354,42 @@ export default function Admin() {
           ))}
         </SelectContent>
       </Select>
+      {/* Mostrar contraseña temporal y disclaimer antes de crear usuario */}
+      {!editingId && showPasswordStep && (
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-lg select-all">{tempPassword}</span>
+            <button
+              type="button"
+              className="text-gray-600 hover:text-gray-900"
+              onClick={() => {
+                navigator.clipboard.writeText(tempPassword);
+              }}
+              title="Copiar contraseña"
+            >
+              <FiCopy size={20} />
+            </button>
+          </div>
+          <div className="text-xs text-gray-700">
+            <b>Importante:</b> Copia la contraseña temporal y compártela con el usuario. <br />
+            Esta contraseña solo se mostrará una vez. El usuario deberá cambiarla al iniciar sesión.
+          </div>
+          <Button type="button" className="mt-2" onClick={handleCreate}>
+            Entiendo y quiero crear el usuario
+          </Button>
+        </div>
+      )}
           </div>
           <div className="flex gap-4 items-center">
             <div className="w-full">
               {editingId ? (
                 <Button onClick={handleUpdate} type="button" className="w-full">Actualizar</Button>
               ) : (
-                <Button onClick={handleCreate} type="button" className="w-full">Registrar</Button>
+                !showPasswordStep && (
+                  <Button onClick={handleShowPasswordStep} type="button" className="w-full">Crear usuario</Button>
+                )
               )}
             </div>
-            {tempPassword && (
-              <div className="text-green-600 text-sm">
-                Contraseña temporal generada: <b>{tempPassword}</b><br />
-                Se ha enviado la contraseña temporal al correo del usuario.
-              </div>
-            )}
           </div>
         </form>
       </div>

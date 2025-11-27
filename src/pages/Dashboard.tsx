@@ -1,6 +1,8 @@
 import { StatCard } from "@/components/features/StatCard";
 import { TicketCard } from "@/components/features/TicketCard";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "../supabase/client";
 import {
   Ticket,
   CheckCircle2,
@@ -83,12 +85,31 @@ const resolutionData = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  // Recuperar usuario y rol de la sesión
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const fullName = user?.full_name || "";
+  const [role, setRole] = useState("");
+
+  // Obtener el rol del usuario desde la base de datos (solo si hay usuario)
+  useEffect(() => {
+    async function fetchRole() {
+      if (!user?.id) return;
+      // Asumiendo que hay una tabla users_roles con user_id y role
+      const { data, error } = await supabase
+        .from('users_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      if (data?.role) setRole(data.role);
+    }
+    fetchRole();
+  }, [user]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mt-2">
           Resumen general del sistema de tickets
         </p>
       </div>

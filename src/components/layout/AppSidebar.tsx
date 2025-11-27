@@ -6,6 +6,7 @@ import {
   Droplet,
   Bot,
   User,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -37,6 +38,11 @@ export function AppSidebar() {
   const isActive = (path: string) => {
     if (path === "/") return currentPath === "/";
     return currentPath.startsWith(path);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    window.location.href = "/";
   };
 
   return (
@@ -80,6 +86,16 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {/* Botón de cerrar sesión al fondo del sidebar, con diseño tipo Configuración */}
+        <div className="mt-auto px-4 pb-4">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-[#181E29] text-[#bfcbe7] font-semibold hover:bg-[#232B3E] transition border border-[#232B3E] justify-start"
+          >
+            <LogOut className="h-5 w-5 text-[#bfcbe7]" />
+            <span className="text-base">Cerrar sesión</span>
+          </button>
+        </div>
       </SidebarContent>
     </Sidebar>
   );
