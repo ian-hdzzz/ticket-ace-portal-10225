@@ -8,18 +8,46 @@ export default function ApiTest() {
     const handleCall = async (fn: () => Promise<any>, name: string) => {
         setLoading(true);
         setResult(`Calling ${name}...`);
-        try {
-            const res = await fn();
+            try {
+                const res = await fn();
             console.log(`${name} response:`, res);
             // If it's an XML document, serialize it to string
             if (res instanceof Document) {
-                setResult(new XMLSerializer().serializeToString(res));
+                // Convert to JSON for easier readability if possible
+                try {
+                    // Prefer the helper if available
+                    // The helper returns the parsed SOAP envelope object; fallback to serializer
+                    // if the helper isn't present in the API module.
+                    const parsed = (ceaApi as any).xmlToJson(res);
+                    setResult(JSON.stringify(parsed, null, 2));
+                } catch (e) {
+                    setResult(new XMLSerializer().serializeToString(res));
+                }
             } else {
                 setResult(JSON.stringify(res, null, 2));
             }
         } catch (error: any) {
             console.error(`${name} error:`, error);
-            setResult(`Error: ${error.message}`);
+            // Display response details if present
+            if (error?.response) {
+                const r = error.response;
+                const body = typeof r.data === 'string' ? r.data : JSON.stringify(r.data, null, 2);
+                // If body looks like XML, attempt to parse to JSON for readability
+                if (typeof r.data === 'string' && r.data.trim().startsWith('<')) {
+                    try {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(r.data, 'text/xml');
+                        const parsed = (ceaApi as any).xmlToJson(doc);
+                        setResult(`Error: ${error.message}\nStatus: ${r.status} ${r.statusText}\nResponse(JSON): ${JSON.stringify(parsed, null, 2)}`);
+                    } catch (_e) {
+                        setResult(`Error: ${error.message}\nStatus: ${r.status} ${r.statusText}\nResponse: ${body}`);
+                    }
+                } else {
+                    setResult(`Error: ${error.message}\nStatus: ${r.status} ${r.statusText}\nResponse: ${body}`);
+                }
+            } else {
+                setResult(`Error: ${error.message}`);
+            }
         } finally {
             setLoading(false);
         }
@@ -52,14 +80,14 @@ export default function ApiTest() {
                     <h2 className="text-xl font-semibold">SOAP API</h2>
                     <button
                         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
-                        onClick={() => handleCall(() => ceaApi.consultaDetalleContrato('123456'), 'consultaDetalleContrato')}
+                        onClick={() => handleCall(() => (ceaApi as any).consultaDetalleContratoJson('123456'), 'consultaDetalleContratoJson')}
                         disabled={loading}
                     >
                         Consulta Detalle Contrato
                     </button>
                     <button
                         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
-                        onClick={() => handleCall(() => ceaApi.getDeuda('NIF', '12345678A', 'EXPLOTACION'), 'getDeuda')}
+                        onClick={() => handleCall(() => (ceaApi as any).getDeudaJson('NIF', '12345678A', 'EXPLOTACION'), 'getDeudaJson')}
                         disabled={loading}
                     >
                         Get Deuda

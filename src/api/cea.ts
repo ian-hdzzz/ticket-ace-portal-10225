@@ -29,6 +29,65 @@ const getTagValue = (xmlDoc: Document | Element, tagName: string): string | null
   return element ? element.textContent : null;
 };
 
+// Helper: Convert an XML Element or Document to a JSON-friendly object.
+// Handles xsi:nil and repeated elements (arrays).
+export const xmlToJson = (node: Document | Element): any => {
+  const parseElement = (el: Element) => {
+    const obj: Record<string, any> = {};
+    const children = Array.from(el.children);
+
+    // Group children by tag name to detect repeated fields (arrays)
+    const groups: Record<string, Element[]> = {};
+    children.forEach((c) => {
+      const name = c.localName || c.nodeName;
+      groups[name] = groups[name] || [];
+      groups[name].push(c);
+    });
+
+    for (const [name, elems] of Object.entries(groups)) {
+      if (elems.length > 1) {
+        obj[name] = elems.map((child) => parseChild(child));
+      } else {
+        obj[name] = parseChild(elems[0]);
+      }
+    }
+
+    return obj;
+  };
+
+  const parseChild = (child: Element) => {
+    // Check for xsi:nil attribute (namespace aware)
+    const xsiNil = child.getAttributeNS && child.getAttributeNS('http://www.w3.org/2001/XMLSchema-instance', 'nil');
+    if (xsiNil === 'true' || xsiNil === '1') return null;
+
+    if (child.children.length === 0) {
+      const text = child.textContent;
+      if (text === null || text.trim() === '') return null;
+      return text.trim();
+    }
+    return parseElement(child);
+  };
+
+  if ((node as Document).documentElement) {
+    const doc = node as Document;
+    // If the SOAP response has a wrapper, return the inner object
+    return parseElement(doc.documentElement as Element);
+  }
+  return parseElement(node as Element);
+};
+
+// Helper to safely escape XML special characters in interpolated strings
+export const xmlEscape = (value: unknown) => {
+  if (value === undefined || value === null) return '';
+  const s = String(value);
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+};
+
 // ============================================================================
 // REST API Functions
 // ============================================================================
@@ -94,13 +153,40 @@ export const updateCaseToCancelled = async (caseId: string) => {
 
 // Generic SOAP request helper
 const sendSoapRequest = async (url: string, soapAction: string, xmlBody: string) => {
-  const response = await axios.post(url, xmlBody, {
-    headers: {
-      'Content-Type': 'text/xml;charset=UTF-8',
-      'SOAPAction': soapAction
+  try {
+    const response = await axios.post(url, xmlBody, {
+      headers: {
+        'Content-Type': 'text/xml;charset=UTF-8',
+        'SOAPAction': soapAction
+      },
+      // Accept all statuses so we can inspect response body in case of 500
+      validateStatus: () => true,
+    });
+
+    // If the remote returned 5xx or 4xx, we still attempt to parse the body
+    // and rethrow with helpful details for debugging.
+    if (response.status >= 400) {
+      const body = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+      const err = new Error(`SOAP request failed: ${response.status} ${response.statusText} - ${body}`);
+      // @ts-ignore attach extra details
+      err['response'] = response;
+      throw err;
     }
-  });
-  return parseXmlResponse(response.data);
+
+    return parseXmlResponse(response.data);
+  } catch (error: any) {
+    // Surface as much detail as possible while avoiding sensitive logs.
+    if (error?.response) {
+      const resp = error.response;
+      const body = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data);
+      const enhanced = new Error(`SOAP request failed with status ${resp.status} ${resp.statusText}. Response: ${body}`);
+      // attach details for callers to inspect
+      // @ts-ignore
+      enhanced.response = resp;
+      throw enhanced;
+    }
+    throw error;
+  }
 };
 
 // CEA ConsultaDetalleContrato
@@ -109,8 +195,8 @@ export const consultaDetalleContrato = async (numeroContrato: string, idioma: st
    <soapenv:Header/>
    <soapenv:Body>
       <occ:consultaDetalleContrato>
-         <numeroContrato>${numeroContrato}</numeroContrato>
-         <idioma>${idioma}</idioma>
+      <numeroContrato>${xmlEscape(numeroContrato)}</numeroContrato>
+      <idioma>${xmlEscape(idioma)}</idioma>
       </occ:consultaDetalleContrato>
    </soapenv:Body>
 </soapenv:Envelope>`;
@@ -118,14 +204,26 @@ export const consultaDetalleContrato = async (numeroContrato: string, idioma: st
   return sendSoapRequest(CEA_SOAP_CONTRACT_URL, '', xml);
 };
 
+// Helper to get parsed JSON directly from SOAP response for convenience in UI
+export const consultaDetalleContratoJson = async (numeroContrato: string, idioma: string = 'es') => {
+  const xmlDoc = await consultaDetalleContrato(numeroContrato, idioma);
+  // The response contains a namespace-wrapped SOAP Envelope -> Body -> response
+  // We can try to find the `consultaDetalleContratoReturn` element and convert that to JSON.
+  const returnElement = xmlDoc.getElementsByTagName('consultaDetalleContratoReturn')[0] || xmlDoc.getElementsByTagName('consultaDetalleContratoResponse')[0];
+  if (returnElement) {
+    return xmlToJson(returnElement as Element);
+  }
+  return xmlToJson(xmlDoc);
+};
+
 export const getContrato = async (numContrato: string, idioma: string = 'es', opciones: string = '') => {
   const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com">
    <soapenv:Header/>
    <soapenv:Body>
       <occ:getContrato>
-         <numContrato>${numContrato}</numContrato>
-         <idioma>${idioma}</idioma>
-         <opciones>${opciones}</opciones>
+      <numContrato>${xmlEscape(numContrato)}</numContrato>
+      <idioma>${xmlEscape(idioma)}</idioma>
+      <opciones>${xmlEscape(opciones)}</opciones>
       </occ:getContrato>
    </soapenv:Body>
 </soapenv:Envelope>`;
@@ -151,16 +249,16 @@ export const crearOrdenTrabajo = async (data: {
       <int:crearOrdenTrabajo>
          <idioma>es</idioma>
          <ordenTrabajo>
-            <tipoOrden>${data.tipoOrden}</tipoOrden>
-            <motivoOrden>${data.motivoOrden}</motivoOrden>
-            <fechaCreacionOrden>${data.fechaCreacionOrden}</fechaCreacionOrden>
-            <numContrato>${data.numContrato}</numContrato>
-            <idPtoServicio>${data.idPtoServicio}</idPtoServicio>
-            <fechaEstimdaFin>${data.fechaEstimdaFin}</fechaEstimdaFin>
-            <observaciones>${data.observaciones}</observaciones>
+            <tipoOrden>${xmlEscape(data.tipoOrden)}</tipoOrden>
+            <motivoOrden>${xmlEscape(data.motivoOrden)}</motivoOrden>
+            <fechaCreacionOrden>${xmlEscape(data.fechaCreacionOrden)}</fechaCreacionOrden>
+            <numContrato>${xmlEscape(data.numContrato)}</numContrato>
+            <idPtoServicio>${xmlEscape(data.idPtoServicio)}</idPtoServicio>
+            <fechaEstimdaFin>${xmlEscape(data.fechaEstimdaFin)}</fechaEstimdaFin>
+            <observaciones>${xmlEscape(data.observaciones)}</observaciones>
 			 <codigoObsCambCont></codigoObsCambCont>
-            <codigoReparacion>${data.codigoReparacion}</codigoReparacion>  
-            <anyoExpediente>${data.anyoExpediente}</anyoExpediente>
+            <codigoReparacion>${xmlEscape(data.codigoReparacion)}</codigoReparacion>  
+            <anyoExpediente>${xmlEscape(data.anyoExpediente)}</anyoExpediente>
 			 <numeroExpediente></numeroExpediente>
             <instalaValvulaPaso>0</instalaValvulaPaso>
          </ordenTrabajo>
@@ -178,10 +276,10 @@ export const getPuntoServicioPorContador = async (listaNumSerieContador: string,
    <soapenv:Header/>
    <soapenv:Body>
       <int:getPuntoServicioPorContador>
-         <listaNumSerieContador>${listaNumSerieContador}</listaNumSerieContador>
-         <usuario>${usuario}</usuario>
-         <idioma>${idioma}</idioma>
-         <opciones>${opciones}</opciones>
+         <listaNumSerieContador>${xmlEscape(listaNumSerieContador)}</listaNumSerieContador>
+         <usuario>${xmlEscape(usuario)}</usuario>
+         <idioma>${xmlEscape(idioma)}</idioma>
+         <opciones>${xmlEscape(opciones)}</opciones>
       </int:getPuntoServicioPorContador>
    </soapenv:Body>
 </soapenv:Envelope>`;
@@ -192,25 +290,32 @@ export const getPuntoServicioPorContador = async (listaNumSerieContador: string,
 // CEA getDeuda
 export const getDeuda = async (tipoIdentificador: string, valor: string, explotacion: string, idioma: string = 'es') => {
   const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://interfazgenericagestiondeuda.occamcxf.occam.agbar.com/" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-	<soapenv:Header>
-		<wsse:Security mustUnderstand="1">
-        <wsse:UsernameToken wsu:Id="UsernameToken-${CEA_API_USERNAME}">
-          <wsse:Username>${CEA_API_USERNAME}</wsse:Username>
-          <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${CEA_API_PASSWORD}</wsse:Password>
+ 	<soapenv:Header>
+ 		<wsse:Security mustUnderstand="1">
+        <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
+          <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
+          <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
         </wsse:UsernameToken>
       </wsse:Security>
-	</soapenv:Header>
+ 	</soapenv:Header>
    <soapenv:Body>
       <int:getDeuda>
-         <tipoIdentificador>${tipoIdentificador}</tipoIdentificador>
-         <valor>${valor}</valor>
-         <explotacion>${explotacion}</explotacion>
-         <idioma>${idioma}</idioma>
+         <tipoIdentificador>${xmlEscape(tipoIdentificador)}</tipoIdentificador>
+         <valor>${xmlEscape(valor)}</valor>
+         <explotacion>${xmlEscape(explotacion)}</explotacion>
+         <idioma>${xmlEscape(idioma)}</idioma>
       </int:getDeuda>
    </soapenv:Body>
 </soapenv:Envelope>`;
 
   return sendSoapRequest(CEA_SOAP_DEBT_URL, '', xml);
+};
+
+export const getDeudaJson = async (tipoIdentificador: string, valor: string, explotacion: string, idioma: string = 'es') => {
+  const xmlDoc = await getDeuda(tipoIdentificador, valor, explotacion, idioma);
+  const returnElement = xmlDoc.getElementsByTagName('getDeudaReturn')[0] || xmlDoc.getElementsByTagName('getDeudaResponse')[0];
+  if (returnElement) return xmlToJson(returnElement as Element);
+  return xmlToJson(xmlDoc);
 };
 
 // CEA GetLecturas
@@ -219,9 +324,9 @@ export const getLecturas = async (explotacion: string, contrato: string, idioma:
    <soapenv:Header/>
    <soapenv:Body>
       <occ:getLecturas>
-         <explotacion>${explotacion}</explotacion>
-         <contrato>${contrato}</contrato>
-         <idioma>${idioma}</idioma>
+      <explotacion>${xmlEscape(explotacion)}</explotacion>
+      <contrato>${xmlEscape(contrato)}</contrato>
+      <idioma>${xmlEscape(idioma)}</idioma>
       </occ:getLecturas>
    </soapenv:Body>
 </soapenv:Envelope>`;
@@ -236,16 +341,16 @@ export const cambiarEmailNotificacionPersona = async (nif: string, nombre: strin
    <soapenv:Header/>
    <soapenv:Body>
       <occ:cambiarEmailNotificacionPersona>
-         <nif>${nif}</nif>
-         <nombre>${nombre}</nombre> 
-		<apellido1>${apellido1}</apellido1>
-         <apellido2>${apellido2}</apellido2>
-         <contrato>${contrato}</contrato>
-         <emailAntigo>${emailAntiguo}</emailAntigo>
-         <emailNuevo>${emailNuevo}</emailNuevo>
+      <nif>${xmlEscape(nif)}</nif>
+      <nombre>${xmlEscape(nombre)}</nombre> 
+   		<apellido1>${xmlEscape(apellido1)}</apellido1>
+      <apellido2>${xmlEscape(apellido2)}</apellido2>
+      <contrato>${xmlEscape(contrato)}</contrato>
+      <emailAntigo>${xmlEscape(emailAntiguo)}</emailAntigo>
+      <emailNuevo>${xmlEscape(emailNuevo)}</emailNuevo>
          <atencionDe>ChatBot</atencionDe>
-         <codigoOficina>${codigoOficina}</codigoOficina>
-         <usuario>${usuario}</usuario>
+         <codigoOficina>${xmlEscape(codigoOficina)}</codigoOficina>
+         <usuario>${xmlEscape(usuario)}</usuario>
       </occ:cambiarEmailNotificacionPersona>
    </soapenv:Body>
 </soapenv:Envelope>`;
