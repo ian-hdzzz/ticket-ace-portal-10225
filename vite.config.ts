@@ -8,6 +8,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/ceadevws': {
+        target: 'https://appcea.ceaqueretaro.gob.mx',
+        changeOrigin: true,
+        secure: false, // In case of self-signed certs on the VPN
+      }
+    }
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
