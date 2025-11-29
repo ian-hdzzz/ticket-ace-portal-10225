@@ -8,16 +8,14 @@ export default function ApiTest() {
     const handleCall = async (fn: () => Promise<any>, name: string) => {
         setLoading(true);
         setResult(`Calling ${name}...`);
-            try {
-                const res = await fn();
+        try {
+            const res = await fn();
             console.log(`${name} response:`, res);
             // If it's an XML document, serialize it to string
             if (res instanceof Document) {
                 // Convert to JSON for easier readability if possible
                 try {
                     // Prefer the helper if available
-                    // The helper returns the parsed SOAP envelope object; fallback to serializer
-                    // if the helper isn't present in the API module.
                     const parsed = (ceaApi as any).xmlToJson(res);
                     setResult(JSON.stringify(parsed, null, 2));
                 } catch (e) {
@@ -78,23 +76,46 @@ export default function ApiTest() {
 
                 <div className="space-y-2">
                     <h2 className="text-xl font-semibold">SOAP API</h2>
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                        <input
+                            placeholder="Contrato"
+                            className="border p-1 rounded"
+                            id="contractInput"
+                        />
+                        <input
+                            placeholder="Explotacion (e.g. 01)"
+                            className="border p-1 rounded"
+                            id="explotacionInput"
+                        />
+                    </div>
                     <button
                         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
-                        onClick={() => handleCall(() => (ceaApi as any).consultaDetalleContratoJson('123456'), 'consultaDetalleContratoJson')}
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '123456';
+                            handleCall(() => (ceaApi as any).consultaDetalleContratoJson(contract), 'consultaDetalleContratoJson');
+                        }}
                         disabled={loading}
                     >
                         Consulta Detalle Contrato
                     </button>
                     <button
                         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
-                        onClick={() => handleCall(() => (ceaApi as any).getDeudaJson('NIF', '12345678A', 'EXPLOTACION'), 'getDeudaJson')}
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '123456';
+                            const explotacion = (document.getElementById('explotacionInput') as HTMLInputElement).value || 'EXPLOTACION';
+                            handleCall(() => (ceaApi as any).getDeudaJson('NIF', contract, explotacion), 'getDeudaJson');
+                        }}
                         disabled={loading}
                     >
                         Get Deuda
                     </button>
                     <button
                         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
-                        onClick={() => handleCall(() => ceaApi.getLecturas('EXPLOTACION', 'CONTRATO123'), 'getLecturas')}
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || 'CONTRATO123';
+                            const explotacion = (document.getElementById('explotacionInput') as HTMLInputElement).value || 'EXPLOTACION';
+                            handleCall(() => ceaApi.getLecturas(explotacion, contract), 'getLecturas');
+                        }}
                         disabled={loading}
                     >
                         Get Lecturas

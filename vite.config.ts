@@ -42,12 +42,6 @@ export default defineConfig(({ mode }) => ({
           }
         }
       },
-      '/aquacis-com': {
-        target: 'https://ceaqueretaro-cf-int.aquacis.com/Comercial',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/aquacis-com/, ''),
-      }
     }
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
