@@ -34,16 +34,17 @@ const getTagValue = (xmlDoc: Document | Element, tagName: string): string | null
 // ============================================================================
 
 export const updateCaseToClosed = async (caseId: string, code: string, note: string) => {
-  const url = `${CEA_REST_URL}`; // Assuming the endpoint is the base URL or specific path needs to be appended? 
-  // The user request shows "PUT Update Case to closed" with body.
-  // It seems the URL is https://appcea.ceaqueretaro.gob.mx/ceadevws/
-  
+  const url = `${CEA_REST_URL}`;
+
   const data = {
     evento: "terminar_reporte_caso",
     data: {
-      sn_caso: caseId,
+      caso_sn: caseId, // Renamed from sn_caso based on server error
       sn_code: code,
-      sn_notes: note
+      sn_notes: note,
+      // Include other fields to prevent PHP notices on server
+      sys_id: "",
+      orden_aquacis: ""
     }
   };
 
@@ -52,12 +53,16 @@ export const updateCaseToClosed = async (caseId: string, code: string, note: str
 };
 
 export const referenceWorkOrderAquacis = async (caseId: string, workOrderId: string) => {
-  const url = `${CEA_REST_URL}`; 
+  const url = `${CEA_REST_URL}`;
   const data = {
     evento: "asigna_orden_aquacis",
     data: {
       sys_id: caseId,
-      orden_aquacis: workOrderId
+      orden_aquacis: workOrderId,
+      // Include other fields to prevent PHP notices
+      caso_sn: "",
+      sn_code: "",
+      sn_notes: ""
     }
   };
 
@@ -70,7 +75,12 @@ export const updateCaseToCancelled = async (caseId: string) => {
   const data = {
     evento: "anular_reporte_caso",
     data: {
-      sn_caso: caseId
+      caso_sn: caseId, // Renamed from sn_caso
+      // Include other fields to prevent PHP notices
+      sys_id: "",
+      orden_aquacis: "",
+      sn_code: "",
+      sn_notes: ""
     }
   };
 
@@ -104,7 +114,7 @@ export const consultaDetalleContrato = async (numeroContrato: string, idioma: st
       </occ:consultaDetalleContrato>
    </soapenv:Body>
 </soapenv:Envelope>`;
-  
+
   return sendSoapRequest(CEA_SOAP_CONTRACT_URL, '', xml);
 };
 
