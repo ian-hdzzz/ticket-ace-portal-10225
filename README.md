@@ -194,6 +194,62 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 - Ensure port 8080 is available (or change in `vite.config.ts`)
 - Check for conflicting processes: `lsof -i :8080`
 
+### CORS & Dev Proxy
+
+- If you're calling CEA (aquacis) SOAP endpoints from the browser during development you will hit cross-origin restrictions unless you route requests through the dev proxy or a backend proxy.
+- Use the local Vite proxy by setting the SOAP env variables to the proxy paths (default set in `env.example`):
+   ```env
+   VITE_CEA_SOAP_CONTRACT_URL=/aquacis-cea/services/InterfazGenericaContratacionWS
+   VITE_CEA_SOAP_DEBT_URL=/aquacis-cea/services/InterfazGenericaGestionDeudaWS
+   ```
+- The dev proxy is configured in `vite.config.ts`. If you change proxy settings, restart the dev server to apply changes:
+   ```powershell
+   npm run dev
+   ```
+- If the remote CEA server redirects from HTTP to HTTPS, configure the proxy target as HTTPS in `vite.config.ts` to avoid the proxy returning a 3xx redirect to the browser and causing a CORS failure.
+
+#### DNS / `ENOTFOUND` errors when resolving remote hosts
+
+- If you see `getaddrinfo ENOTFOUND` from Vite for a host like `ceaqueretaro-cf-int.aquacis.com`, try the following:
+   1. Confirm the hostname is correct for your environment and you have network access (VPN, internal DNS) if required.
+   2. If the host should be reachable but isn't, add a temporary hosts file entry (Windows: `%SystemRoot%\\system32\\drivers\\etc\\hosts`) mapping `ceaqueretaro-cf-int.aquacis.com` to the appropriate IP, then restart the dev server.
+   3. If the environment uses a different host (e.g., `aquacis-cf-int.ceaqueretaro.gob.mx`), update `vite.config.ts` to point the `/aquacis-com` proxy to the working host instead.
+   4. As a fallback, implement a server-side proxy on `server.js` that can reach internal hosts but the browser cannot. Example (simplified) and recommended: the included `server.js` contains a proxy route we can use.
+
+      ```js
+       // server.js (Express)
+       import axios from 'axios';
+      app.post('/api/cea/:proxyName/*', async (req, res) => {
+          try {
+             const upstreamPath = req.params[0];
+            const response = await axios.post('https://ceaqueretaro-cf-int.aquacis.com/Comercial/' + upstreamPath, req.body, {
+                headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
+             });
+             res.status(response.status).send(response.data);
+          } catch (err) {
+             res.status(500).send(err?.response?.data || err.message);
+          }
+         });
+       ```
+
+##### Using the included Express proxy
+
+- Start the server in a separate terminal:
+   ```powershell
+   npm run webhook
+   ```
+- Point your frontend stamps to use the dev proxy path in your `.env` or `env.example` (example):
+   ```env
+   VITE_CEA_SOAP_READINGS_URL=/api/cea/aquacis-com/services/InterfazOficinaVirtualClientesWS
+   VITE_CEA_SOAP_RECEIPT_URL=/api/cea/aquacis-cea/services/InterfazOficinaVirtualClientesWS
+   ```
+- Restart both the `npm run webhook` and `npm run dev` servers and re-try API calls.
+
+### Parsing SOAP Responses in the UI
+
+- The app returns SOAP envelope responses and, in development, the `ApiTest` page converts XML responses to a readable JSON-like structure for convenience. The parser handles `xsi:nil="true"` values and maps them to `null` in the parsed object so empty fields are explicit.
+- If you're creating UI components to consume SOAP responses, use the `xmlToJson` helper in `src/api/cea.ts` — it handles nested objects, repeated arrays, and `xsi:nil` attributes.
+
 ## Resources
 
 - [React Documentation](https://react.dev/)
