@@ -12,7 +12,19 @@ export default defineConfig(({ mode }) => ({
       '/ceadevws': {
         target: 'https://appcea.ceaqueretaro.gob.mx',
         changeOrigin: true,
-        secure: false, // In case of self-signed certs on the VPN
+        secure: false,
+      },
+      '/aquacis-cea': {
+        target: 'http://aquacis-cf-int.ceaqueretaro.gob.mx/Comercial',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/aquacis-cea/, ''),
+      },
+      '/aquacis-com': {
+        target: 'https://ceaqueretaro-cf-int.aquacis.com/Comercial',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/aquacis-com/, ''),
       }
     }
   },
