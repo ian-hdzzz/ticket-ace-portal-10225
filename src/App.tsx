@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import ChatwootWidget from "./components/features/ChatwootWidget";
 import Auth from "./pages/Auth";
+import ApiTest from "./pages/ApiTest";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -38,6 +39,7 @@ const App = () => (
             </Route>
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/api-test" element={<ApiTest />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

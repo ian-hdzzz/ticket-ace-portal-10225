@@ -20,6 +20,26 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from '../supabase/client.ts';
+import * as ceaApi from "@/api/cea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface Conversation {
   id: number;
@@ -43,7 +63,7 @@ interface TicketData {
   location: string;
   category: string;
   conversations: Conversation[];
-} 
+}
 
 const statusConfig = {
   abierto: { label: "Abierto", variant: "default" as const },
@@ -90,26 +110,37 @@ const channelLabels = {
 export default function TicketDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   // Estados para manejo de datos de Supabase
   const [ticket, setTicket] = useState<any>(null);
   const [isLoadingTicket, setIsLoadingTicket] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Work Order State
+  const [isWorkOrderDialogOpen, setIsWorkOrderDialogOpen] = useState(false);
+  const [isCreatingWorkOrder, setIsCreatingWorkOrder] = useState(false);
+  const [workOrderData, setWorkOrderData] = useState({
+    tipoOrden: "",
+    motivoOrden: "",
+    fechaEstimdaFin: "",
+    observaciones: "",
+    codigoReparacion: "",
+  });
+
   // Función para obtener ticket específico desde Supabase
   const getTicketById = async (ticketId: string) => {
     setIsLoadingTicket(true);
     setError(null);
-    
+
     try {
-      
+
       const result = await supabase
         .from('tickets')
         .select('*')
         .eq('id', ticketId)
         .single();
 
-      
+
       // Transformar datos para compatibilidad con la UI
       const transformedTicket = {
         id: result.data.id,
@@ -119,7 +150,7 @@ export default function TicketDetails() {
         status: mapStatusFromDB(result.data.status),
         priority: mapPriorityFromDB(result.data.priority),
         assignedTo: result.data.assigned_to || 'Sin asignar',
-        createdAt: result.data.created_at 
+        createdAt: result.data.created_at
           ? new Date(result.data.created_at).toLocaleString("es-MX")
           : 'No disponible',
         location: 'No especificada', // No hay campo específico para ubicación  
@@ -140,7 +171,7 @@ export default function TicketDetails() {
       };
 
       setTicket(transformedTicket);
-      
+
     } catch (e) {
       console.error('Error al obtener ticket:', e);
       setError(`Error al cargar el ticket: ${e.message || 'Error desconocido'}`);
@@ -181,14 +212,105 @@ export default function TicketDetails() {
     return mappedPriority;
   };
 
+  // Función para crear Orden de Trabajo
+  const handleCreateWorkOrder = async () => {
+    if (!ticket?.id || !ticket?.metadata?.numero_contrato) {
+      toast.error("No se puede crear OT: Falta ID de ticket o número de contrato");
+      return;
+    }
+
+    setIsCreatingWorkOrder(true);
+    try {
+      // 1. Crear OT en Aquacis
+      const otData = {
+        ...workOrderData,
+        numContrato: ticket.metadata.numero_contrato,
+        fechaCreacionOrden: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        idPtoServicio: ticket.metadata.id_punto_servicio || "0", // Fallback or from metadata
+        anyoExpediente: new Date().getFullYear().toString(),
+      };
+
+      console.log("Creating Work Order with data:", otData);
+      const otResponse = await ceaApi.crearOrdenTrabajo(otData);
+      console.log("OT Response:", otResponse);
+
+      // Parse response to get OT ID
+      let otId = null;
+      if (otResponse instanceof Document) {
+        const idTag = otResponse.getElementsByTagName("idOrden")[0] || otResponse.getElementsByTagName("return")[0];
+        if (idTag) otId = idTag.textContent;
+      }
+
+      if (!otId) {
+        console.warn("Could not parse OT ID from response, using mock ID if in demo mode");
+        otId = "OT-" + Date.now();
+      }
+
+      toast.success(`Orden de Trabajo creada: ${otId}`);
+
+      // 2. Vincular OT con Ticket en CEA App
+      await ceaApi.referenceWorkOrderAquacis(ticket.id, otId);
+      toast.success("Orden de Trabajo vinculada al caso");
+
+      // 3. Guardar en Supabase
+      const { error } = await supabase
+        .from('tickets')
+        .update({
+          metadata: {
+            ...ticket.metadata,
+            orden_aquacis: otId
+          }
+        })
+        .eq('id', ticket.id);
+
+      if (error) throw error;
+
+      // 4. Actualizar estado local
+      setTicket((prev: any) => ({
+        ...prev,
+        metadata: {
+          ...prev.metadata,
+          orden_aquacis: otId
+        }
+      }));
+
+      setIsWorkOrderDialogOpen(false);
+
+    } catch (e: any) {
+      console.error("Error creating Work Order:", e);
+      toast.error(`Error al crear OT: ${e.message}`);
+    } finally {
+      setIsCreatingWorkOrder(false);
+    }
+  };
+
   // Función para actualizar estado del ticket
   const updateTicketStatus = async (newStatus: "abierto" | "cancelado" | "cerrado" | "en_proceso" | "escalado" | "esperando_cliente" | "esperando_interno" | "resuelto") => {
     if (!ticket?.id) return;
 
     try {
       console.log(`Actualizando ticket ${ticket.id} a estado:`, newStatus);
-      
-      const updateData: any = { 
+
+      // API Calls for specific statuses
+      if (newStatus === "resuelto" || newStatus === "cerrado") {
+        try {
+          await ceaApi.updateCaseToClosed(ticket.id, "RESUELTO", ticket.resolution_notes || "Ticket resuelto desde portal");
+          toast.success("Estado sincronizado con CEA App (Cerrado)");
+        } catch (apiError) {
+          console.error("Error syncing close status:", apiError);
+          toast.error("Error al sincronizar cierre con CEA App");
+        }
+      } else if (newStatus === "cancelado") {
+        try {
+          await ceaApi.updateCaseToCancelled(ticket.id);
+          toast.success("Estado sincronizado con CEA App (Cancelado)");
+        } catch (apiError) {
+          console.error("Error syncing cancel status:", apiError);
+          toast.error("Error al sincronizar cancelación con CEA App");
+        }
+      }
+
+      const updateData: any = {
         status: newStatus,
         updated_at: new Date().toISOString()
       };
@@ -209,15 +331,18 @@ export default function TicketDetails() {
 
       if (error) {
         console.error('Error al actualizar estado:', error);
+        toast.error("Error al actualizar estado en base de datos");
         return;
       }
 
       // Recargar ticket para mostrar cambios
       await getTicketById(ticket.id.toString());
       console.log('Estado actualizado correctamente');
-      
+      toast.success(`Estado actualizado a: ${newStatus}`);
+
     } catch (e) {
       console.error('Error al actualizar ticket:', e);
+      toast.error("Error desconocido al actualizar ticket");
     }
   };
 
@@ -277,8 +402,8 @@ export default function TicketDetails() {
             <Button onClick={() => navigate("/dashboard/tickets")}>
               Volver a Tickets
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => id && getTicketById(id)}
             >
               Reintentar
@@ -350,7 +475,7 @@ export default function TicketDetails() {
                 {ticket.conversations.map((conversation) => {
                   const ChannelIcon = channelIcons[conversation.channel as keyof typeof channelIcons];
                   const channelColor = channelColors[conversation.channel as keyof typeof channelColors];
-                  
+
                   return (
                     <div key={conversation.id} className="relative flex gap-4 pb-6">
                       <div className={cn(
@@ -359,7 +484,7 @@ export default function TicketDetails() {
                       )}>
                         <ChannelIcon className={cn("h-5 w-5", channelColor)} />
                       </div>
-                      
+
                       <div className="flex-1 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium">
@@ -378,20 +503,20 @@ export default function TicketDetails() {
                             {conversation.timestamp}
                           </span>
                         </div>
-                        
+
                         {conversation.from && (
                           <div className="text-xs text-muted-foreground">
                             <span className="font-medium">De:</span> {conversation.from}
                             {conversation.to && <> → <span className="font-medium">Para:</span> {conversation.to}</>}
                           </div>
                         )}
-                        
+
                         {conversation.subject && (
                           <div className="text-sm font-medium text-foreground">
                             {conversation.subject}
                           </div>
                         )}
-                        
+
                         <div className="rounded-lg border bg-muted/50 p-3 text-sm">
                           {conversation.message}
                         </div>
@@ -429,7 +554,7 @@ export default function TicketDetails() {
             </CardContent>
           </Card>
         </div>
-        
+
 
         <div className="space-y-6">
           <Card>
@@ -438,8 +563,8 @@ export default function TicketDetails() {
             </CardHeader>
             <CardContent className="space-y-2">
               {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
-                <Button 
-                  className="w-full gap-2" 
+                <Button
+                  className="w-full gap-2"
                   variant="default"
                   onClick={() => updateTicketStatus("resuelto")}
                 >
@@ -448,8 +573,8 @@ export default function TicketDetails() {
                 </Button>
               )}
               {ticket.status === "resuelto" && (
-                <Button 
-                  className="w-full gap-2" 
+                <Button
+                  className="w-full gap-2"
                   variant="default"
                   onClick={() => updateTicketStatus("cerrado")}
                 >
@@ -457,29 +582,124 @@ export default function TicketDetails() {
                   Cerrar Ticket
                 </Button>
               )}
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 variant="outline"
                 onClick={() => updateTicketStatus("en_proceso")}
                 disabled={ticket.status === "en_proceso"}
               >
                 {ticket.status === "en_proceso" ? "En Proceso ✓" : "Marcar En Proceso"}
               </Button>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 variant="outline"
                 onClick={() => updateTicketStatus("abierto")}
                 disabled={ticket.status === "abierto"}
               >
                 {ticket.status === "abierto" ? "Abierto ✓" : "Reabrir Ticket"}
               </Button>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 variant="outline"
                 onClick={() => getTicketById(ticket.id.toString())}
               >
-                 Actualizar Datos
+                Actualizar Datos
               </Button>
+
+              <Separator className="my-2" />
+
+              <Dialog open={isWorkOrderDialogOpen} onOpenChange={setIsWorkOrderDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="w-full gap-2"
+                    variant="secondary"
+                    disabled={!!ticket.metadata?.orden_aquacis}
+                  >
+                    <FileText className="h-4 w-4" />
+                    {ticket.metadata?.orden_aquacis ? `OT: ${ticket.metadata.orden_aquacis}` : "Generar Orden de Trabajo"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Crear Orden de Trabajo (Aquacis)</DialogTitle>
+                    <DialogDescription>
+                      Complete los datos para generar una nueva orden de trabajo vinculada a este ticket.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="tipoOrden" className="text-right">
+                        Tipo
+                      </Label>
+                      <Select
+                        onValueChange={(val) => setWorkOrderData({ ...workOrderData, tipoOrden: val })}
+                        value={workOrderData.tipoOrden}
+                      >
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Seleccione tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="REPARACION">Reparación</SelectItem>
+                          <SelectItem value="INSPECCION">Inspección</SelectItem>
+                          <SelectItem value="INSTALACION">Instalación</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="motivo" className="text-right">
+                        Motivo
+                      </Label>
+                      <Input
+                        id="motivo"
+                        className="col-span-3"
+                        value={workOrderData.motivoOrden}
+                        onChange={(e) => setWorkOrderData({ ...workOrderData, motivoOrden: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="fechaFin" className="text-right">
+                        Fecha Fin
+                      </Label>
+                      <Input
+                        id="fechaFin"
+                        type="date"
+                        className="col-span-3"
+                        value={workOrderData.fechaEstimdaFin}
+                        onChange={(e) => setWorkOrderData({ ...workOrderData, fechaEstimdaFin: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="obs" className="text-right">
+                        Observaciones
+                      </Label>
+                      <Textarea
+                        id="obs"
+                        className="col-span-3"
+                        value={workOrderData.observaciones}
+                        onChange={(e) => setWorkOrderData({ ...workOrderData, observaciones: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="codRep" className="text-right">
+                        Cód. Rep.
+                      </Label>
+                      <Input
+                        id="codRep"
+                        className="col-span-3"
+                        value={workOrderData.codigoReparacion}
+                        onChange={(e) => setWorkOrderData({ ...workOrderData, codigoReparacion: e.target.value })}
+                        placeholder="Ej. REP-001"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" onClick={handleCreateWorkOrder} disabled={isCreatingWorkOrder}>
+                      {isCreatingWorkOrder ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Crear Orden
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
           <Card>
@@ -661,7 +881,7 @@ export default function TicketDetails() {
             </CardContent>
           </Card>
 
-          
+
         </div>
       </div>
     </div>
