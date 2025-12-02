@@ -129,6 +129,105 @@ export default function ApiTest() {
                     >
                         Get Lecturas
                     </button>
+
+                    <h3 className="text-lg font-semibold mt-4 col-span-2">New Endpoints</h3>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '';
+                            handleCall(() => (ceaApi as any).getContratos(contract, '', '', '', '', '', []), 'getContratos');
+                        }}
+                        disabled={loading}
+                    >
+                        Get Contratos
+                    </button>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const data = {
+                                operationalSiteID: 'SITE1',
+                                installationID: 'INST1',
+                                systemOrigin: 'SYS',
+                                otClass: 'CLASS',
+                                otOrigin: 'ORIGIN',
+                                endDateOt: '2023-01-01',
+                                endLastTaskOt: '2023-01-01',
+                                finalSolution: 'SOLVED',
+                                nonExecutionMotive: '',
+                                solutionDescription: 'Fixed',
+                                executorIdentifier: 'EXEC1',
+                                executorName: 'John Doe',
+                                companyExecutorIdentifier: 'COMP1',
+                                companyExecutorName: 'Company Inc',
+                                transmitterInstalled: '0',
+                                language: 'es',
+                                suspensionLevel: '0',
+                                longitude: '0.0',
+                                latitude: '0.0',
+                                coordinatesType: 'GPS',
+                                codificationType: 'WGS84',
+                                captureDate: '2023-01-01'
+                            };
+                            handleCall(() => (ceaApi as any).resolveOT(data), 'resolveOT');
+                        }}
+                        disabled={loading}
+                    >
+                        Resolve OT
+                    </button>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const data = {
+                                id: 'ID1',
+                                codOrden: 'ORD1',
+                                fechaVisita: '2023-01-01',
+                                resultado: 'OK',
+                                idOperario: 'OP1',
+                                nombreOperario: 'Jane Doe',
+                                cifContratista: 'CIF1',
+                                nombreContratista: 'Contractor Inc',
+                                codIncidencia: 'INC1',
+                                descIncidencia: 'Desc',
+                                observaciones: 'Obs',
+                                codVinculacion: 'VINC1',
+                                idDocFirma: 'DOC1',
+                                personaNombre: 'Client Name',
+                                personaApellido1: 'Lastname1',
+                                personaApellido2: 'Lastname2',
+                                personaTelefono: '123456789',
+                                personaNif: 'NIF1'
+                            };
+                            handleCall(() => (ceaApi as any).informarVisita(data), 'informarVisita');
+                        }}
+                        disabled={loading}
+                    >
+                        Informar Visita
+                    </button>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || 'CONTRATO123';
+                            handleCall(() => (ceaApi as any).cambiarPersonaNotificacionContrato(contract, 'NIF', 'email1@example.com', 'email2@example.com', 'USER'), 'cambiarPersonaNotificacionContrato');
+                        }}
+                        disabled={loading}
+                    >
+                        Cambiar Persona Notif
+                    </button>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || 'CONTRATO123';
+                            handleCall(() => (ceaApi as any).cambiarTipoFacturaContrato(contract, 'NIF', 'Digital', 'USER'), 'cambiarTipoFacturaContrato');
+                        }}
+                        disabled={loading}
+                    >
+                        Cambiar Tipo Factura
+                    </button>
                 </div>
             </div>
 
