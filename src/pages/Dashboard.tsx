@@ -115,15 +115,35 @@ function getCategoryData(tickets) {
   }));
 }
 
-const resolutionData = [
-  { time: "00:00", tasa: 68 },
-  { time: "04:00", tasa: 72 },
-  { time: "08:00", tasa: 75 },
-  { time: "12:00", tasa: 76 },
-  { time: "16:00", tasa: 78 },
-  { time: "20:00", tasa: 76 },
-  { time: "23:59", tasa: 76 },
-];
+// Genera los datos de resolución por hora para hoy
+function getResolutionData(tickets) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Inicializa 7 puntos de tiempo (puedes ajustar los intervalos)
+  const hours = [0, 4, 8, 12, 16, 20, 23];
+  return hours.map(h => {
+    const start = new Date(today);
+    start.setHours(h, 0, 0, 0);
+    const end = new Date(today);
+    end.setHours(h === 23 ? 23 : h + 4, h === 23 ? 59 : 0, h === 23 ? 59 : 0, 999);
+    // Tickets resueltos hasta ese momento
+    const resolved = tickets.filter(t => {
+      if (t.status !== 'resuelto' || !t.resolved_at) return false;
+      const resolvedAt = new Date(t.resolved_at);
+      return resolvedAt >= today && resolvedAt <= end;
+    }).length;
+    // Tickets totales creados hasta ese momento
+    const total = tickets.filter(t => {
+      const createdAt = new Date(t.created_at);
+      return createdAt >= today && createdAt <= end;
+    }).length;
+    // Tasa de resolución (porcentaje)
+    const tasa = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    // Formato de hora
+    const time = h === 23 ? "23:59" : `${h.toString().padStart(2, '0')}:00`;
+    return { time, tasa };
+  });
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -146,6 +166,7 @@ export default function Dashboard() {
   });
   const [ticketTrendData, setTicketTrendData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
+  const [resolutionData, setResolutionData] = useState([]);
   // Rango de fechas
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -230,6 +251,8 @@ export default function Dashboard() {
       setTicketTrendData(getLastWeekTrend(filtered));
       // Calcular datos por categoría
       setCategoryData(getCategoryData(filtered));
+      // Calcular datos de resolución en tiempo real (solo tickets de hoy)
+      setResolutionData(getResolutionData(filtered));
     }
     fetchTickets();
   }, [dateRange]);
