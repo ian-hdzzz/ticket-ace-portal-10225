@@ -181,24 +181,24 @@ export default function ApiTest() {
                         className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
                         onClick={() => {
                             const data = {
-                                id: 'ID1',
-                                codOrden: 'ORD1',
-                                fechaVisita: '2023-01-01',
-                                resultado: 'OK',
-                                idOperario: 'OP1',
-                                nombreOperario: 'Jane Doe',
-                                cifContratista: 'CIF1',
-                                nombreContratista: 'Contractor Inc',
-                                codIncidencia: 'INC1',
-                                descIncidencia: 'Desc',
-                                observaciones: 'Obs',
-                                codVinculacion: 'VINC1',
-                                idDocFirma: 'DOC1',
-                                personaNombre: 'Client Name',
-                                personaApellido1: 'Lastname1',
-                                personaApellido2: 'Lastname2',
-                                personaTelefono: '123456789',
-                                personaNif: 'NIF1'
+                                id: '',
+                                codOrden: '',
+                                fechaVisita: new Date().toISOString(),
+                                resultado: '', // Try empty
+                                idOperario: '',
+                                nombreOperario: '',
+                                cifContratista: '',
+                                nombreContratista: '',
+                                codIncidencia: '', // Try empty
+                                descIncidencia: '',
+                                observaciones: '',
+                                codVinculacion: '',
+                                idDocFirma: '',
+                                personaNombre: '',
+                                personaApellido1: '',
+                                personaApellido2: '',
+                                personaTelefono: '',
+                                personaNif: ''
                             };
                             handleCall(() => (ceaApi as any).informarVisita(data), 'informarVisita');
                         }}
