@@ -147,28 +147,28 @@ export default function ApiTest() {
                         className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
                         onClick={() => {
                             const data = {
-                                operationalSiteID: 'SITE1',
-                                installationID: 'INST1',
-                                systemOrigin: 'SYS',
-                                otClass: 'CLASS',
-                                otOrigin: 'ORIGIN',
-                                endDateOt: '2023-01-01',
-                                endLastTaskOt: '2023-01-01',
-                                finalSolution: 'SOLVED',
+                                operationalSiteID: '',
+                                installationID: '',
+                                systemOrigin: '',
+                                otClass: '',
+                                otOrigin: '',
+                                endDateOt: new Date().toISOString(),
+                                endLastTaskOt: new Date().toISOString(),
+                                finalSolution: '',
                                 nonExecutionMotive: '',
-                                solutionDescription: 'Fixed',
-                                executorIdentifier: 'EXEC1',
-                                executorName: 'John Doe',
-                                companyExecutorIdentifier: 'COMP1',
-                                companyExecutorName: 'Company Inc',
+                                solutionDescription: '',
+                                executorIdentifier: '',
+                                executorName: '',
+                                companyExecutorIdentifier: '',
+                                companyExecutorName: '',
                                 transmitterInstalled: '0',
                                 language: 'es',
                                 suspensionLevel: '0',
                                 longitude: '0.0',
                                 latitude: '0.0',
-                                coordinatesType: 'GPS',
-                                codificationType: 'WGS84',
-                                captureDate: '2023-01-01'
+                                coordinatesType: '',
+                                codificationType: '',
+                                captureDate: new Date().toISOString()
                             };
                             handleCall(() => (ceaApi as any).resolveOT(data), 'resolveOT');
                         }}
@@ -210,8 +210,8 @@ export default function ApiTest() {
                     <button
                         className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
                         onClick={() => {
-                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || 'CONTRATO123';
-                            handleCall(() => (ceaApi as any).cambiarPersonaNotificacionContrato(contract, 'NIF', 'email1@example.com', 'email2@example.com', 'USER'), 'cambiarPersonaNotificacionContrato');
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '';
+                            handleCall(() => (ceaApi as any).cambiarPersonaNotificacionContrato(contract, '', '', '', ''), 'cambiarPersonaNotificacionContrato');
                         }}
                         disabled={loading}
                     >
@@ -221,8 +221,8 @@ export default function ApiTest() {
                     <button
                         className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
                         onClick={() => {
-                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || 'CONTRATO123';
-                            handleCall(() => (ceaApi as any).cambiarTipoFacturaContrato(contract, 'NIF', 'Digital', 'USER'), 'cambiarTipoFacturaContrato');
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '';
+                            handleCall(() => (ceaApi as any).cambiarTipoFacturaContrato(contract, '', '', ''), 'cambiarTipoFacturaContrato');
                         }}
                         disabled={loading}
                     >
