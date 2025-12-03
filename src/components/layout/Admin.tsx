@@ -2,14 +2,9 @@ import React, { useState, useEffect } from "react";
 import { FiCopy } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem
-} from "@/components/ui/select";
-import {supabase} from '../../supabase/client.ts'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { supabase } from '../../supabase/client.ts';
+import { createUser, assignUserRole, updateUser, updateUserRole, deleteUser } from "@/api/AdminUsersSupa";
 
 const getRoles = async () => {
   try {
@@ -32,8 +27,47 @@ export default function Admin() {
   const [tempPassword, setTempPassword] = useState("");
   const [showPasswordStep, setShowPasswordStep] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [editingUsersRolesId, setEditingUsersRolesId] = useState(null);
 
   const [roles, setRoles] = useState([]);
+
+  // Helper to get object from array or object
+  const getObj = (val) => Array.isArray(val) ? val[0] : val;
+
+  // Función global para refrescar usuarios
+  const fetchUsersWithRoles = async () => {
+    const { data, error } = await supabase
+      .from('users_roles')
+      .select(`id, user:users!users_roles_user_id_fkey (id, full_name, email, phone), role:roles (id, name), assigned_by:users!users_roles_assigned_by_fkey (full_name)`);
+    if (error) {
+      console.error('Error fetching users with roles:', error);
+      setUsers([]);
+      return;
+    }
+    // Debug: print each row from Supabase
+    if (data && Array.isArray(data)) {
+      data.forEach((row, idx) => {
+        console.log(`Row ${idx}:`, row);
+      });
+    }
+    const mapped = data
+      .filter(row => getObj(row.user) && getObj(row.user).id)
+      .map((row) => {
+        const user = getObj(row.user);
+        const role = getObj(row.role);
+        const assigned_by = getObj(row.assigned_by);
+        return {
+          id: user.id,
+          users_roles_id: row.id,
+          name: user.full_name,
+          email: user.email,
+          phone: user.phone || "",
+          role: role?.name || "",
+          assigned_by: assigned_by?.full_name || "",
+        };
+      });
+    setUsers(mapped);
+  };
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -42,43 +76,6 @@ export default function Admin() {
       setForm((prev) => ({ ...prev, role: rolesFromDb[0]?.id || "" }));
     };
     fetchRoles();
-    // Fetch users with roles and assigned_by
-    // Helper to get first value from array or empty string
-    const getFirst = (arr, key) => Array.isArray(arr) && arr.length > 0 ? arr[0][key] || '' : '';
-    const fetchUsersWithRoles = async () => {
-      const { data, error } = await supabase
-        .from('users_roles')
-        .select(`id, user:users!users_roles_user_id_fkey (id, full_name, email), role:roles (id, name), assigned_by:users!users_roles_assigned_by_fkey (full_name)`);
-      if (error) {
-        console.error('Error fetching users with roles:', error);
-        setUsers([]);
-        return;
-      }
-      // Debug: print each row from Supabase
-      if (data && Array.isArray(data)) {
-        data.forEach((row, idx) => {
-          console.log(`Row ${idx}:`, row);
-        });
-      }
-      // Helper to get object from array or object
-      const getObj = (val) => Array.isArray(val) ? val[0] : val;
-      // Map data to expected format for table, filtering only valid users
-      const mapped = data
-        .filter(row => getObj(row.user) && getObj(row.user).id)
-        .map((row) => {
-          const user = getObj(row.user);
-          const role = getObj(row.role);
-          const assigned_by = getObj(row.assigned_by);
-          return {
-            id: user.id,
-            name: user.full_name,
-            email: user.email,
-            role: role?.name || "",
-            assigned_by: assigned_by?.full_name || "",
-          };
-        });
-      setUsers(mapped);
-    };
     fetchUsersWithRoles();
   }, []);
 
@@ -130,80 +127,35 @@ export default function Admin() {
       window.alert(errorMsg);
       return;
     }
-    // Mostrar en consola los datos enviados a la tabla users
-    console.log('Datos enviados a tabla users:', {
-      full_name: form.name,
-      email: form.email,
-      phone: form.phone,
-      password: tempPassword
-    });
-    // 1. Crear usuario en tabla users
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .insert({
+    try {
+      const user = await createUser({
         full_name: form.name,
         email: form.email,
         phone: form.phone,
-        password: tempPassword // Guardar la contraseña generada
-      })
-      .select();
-    if (userError || !userData || !userData[0]?.id) {
-      window.alert('Error creando usuario en tabla users: ' + (userError?.message || ''));
-      return;
-    }
-    const userId = userData[0].id;
-    // Mostrar en consola los datos enviados a users_roles
-    console.log('Datos enviados a users_roles:', {
-      user_id: userId,
-      role_id: form.role,
-      assigned_by: null
-    });
-    // 2. Asignar rol en users_roles
-    const { error: roleError } = await supabase
-      .from('users_roles')
-      .insert({
-        user_id: userId,
-        role_id: form.role,
-        assigned_by: null // Puedes poner el id del admin actual si lo tienes
+        password: tempPassword
       });
-    if (roleError) {
-      window.alert('Usuario creado, pero hubo un error asignando el rol: ' + (roleError?.message || ''));
-    } else {
-      window.alert('Usuario creado correctamente.');
+      await assignUserRole({
+        user_id: user.id,
+        role_id: form.role,
+        assigned_by: null
+      });
+      window.alert("Usuario creado correctamente.");
+      setForm({ name: "", email: "", phone: "", role: roles[0]?.id || "" });
+      setTempPassword("");
+      setShowPasswordStep(false);
+      await fetchUsersWithRoles();
+    } catch (err) {
+      window.alert("Error creando usuario: " + (err.message || err));
     }
-    setForm({ name: "", email: "", phone: "", role: roles[0]?.id || "" });
-    setTempPassword("");
-    setShowPasswordStep(false);
-    // Refetch users from DB
-    const fetchUsersWithRoles = async () => {
-      const { data } = await supabase
-        .from('users_roles')
-        .select(`id, user:users!users_roles_user_id_fkey (id, full_name, email), role:roles (id, name), assigned_by:users!users_roles_assigned_by_fkey (full_name)`);
-      const getObj = (val) => Array.isArray(val) ? val[0] : val;
-      const mapped = data
-        .filter(row => getObj(row.user) && getObj(row.user).id)
-        .map((row) => {
-          const user = getObj(row.user);
-          const role = getObj(row.role);
-          const assigned_by = getObj(row.assigned_by);
-          return {
-            id: user.id,
-            name: user.full_name,
-            email: user.email,
-            role: role?.name || "",
-            assigned_by: assigned_by?.full_name || "",
-          };
-        });
-      setUsers(mapped);
-    };
-    fetchUsersWithRoles();
-    // Aquí se enviaría el correo con la contraseña temporal
   };
 
   // Handle user edit
   const handleEdit = (user) => {
     // Buscar el id del rol por el nombre
     const roleObj = roles.find(r => r.name === user.role);
+    console.log('handleEdit - user:', user);
+    console.log('handleEdit - user.id:', user.id);
+    console.log('handleEdit - users_roles_id:', user.users_roles_id);
     setForm({
       name: user.name,
       email: user.email,
@@ -211,103 +163,44 @@ export default function Admin() {
       role: roleObj?.id || ""
     });
     setEditingId(user.id);
+    setEditingUsersRolesId(user.users_roles_id);
   };
 
   // Handle user update (Supabase)
   const handleUpdate = async () => {
     if (!editingId) return;
-    // Update user info in Supabase
-    const { error } = await supabase
-      .from('users')
-      .update({
+    try {
+      console.log('handleUpdate - editingId:', editingId);
+      console.log('handleUpdate - editingUsersRolesId:', editingUsersRolesId);
+      console.log('handleUpdate - form:', form);
+      const userUpdateRes = await updateUser(editingId, {
         full_name: form.name,
         email: form.email,
-        phone: form.phone // Si tienes el campo phone en la tabla users
-      })
-      .eq('id', editingId);
-    if (error) {
-      window.alert('Error actualizando usuario');
-      return;
+        phone: form.phone
+      });
+      console.log('handleUpdate - updateUser response:', userUpdateRes);
+      const roleUpdateRes = await updateUserRole(editingUsersRolesId, form.role);
+      console.log('handleUpdate - updateUserRole response:', roleUpdateRes);
+      window.alert("Usuario actualizado correctamente.");
+      setEditingId(null);
+      setEditingUsersRolesId(null);
+      setForm({ name: "", email: "", phone: "", role: roles[0]?.id || "" });
+      await fetchUsersWithRoles();
+    } catch (err) {
+      window.alert("Error actualizando usuario: " + (err.message || err));
     }
-    // Update role in users_roles
-    const { error: roleError } = await supabase
-      .from('users_roles')
-      .update({
-        role_id: form.role
-      })
-      .eq('user_id', editingId);
-    if (roleError) {
-      window.alert('Usuario actualizado, pero hubo un error actualizando el rol.');
-    } else {
-      window.alert('Usuario actualizado correctamente.');
-    }
-    setEditingId(null);
-    setForm({ name: "", email: "", phone: "", role: roles[0]?.id || "" });
-    // Refetch users from DB
-    const fetchUsersWithRoles = async () => {
-      const { data } = await supabase
-        .from('users_roles')
-        .select(`id, user:users!users_roles_user_id_fkey (id, full_name, email), role:roles (id, name), assigned_by:users!users_roles_assigned_by_fkey (full_name)`);
-      const getObj = (val) => Array.isArray(val) ? val[0] : val;
-      const mapped = data
-        .filter(row => getObj(row.user) && getObj(row.user).id)
-        .map((row) => {
-          const user = getObj(row.user);
-          const role = getObj(row.role);
-          const assigned_by = getObj(row.assigned_by);
-          return {
-            id: user.id,
-            name: user.full_name,
-            email: user.email,
-            role: role?.name || "",
-            assigned_by: assigned_by?.full_name || "",
-          };
-        });
-      setUsers(mapped);
-    };
-    fetchUsersWithRoles();
   };
 
   // Handle user delete (Supabase)
   const handleDelete = async (id) => {
-    // Delete from users_roles first
-    const { error: rolesError } = await supabase
-      .from('users_roles')
-      .delete()
-      .eq('user_id', id);
-    // Delete from users
-    const { error: userError } = await supabase
-      .from('users')
-      .delete()
-      .eq('id', id);
-    if (rolesError || userError) {
-      window.alert('Error eliminando usuario.');
-    } else {
-      window.alert('Usuario eliminado correctamente.');
+    try {
+      console.log('handleDelete - id:', id);
+      await deleteUser(id);
+      window.alert("Usuario eliminado correctamente.");
+      await fetchUsersWithRoles();
+    } catch (err) {
+      window.alert("Error eliminando usuario: " + (err.message || err));
     }
-    // Refetch users from DB
-    const fetchUsersWithRoles = async () => {
-      const { data } = await supabase
-        .from('users_roles')
-        .select(`id, user:users!users_roles_user_id_fkey (id, full_name, email), role:roles (id, name), assigned_by:users!users_roles_assigned_by_fkey (full_name)`);
-      const getObj = (val) => Array.isArray(val) ? val[0] : val;
-      const mapped = data
-        .filter(row => getObj(row.user) && getObj(row.user).id)
-        .map((row) => {
-          const user = getObj(row.user);
-          const role = getObj(row.role);
-          const assigned_by = getObj(row.assigned_by);
-          return {
-            id: user.id,
-            name: user.full_name,
-            email: user.email,
-            role: role?.name || "",
-            assigned_by: assigned_by?.full_name || "",
-          };
-        });
-      setUsers(mapped);
-    };
-    fetchUsersWithRoles();
   };
 
   return (
