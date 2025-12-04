@@ -320,8 +320,15 @@ export const getDeudaJson = async (tipoIdentificador: string, valor: string, exp
 
 // CEA GetLecturas
 export const getLecturas = async (explotacion: string, contrato: string, idioma: string = 'es') => {
-  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com">
-   <soapenv:Header/>
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+   <soapenv:Header>
+      <wsse:Security mustUnderstand="1">
+        <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
+          <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
+          <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
+        </wsse:UsernameToken>
+      </wsse:Security>
+   </soapenv:Header>
    <soapenv:Body>
       <occ:getLecturas>
       <explotacion>${xmlEscape(explotacion)}</explotacion>
