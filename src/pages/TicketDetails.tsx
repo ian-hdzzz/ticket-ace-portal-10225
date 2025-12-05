@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,6 +111,10 @@ const channelLabels = {
 export default function TicketDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // Establecer título de la página (se actualizará cuando cargue el ticket)
+  const [pageTitle, setPageTitle] = useState("Detalles del Ticket");
+  usePageTitle(pageTitle, "Información completa del ticket");
 
   // Estados para manejo de datos de Supabase
   const [ticket, setTicket] = useState<any>(null);
@@ -172,6 +177,7 @@ export default function TicketDetails() {
       };
 
       setTicket(transformedTicket);
+      setPageTitle(`Ticket ${transformedTicket.folio}`);
 
     } catch (e) {
       console.error('Error al obtener ticket:', e);
@@ -686,224 +692,9 @@ export default function TicketDetails() {
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="codRep" className="text-right">
-                        Cód. Rep.
+                      <Label htmlFor="codigoReparacion" className="text-right">
+                        Código Reparación
                       </Label>
                       <Input
-                        id="codRep"
-                        className="col-span-3"
-                        value={workOrderData.codigoReparacion}
-                        onChange={(e) => setWorkOrderData({ ...workOrderData, codigoReparacion: e.target.value })}
-                        placeholder="Ej. REP-001"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" onClick={handleCreateWorkOrder} disabled={isCreatingWorkOrder}>
-                      {isCreatingWorkOrder ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      Crear Orden
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Detalles</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>Creado</span>
-                </div>
-                <p className="text-sm font-medium ml-6">{ticket.createdAt}</p>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>Asignado a</span>
-                </div>
-                <p className="text-sm font-medium ml-6">{ticket.assignedTo}</p>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>Ubicación</span>
-                </div>
-                <p className="text-sm font-medium ml-6">{ticket.location}</p>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <FileText className="h-4 w-4" />
-                  <span>Categoría</span>
-                </div>
-                <p className="text-sm font-medium ml-6">{ticket.category}</p>
-              </div>
-
-              {/* Número de Contrato */}
-              {ticket.contract_number && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <FileText className="h-4 w-4" />
-                      <span>Número de Contrato</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6">{ticket.contract_number}</p>
-                  </div>
-                </>
-              )}
-
-              {/* Campos extraídos del metadata */}
-              {ticket.metadata && ticket.metadata.colonia && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>Colonia</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6">{ticket.metadata.colonia}</p>
-                  </div>
-                </>
-              )}
-
-              {ticket.metadata && ticket.metadata.ubicacion && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>Dirección</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6">{ticket.metadata.ubicacion}</p>
-                  </div>
-                </>
-              )}
-
-              {ticket.metadata && ticket.metadata.referencias && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>Referencias</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6">{ticket.metadata.referencias}</p>
-                  </div>
-                </>
-              )}
-
-              {ticket.metadata && ticket.metadata.tiempo_estimado && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>Tiempo Estimado</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6">{ticket.metadata.tiempo_estimado}</p>
-                  </div>
-                </>
-              )}
-
-              {ticket.channel && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MessageSquare className="h-4 w-4" />
-                      <span>Canal de Contacto</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6 capitalize">{ticket.channel}</p>
-                  </div>
-                </>
-              )}
-
-              {ticket.sla_deadline && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>SLA Deadline</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6">
-                      {new Date(ticket.sla_deadline).toLocaleString("es-MX")}
-                      {ticket.sla_breached && (
-                        <Badge variant="destructive" className="ml-2 text-xs">SLA Incumplido</Badge>
-                      )}
-                    </p>
-                  </div>
-                </>
-              )}
-
-              {ticket.resolution_notes && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <FileText className="h-4 w-4" />
-                      <span>Notas de Resolución</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6">{ticket.resolution_notes}</p>
-                  </div>
-                </>
-              )}
-
-              {ticket.tags && ticket.tags.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <FileText className="h-4 w-4" />
-                      <span>Etiquetas</span>
-                    </div>
-                    <div className="ml-6 flex flex-wrap gap-1">
-                      {ticket.tags.map((tag: string, index: number) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {ticket.escalated_to && (
-                <>
-                  <Separator />
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <User className="h-4 w-4" />
-                      <span>Escalado a</span>
-                    </div>
-                    <p className="text-sm font-medium ml-6">{ticket.escalated_to}</p>
-                    {ticket.escalated_at && (
-                      <p className="text-xs text-muted-foreground ml-6">
-                        Escalado el: {new Date(ticket.escalated_at).toLocaleString("es-MX")}
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-
-        </div>
-      </div>
-    </div>
-  );
-}
+                        id="codigoReparacion"
+   

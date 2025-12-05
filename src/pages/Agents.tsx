@@ -1,5 +1,13 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +45,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listAgents, createAgent, updateAgent, deleteAgent } from "@/api/agents";
 
 interface Agent {
@@ -61,6 +68,9 @@ interface Agent {
 const defaultAgents: Agent[] = [];
 
 export default function Agents() {
+  // Establecer título de la página
+  usePageTitle("Agentes IA", "Configura y administra los agentes de IA que atienden a los usuarios");
+  
   const [agents, setAgents] = useState<Agent[]>(defaultAgents);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -150,7 +160,7 @@ export default function Agents() {
     const files = e.target.files;
     if (!files || !editingAgent) return;
 
-    const fileNames = Array.from(files).map(f => f.name);
+    const fileNames = Array.from(files).map((f) => f.name);
     setEditingAgent({
       ...editingAgent,
       documents: [...(editingAgent.documents || []), ...fileNames],
@@ -161,7 +171,7 @@ export default function Agents() {
     if (!editingAgent) return;
     setEditingAgent({
       ...editingAgent,
-      documents: (editingAgent.documents || []).filter(d => d !== fileName),
+      documents: (editingAgent.documents || []).filter((d) => d !== fileName),
     });
   };
 
@@ -169,7 +179,7 @@ export default function Agents() {
     const files = e.target.files;
     if (!files || !editingAgent) return;
 
-    const fileNames = Array.from(files).map(f => f.name);
+    const fileNames = Array.from(files).map((f) => f.name);
     setEditingAgent({
       ...editingAgent,
       databaseConfig: {
@@ -187,20 +197,14 @@ export default function Agents() {
       databaseConfig: {
         ...editingAgent.databaseConfig,
         type: "csv",
-        files: (editingAgent.databaseConfig?.files || []).filter(f => f !== fileName),
+        files: (editingAgent.databaseConfig?.files || []).filter((f) => f !== fileName),
       },
     });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Agentes IA</h1>
-          <p className="text-muted-foreground">
-            Configura y administra los agentes de IA que atienden a los usuarios
-          </p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button onClick={handleCreateNew} className="gap-2">
           <Plus className="h-4 w-4" />
           Nuevo Agente

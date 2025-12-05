@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +50,10 @@ import { supabase } from '../supabase/client.ts'
 
 export default function Tickets() {
   const navigate = useNavigate();
+  
+  // Establecer el título de la página
+  usePageTitle("Tickets", "Gestiona todos los tickets del sistema");
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [priorityFilter, setPriorityFilter] = useState<string>("todos");
@@ -480,15 +485,6 @@ export default function Tickets() {
   return (
     <div className="flex h-full flex-col overflow-hidden -m-6">
       <div className="flex-shrink-0 space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Tickets</h1>
-            <p className="text-muted-foreground">
-              Gestiona todos los tickets del sistema
-            </p>
-          </div>
-        </div>
-
         {/* Date Range Filter and Ticket Count */}
         <div className="flex items-center justify-between gap-4 text-sm">
           <div className="flex gap-3 items-center">

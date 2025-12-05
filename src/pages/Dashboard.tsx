@@ -17,6 +17,7 @@ import { StatCard } from "@/components/features/StatCard";
 import { TicketCard } from "@/components/features/TicketCard";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "../supabase/client";
 import {
   Ticket,
@@ -147,7 +148,10 @@ function getResolutionData(tickets) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  // Recuperar usuario y rol de la sesión
+  
+  // Establecer título de la página
+  usePageTitle("Dashboard", "Resumen general del sistema de tickets");
+  
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const fullName = user?.full_name || "";
   const [role, setRole] = useState("");
@@ -259,27 +263,21 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
-          Resumen general del sistema de tickets
-        </p>
-        <div className="flex gap-4 items-center mt-4">
-          <label className="text-sm font-medium">Desde:</label>
-          <input
-            type="date"
-            value={dateRange.start.toISOString().slice(0, 10)}
-            onChange={e => setDateRange(r => ({ ...r, start: new Date(e.target.value) }))}
-            className="border rounded px-2 py-1"
-          />
-          <label className="text-sm font-medium">Hasta:</label>
-          <input
-            type="date"
-            value={dateRange.end.toISOString().slice(0, 10)}
-            onChange={e => setDateRange(r => ({ ...r, end: new Date(e.target.value + 'T23:59:59') }))}
-            className="border rounded px-2 py-1"
-          />
-        </div>
+      <div className="flex gap-4 items-center">
+        <label className="text-sm font-medium">Desde:</label>
+        <input
+          type="date"
+          value={dateRange.start.toISOString().slice(0, 10)}
+          onChange={e => setDateRange(r => ({ ...r, start: new Date(e.target.value) }))}
+          className="border rounded px-2 py-1"
+        />
+        <label className="text-sm font-medium">Hasta:</label>
+        <input
+          type="date"
+          value={dateRange.end.toISOString().slice(0, 10)}
+          onChange={e => setDateRange(r => ({ ...r, end: new Date(e.target.value + 'T23:59:59') }))}
+          className="border rounded px-2 py-1"
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

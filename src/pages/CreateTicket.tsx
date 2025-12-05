@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +54,9 @@ const channelOptions: { value: ChannelType; label: string }[] = [
 ];
 
 export default function CreateTicket() {
+  // Establecer título de la página
+  usePageTitle("Crear Ticket", "Registra un nuevo ticket en el sistema");
+  
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentTag, setCurrentTag] = useState('');
@@ -151,7 +155,6 @@ export default function CreateTicket() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Regresar
             </Button>
-            <h1 className="text-3xl font-bold">Crear Nuevo Ticket</h1>
           </div>
 
         <Card>

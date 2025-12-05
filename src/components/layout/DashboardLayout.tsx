@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabase/client";
+import { PageProvider, usePageContext } from "@/contexts/PageContext";
 
-export function DashboardLayout() {
+function DashboardContent() {
+  const { title, description } = usePageContext();
   // Recuperar usuario y rol de la sesión
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const fullName = user?.full_name || "";
@@ -79,16 +81,37 @@ export function DashboardLayout() {
       <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <header className="sticky py-10 top-0 z-10 flex h-16 flex-shrink-0 items-center gap-4 border-b bg-background px-6">
-            <SidebarTrigger />
-            {/* Mensaje de bienvenida y rol */}
-            {fullName && (
-              <div className="flex flex-col items-start">
-                <span className="font-bold text-primary leading-tight" style={{ fontSize: '1.3rem' }}>¡Bienvenido {fullName}!</span>
-                <span className="text-sm mt-0.5" style={{ color: '#4B5563' }}>Rol: {role || "Sin rol"}</span>
+          <header className="sticky top-0 z-10 flex h-20 flex-shrink-0 items-center justify-between gap-6 border-b bg-background px-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              {/* Mensaje de bienvenida y rol */}
+              {fullName && (
+                <div className="flex flex-col items-start">
+                  <span className="font-bold text-primary leading-tight" style={{ fontSize: '1.3rem' }}>
+                    ¡Bienvenido {fullName}!
+                  </span>
+                  <span className="text-sm mt-0.5" style={{ color: '#4B5563' }}>
+                    Rol: {role || "Sin rol"}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* Título y descripción de la sección */}
+            {(title || description) && (
+              <div className="flex flex-col items-end text-right">
+                {title && (
+                  <h1 className="text-2xl font-bold tracking-tight text-primary">
+                    {title}
+                  </h1>
+                )}
+                {description && (
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {description}
+                  </p>
+                )}
               </div>
             )}
-            <div className="flex-1" />
           </header>
           <main className="flex-1 overflow-y-auto overflow-x-hidden p-6">
             <Outlet />
@@ -104,5 +127,13 @@ export function DashboardLayout() {
         )}
       </div>
     </SidebarProvider>
+  );
+}
+
+export function DashboardLayout() {
+  return (
+    <PageProvider>
+      <DashboardContent />
+    </PageProvider>
   );
 }

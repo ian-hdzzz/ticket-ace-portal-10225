@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -7,15 +8,11 @@ import { User, Bell, Lock, Palette } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 export default function Settings() {
+  // Establecer título de la página
+  usePageTitle("Configuración", "Administra las preferencias de tu cuenta");
+  
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
-        <p className="text-muted-foreground">
-          Administra las preferencias de tu cuenta
-        </p>
-      </div>
-
       <div className="grid gap-6">
         <Card>
           <CardHeader>

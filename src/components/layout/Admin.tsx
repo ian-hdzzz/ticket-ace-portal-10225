@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiCopy } from "react-icons/fi";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -203,9 +204,11 @@ export default function Admin() {
     }
   };
 
+  // Establecer título de la página
+  usePageTitle("Administración", "Gestión de usuarios del sistema");
+
   return (
     <div className="p-6 w-[90%] mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Administración de Usuarios</h1>
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-2">Registrar nuevo usuario</h2>
         <form className="flex flex-col gap-4 bg-white p-4 rounded-lg shadow">
