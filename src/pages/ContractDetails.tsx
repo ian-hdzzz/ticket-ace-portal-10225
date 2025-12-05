@@ -172,7 +172,7 @@ export default function ContractDetails() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Contrato #{contract.numero_contrato}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Detalles de contrato</h1>
           <p className="text-muted-foreground">{contract.titular}</p>
         </div>
         <div className="flex gap-2">
@@ -410,16 +410,8 @@ export default function ContractDetails() {
               <Button
                 className="w-full gap-2"
                 variant="outline"
-                onClick={async () => {
-                  try {
-                    const { getDeudaJson } = await import("@/api/cea");
-                    toast.loading("Consultando deuda...");
-                    const deuda = await getDeudaJson("CONTRATO", contract.numero_contrato, contract.explotacion);
-                    console.log("Deuda:", deuda);
-                    toast.success("Deuda consultada (ver consola)");
-                  } catch (e: any) {
-                    toast.error(`Error al consultar deuda: ${e.message}`);
-                  }
+                onClick={() => {
+                  navigate(`/dashboard/deuda/${contract.numero_contrato}/${contract.explotacion}`);
                 }}
               >
                 <DollarSign className="h-4 w-4" />
