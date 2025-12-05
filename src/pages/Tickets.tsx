@@ -168,7 +168,6 @@ export default function Tickets() {
       if (result.data && result.data.length > 0) {
         // Procesar cada ticket individualmente con transformación completa
         const processedTickets = result.data.map((ticket, index) => {
-          
           // Extraer nombre del cliente de múltiples fuentes
           let customerName = 'Sin titular';
           
@@ -183,8 +182,6 @@ export default function Tickets() {
                           (ticket.metadata && ticket.metadata.customer_name) ||
                             ticket.customer_id || 'Sin titular';
             }
-            
-            console.log(`Nombre del cliente determinado: "${customerName}"`);
             
             const transformedTicket = {
               // Mantener todos los campos originales de la DB
@@ -201,6 +198,7 @@ export default function Tickets() {
               prioridad: ticket.priority || 'media',
               grupo_asignacion: ticket.service_type || ticket.ticket_type || 'general',
               asignado_a: ticket.assigned_to || null,
+              numero_contrato: ticket.contract_number || null, // Mapear contract_number a numero_contrato
               
               assignedTo: ticket.assigned_to || 'Sin asignar',
               createdAt: ticket.created_at 
@@ -225,11 +223,9 @@ export default function Tickets() {
               conversations: [] 
             };
             
-            console.log(`Ticket transformado ${index + 1} - titular final: "${transformedTicket.titular}", numero_ticket: "${transformedTicket.numero_ticket}"`);
             return transformedTicket;
           });
 
-          console.log('Tickets procesados:', processedTickets.length);
           setSupabaseTickets(processedTickets);
         } else {
           console.log('No se encontraron tickets en la base de datos');
@@ -279,7 +275,7 @@ export default function Tickets() {
           ? new Date(ticket.created_at).toLocaleString("es-MX")
           : "-";
       case "numero_contrato":
-        return ticket.numero_contrato || "-";
+        return ticket.numero_contrato || ticket.contract_number || "-";
       case "colonia":
         return ticket.colonia || (ticket.metadata && ticket.metadata.colonia) || "-";
       case "direccion":

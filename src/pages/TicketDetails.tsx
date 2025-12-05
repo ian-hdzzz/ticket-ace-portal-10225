@@ -157,6 +157,7 @@ export default function TicketDetails() {
         category: result.data.service_type || result.data.ticket_type || 'General',
         channel: result.data.channel,
         customer_id: result.data.customer_id,
+        contract_number: result.data.contract_number || null, // Número de contrato
         assigned_at: result.data.assigned_at,
         escalated_to: result.data.escalated_to,
         escalated_at: result.data.escalated_at,
@@ -214,7 +215,7 @@ export default function TicketDetails() {
 
   // Función para crear Orden de Trabajo
   const handleCreateWorkOrder = async () => {
-    if (!ticket?.id || !ticket?.metadata?.numero_contrato) {
+    if (!ticket?.id || !ticket?.contract_number) {
       toast.error("No se puede crear OT: Falta ID de ticket o número de contrato");
       return;
     }
@@ -224,7 +225,7 @@ export default function TicketDetails() {
       // 1. Crear OT en Aquacis
       const otData = {
         ...workOrderData,
-        numContrato: ticket.metadata.numero_contrato,
+        numContrato: ticket.contract_number, // Usar contract_number de la DB
         fechaCreacionOrden: new Date().toISOString().split('T')[0], // YYYY-MM-DD
         idPtoServicio: ticket.metadata.id_punto_servicio || "0", // Fallback or from metadata
         anyoExpediente: new Date().getFullYear().toString(),
@@ -429,9 +430,14 @@ export default function TicketDetails() {
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{ticket.title}</h1>
           <p className="text-muted-foreground">#{ticket.folio}</p>
-          {ticket.customer_id && (
-            <p className="text-sm text-muted-foreground">Cliente ID: {ticket.customer_id}</p>
-          )}
+          <div className="flex gap-4 mt-1">
+            {ticket.customer_id && (
+              <p className="text-sm text-muted-foreground">Cliente: {ticket.customer_id}</p>
+            )}
+            {ticket.contract_number && (
+              <p className="text-sm text-muted-foreground">Contrato: {ticket.contract_number}</p>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <Badge variant={statusConfig[ticket.status].variant}>
@@ -744,6 +750,20 @@ export default function TicketDetails() {
                 </div>
                 <p className="text-sm font-medium ml-6">{ticket.category}</p>
               </div>
+
+              {/* Número de Contrato */}
+              {ticket.contract_number && (
+                <>
+                  <Separator />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <FileText className="h-4 w-4" />
+                      <span>Número de Contrato</span>
+                    </div>
+                    <p className="text-sm font-medium ml-6">{ticket.contract_number}</p>
+                  </div>
+                </>
+              )}
 
               {/* Campos extraídos del metadata */}
               {ticket.metadata && ticket.metadata.colonia && (
