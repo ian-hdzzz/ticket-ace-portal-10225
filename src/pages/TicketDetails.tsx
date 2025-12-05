@@ -441,7 +441,7 @@ export default function TicketDetails() {
               <p className="text-sm text-muted-foreground">Cliente: {ticket.customer_id}</p>
             )}
             {ticket.contract_number && (
-              <p className="text-sm text-muted-foreground">Contrato: {ticket.contract_number}</p>
+              <p className="text-sm text-muted-foreground">No. Contrato: {ticket.contract_number}</p>
             )}
           </div>
         </div>
@@ -613,10 +613,19 @@ export default function TicketDetails() {
               <Button
                 className="w-full"
                 variant="outline"
-                onClick={() => getTicketById(ticket.id.toString())}
+                onClick={() => updateTicketStatus("en_proceso")}
               >
-                Actualizar Datos
+                Tomar Ticket
               </Button>
+              {ticket.contract_number && (
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => navigate(`/dashboard/contratos/detail/${ticket.contract_number}`)}
+                >
+                  Revisar Contrato
+                </Button>
+              )}
 
               <Separator className="my-2" />
 

@@ -7,6 +7,7 @@ import {
   Bot,
   User,
   LogOut,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -25,6 +26,7 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Tickets", url: "/dashboard/tickets", icon: Ticket },
+  { title: "Contratos", url: "/dashboard/contratos", icon: FileText },
   { title: "Agentes IA", url: "/dashboard/agents", icon: Bot },
   { title: "Admin", url: "/dashboard/admin", icon: User },
   { title: "Configuración", url: "/dashboard/settings", icon: Settings },

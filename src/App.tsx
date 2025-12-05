@@ -10,6 +10,9 @@ import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
 import TicketDetails from "./pages/TicketDetails";
 import CreateTicket from "./pages/CreateTicket";
+import Contratos from "./pages/Contratos";
+import ContractDetails from "./pages/ContractDetails";
+import Lecturas from "./pages/Lecturas";
 import Agents from "./pages/Agents";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -34,6 +37,9 @@ const App = () => (
               <Route path="tickets" element={<Tickets />} />
               <Route path="tickets/new" element={<CreateTicket />} />
               <Route path="tickets/:id" element={<TicketDetails />} />
+              <Route path="contratos" element={<Contratos />} />
+              <Route path="contratos/detail/:id" element={<ContractDetails />} />
+              <Route path="lecturas/:contratoId/:explotacion" element={<Lecturas />} />
               <Route path="agents" element={<Agents />} />
               <Route path="settings" element={<Settings />} />
               <Route path="admin" element={<Admin />} />
