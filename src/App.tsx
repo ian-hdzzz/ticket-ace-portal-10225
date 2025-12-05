@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import ChatwootWidget from "./components/features/ChatwootWidget";
 import Auth from "./pages/Auth";
 import ApiTest from "./pages/ApiTest";
+import RootRedirect from "./pages/RootRedirect";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -26,7 +27,7 @@ const App = () => (
       <ChatwootWidget />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Auth />} />
+          <Route path="/" element={<RootRedirect />} />
           <Route element={<RequireAuth />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />

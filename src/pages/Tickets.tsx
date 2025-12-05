@@ -101,6 +101,7 @@ export default function Tickets() {
       return matchesSearch && matchesStatus && matchesPriority;
     });
   }, [supabaseTickets, searchQuery, statusFilter, priorityFilter]);
+  
   // Función mejorada para traer datos del backend
   const getTickets = async () => {
     setIsLoadingSupabase(true);

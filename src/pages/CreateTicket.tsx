@@ -25,14 +25,14 @@ const serviceTypeOptions: { value: ServiceType; label: string }[] = [
 ];
 
 const ticketTypeOptions: { value: TicketTypeCode; label: string }[] = [
-  { value: 'ACL', label: 'Aclaraciones' },
-  { value: 'ACT', label: 'Actualizar Caso' },
-  { value: 'CON', label: 'Contratación' },
-  { value: 'DIG', label: 'Digital' },
   { value: 'FUG', label: 'Reportes de Fugas' },
-  { value: 'LEC', label: 'Lectura' },
+  { value: 'ACL', label: 'Aclaraciones' },
+  { value: 'CON', label: 'Contratación' },
   { value: 'PAG', label: 'Pago' },
+  { value: 'LEC', label: 'Lectura' },
   { value: 'REV', label: 'Revisión' },
+  { value: 'DIG', label: 'Digital' },
+  { value: 'ACT', label: 'Actualizar Caso' },
   { value: 'URG', label: 'Urgente' },
 ];
 
@@ -40,7 +40,7 @@ const priorityOptions: { value: PriorityLevel; label: string }[] = [
   { value: 'baja', label: 'Baja' },
   { value: 'media', label: 'Media' },
   { value: 'alta', label: 'Alta' },
-  { value: 'critica', label: 'Crítica' },
+  { value: 'urgente', label: 'Urgente' },
 ];
 
 const channelOptions: { value: ChannelType; label: string }[] = [
