@@ -487,79 +487,31 @@ export default function Tickets() {
               Gestiona todos los tickets del sistema
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={getTickets}
-              disabled={isLoadingSupabase}
-              className="gap-2"
-            >
-              {isLoadingSupabase ? "� Cargando..." : "Actualizar Datos"}
-            </Button>
-            <Button
-              className="gap-2"
-              onClick={() => navigate('/dashboard/tickets/new')}
-            >
-              <Plus className="h-4 w-4" />
-              Nuevo Ticket
-            </Button>
-          </div>
         </div>
 
-        {/* User Type Switcher */}
-        <div className="flex items-center gap-4 rounded-lg border p-4">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="user-type">Vista como:</Label>
-          </div>
-          <Select value={selectedUserType} onValueChange={(value: UserType) => setSelectedUserType(value)}>
-            <SelectTrigger className="w-[300px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {allUserTypes.map((userType) => (
-                <SelectItem key={userType} value={userType}>
-                  {getUserTypeDisplayName(userType)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="text-sm text-muted-foreground">
-            Mostrando {visibleFields.length} campos visibles
-          </div>
-        </div>
-
-        {/* Date Range Filter */}
-        <div className="flex items-center gap-4 rounded-lg border p-4">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Label>Filtrar por fecha de creación:</Label>
-          </div>
-          <div className="flex gap-4 items-center">
-            <label className="text-sm font-medium">Desde:</label>
+        {/* Date Range Filter and Ticket Count */}
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <div className="flex gap-3 items-center">
+            <label className="text-sm font-medium text-muted-foreground">Desde:</label>
             <input
               type="date"
               value={dateRange.start.toISOString().slice(0, 10)}
               onChange={(e) => setDateRange((r) => ({ ...r, start: new Date(e.target.value) }))}
               className="border rounded px-3 py-2 text-sm"
             />
-            <label className="text-sm font-medium">Hasta:</label>
+            <label className="text-sm font-medium text-muted-foreground">Hasta:</label>
             <input
               type="date"
               value={dateRange.end.toISOString().slice(0, 10)}
               onChange={(e) => setDateRange((r) => ({ ...r, end: new Date(e.target.value + 'T23:59:59') }))}
               className="border rounded px-3 py-2 text-sm"
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDateRange({
-                start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-                end: new Date()
-              })}
-            >
-              Restablecer
-            </Button>
+          </div>
+          <div className="text-muted-foreground">
+            {isLoadingSupabase 
+              ? "Cargando tickets desde Supabase..." 
+              : `Mostrando ${filteredTickets.length} de ${supabaseTickets.length} tickets (${dateRange.start.toLocaleDateString('es-MX')} - ${dateRange.end.toLocaleDateString('es-MX')})`
+            }
           </div>
         </div>
 
@@ -574,6 +526,21 @@ export default function Tickets() {
             />
           </div>
           <div className="flex gap-2">
+            {/* User Type Switcher */}
+            <Select value={selectedUserType} onValueChange={(value: UserType) => setSelectedUserType(value)}>
+              <SelectTrigger className="w-[200px]">
+                <User className="mr-2 h-4 w-4" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {allUserTypes.map((userType) => (
+                  <SelectItem key={userType} value={userType}>
+                    {getUserTypeDisplayName(userType)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[160px]">
                 <Filter className="mr-2 h-4 w-4" />
@@ -605,14 +572,23 @@ export default function Tickets() {
                 <SelectItem value="urgente">Urgente</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
 
-        <div className="text-sm text-muted-foreground">
-          {isLoadingSupabase 
-            ? "Cargando tickets desde Supabase..." 
-            : `Mostrando ${filteredTickets.length} de ${supabaseTickets.length} tickets (${dateRange.start.toLocaleDateString('es-MX')} - ${dateRange.end.toLocaleDateString('es-MX')})`
-          }
+            <Button
+              variant="outline"
+              onClick={getTickets}
+              disabled={isLoadingSupabase}
+              className="gap-2"
+            >
+              {isLoadingSupabase ? "🔄 Cargando..." : "Actualizar Datos"}
+            </Button>
+            <Button
+              className="gap-2"
+              onClick={() => navigate('/dashboard/tickets/new')}
+            >
+              <Plus className="h-4 w-4" />
+              Nuevo Ticket
+            </Button>
+          </div>
         </div>
       </div>
 
