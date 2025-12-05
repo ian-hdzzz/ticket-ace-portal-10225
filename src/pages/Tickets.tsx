@@ -34,7 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Filter, Ticket as TicketIcon, User, MoreVertical, BarChart3, PieChart as PieChartIcon, Download } from "lucide-react";
+import { Search, Plus, Filter, Ticket as TicketIcon, User, MoreVertical, BarChart3, PieChart as PieChartIcon, Download, Calendar } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import jsPDF from 'jspdf';
@@ -56,6 +56,13 @@ export default function Tickets() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [supabaseTickets, setSupabaseTickets] = useState<any[]>([]);
   const [isLoadingSupabase, setIsLoadingSupabase] = useState(false);
+  const [dateRange, setDateRange] = useState<{
+    start: Date;
+    end: Date;
+  }>({
+    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // Primer día del mes actual
+    end: new Date(), // Hoy
+  });
   const [chartModal, setChartModal] = useState<{ 
     open: boolean; 
     field: TicketField | null; 
@@ -112,9 +119,14 @@ export default function Tickets() {
         (ticket.titular?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
       const matchesStatus = statusFilter === "todos" || ticket.estado === statusFilter;
       const matchesPriority = priorityFilter === "todos" || ticket.prioridad === priorityFilter;
-      return matchesSearch && matchesStatus && matchesPriority;
+      
+      // Filtro de fechas
+      const ticketDate = new Date(ticket.created_at);
+      const matchesDateRange = ticketDate >= dateRange.start && ticketDate <= dateRange.end;
+      
+      return matchesSearch && matchesStatus && matchesPriority && matchesDateRange;
     });
-  }, [supabaseTickets, searchQuery, statusFilter, priorityFilter]);
+  }, [supabaseTickets, searchQuery, statusFilter, priorityFilter, dateRange]);
   
   // Función mejorada para traer datos del backend
   const getTickets = async () => {
@@ -321,12 +333,12 @@ export default function Tickets() {
     }
   };
 
-  // Función para generar datos de gráficos
+  // Función para generar datos de gráficos (usa tickets filtrados por fecha)
   const generateChartData = (field: TicketField) => {
     const counts: Record<string, number> = {};
     
-    // Contar valores para cada campo
-    supabaseTickets.forEach((ticket) => {
+    // Contar valores para cada campo usando tickets filtrados por fecha
+    filteredTickets.forEach((ticket) => {
       const value = getFieldValue(ticket, field);
       if (value && value !== "-") {
         counts[value] = (counts[value] || 0) + 1;
@@ -364,17 +376,19 @@ export default function Tickets() {
       pdf.setFont('helvetica', 'normal');
       pdf.text(`Campo: ${FIELD_LABELS[chartModal.field]}`, margin, 30);
       pdf.text(`Tipo de gráfico: ${chartModal.type === 'bar' ? 'Barras' : 'Pastel'}`, margin, 37);
-      pdf.text(`Fecha: ${new Date().toLocaleDateString('es-MX', { 
+      pdf.text(`Rango de fechas: ${dateRange.start.toLocaleDateString('es-MX')} - ${dateRange.end.toLocaleDateString('es-MX')}`, margin, 44);
+      pdf.text(`Total de tickets: ${filteredTickets.length}`, margin, 51);
+      pdf.text(`Generado: ${new Date().toLocaleDateString('es-MX', { 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}`, margin, 44);
+      })}`, margin, 58);
       
       // Línea separadora
       pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, 48, pageWidth - margin, 48);
+      pdf.line(margin, 62, pageWidth - margin, 62);
       
       // Capturar el gráfico
       const chartElement = document.getElementById('chart-container');
@@ -389,10 +403,10 @@ export default function Tickets() {
         const imgWidth = pageWidth - (margin * 2);
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        pdf.addImage(imgData, 'PNG', margin, 55, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', margin, 68, imgWidth, imgHeight);
         
         // Agregar tabla resumen
-        let yPosition = 55 + imgHeight + 15;
+        let yPosition = 68 + imgHeight + 15;
         
         // Si necesitamos una nueva página para la tabla
         if (yPosition > pageHeight - 80) {
@@ -519,6 +533,40 @@ export default function Tickets() {
           </div>
         </div>
 
+        {/* Date Range Filter */}
+        <div className="flex items-center gap-4 rounded-lg border p-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Label>Filtrar por fecha de creación:</Label>
+          </div>
+          <div className="flex gap-4 items-center">
+            <label className="text-sm font-medium">Desde:</label>
+            <input
+              type="date"
+              value={dateRange.start.toISOString().slice(0, 10)}
+              onChange={(e) => setDateRange((r) => ({ ...r, start: new Date(e.target.value) }))}
+              className="border rounded px-3 py-2 text-sm"
+            />
+            <label className="text-sm font-medium">Hasta:</label>
+            <input
+              type="date"
+              value={dateRange.end.toISOString().slice(0, 10)}
+              onChange={(e) => setDateRange((r) => ({ ...r, end: new Date(e.target.value + 'T23:59:59') }))}
+              className="border rounded px-3 py-2 text-sm"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDateRange({
+                start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                end: new Date()
+              })}
+            >
+              Restablecer
+            </Button>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -565,7 +613,10 @@ export default function Tickets() {
         </div>
 
         <div className="text-sm text-muted-foreground">
-          {isLoadingSupabase ? "Cargando tickets desde Supabase..." : `Mostrando ${filteredTickets.length} tickets`}
+          {isLoadingSupabase 
+            ? "Cargando tickets desde Supabase..." 
+            : `Mostrando ${filteredTickets.length} de ${supabaseTickets.length} tickets (${dateRange.start.toLocaleDateString('es-MX')} - ${dateRange.end.toLocaleDateString('es-MX')})`
+          }
         </div>
       </div>
 
@@ -885,6 +936,11 @@ export default function Tickets() {
             </DialogTitle>
             <DialogDescription>
               {chartModal.type === "bar" ? "Gráfico de barras" : "Gráfico de pastel"} mostrando la distribución de {chartModal.field && FIELD_LABELS[chartModal.field].toLowerCase()}
+              <br />
+              <span className="text-xs">
+                Período: {dateRange.start.toLocaleDateString('es-MX')} - {dateRange.end.toLocaleDateString('es-MX')} 
+                ({filteredTickets.length} tickets)
+              </span>
             </DialogDescription>
           </DialogHeader>
 
