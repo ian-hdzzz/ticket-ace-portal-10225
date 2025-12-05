@@ -110,6 +110,15 @@ export default function ApiTest() {
                         Get Deuda
                     </button>
                     <button
+                        className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 w-full"
+                        onClick={() => {
+                            handleCall(() => (ceaApi as any).getDeudaJson('CONTRATO', '523160', '1', 'es'), 'getDeudaJson (Fixed)');
+                        }}
+                        disabled={loading}
+                    >
+                        Get Deuda (Fixed Payload)
+                    </button>
+                    <button
                         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
                         onClick={() => {
                             const contract = (document.getElementById('contractInput') as HTMLInputElement).value || 'CONTRATO123';
@@ -119,6 +128,105 @@ export default function ApiTest() {
                         disabled={loading}
                     >
                         Get Lecturas
+                    </button>
+
+                    <h3 className="text-lg font-semibold mt-4 col-span-2">New Endpoints</h3>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '';
+                            handleCall(() => (ceaApi as any).getContratos(contract, '', '', '', '', '', []), 'getContratos');
+                        }}
+                        disabled={loading}
+                    >
+                        Get Contratos
+                    </button>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const data = {
+                                operationalSiteID: '',
+                                installationID: '',
+                                systemOrigin: '',
+                                otClass: '',
+                                otOrigin: '',
+                                endDateOt: new Date().toISOString(),
+                                endLastTaskOt: new Date().toISOString(),
+                                finalSolution: '',
+                                nonExecutionMotive: '',
+                                solutionDescription: '',
+                                executorIdentifier: '',
+                                executorName: '',
+                                companyExecutorIdentifier: '',
+                                companyExecutorName: '',
+                                transmitterInstalled: '0',
+                                language: 'es',
+                                suspensionLevel: '0',
+                                longitude: '0.0',
+                                latitude: '0.0',
+                                coordinatesType: '',
+                                codificationType: '',
+                                captureDate: new Date().toISOString()
+                            };
+                            handleCall(() => (ceaApi as any).resolveOT(data), 'resolveOT');
+                        }}
+                        disabled={loading}
+                    >
+                        Resolve OT
+                    </button>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const data = {
+                                id: '',
+                                codOrden: '',
+                                fechaVisita: new Date().toISOString(),
+                                resultado: '', // Try empty
+                                idOperario: '',
+                                nombreOperario: '',
+                                cifContratista: '',
+                                nombreContratista: '',
+                                codIncidencia: '', // Try empty
+                                descIncidencia: '',
+                                observaciones: '',
+                                codVinculacion: '',
+                                idDocFirma: '',
+                                personaNombre: '',
+                                personaApellido1: '',
+                                personaApellido2: '',
+                                personaTelefono: '',
+                                personaNif: ''
+                            };
+                            handleCall(() => (ceaApi as any).informarVisita(data), 'informarVisita');
+                        }}
+                        disabled={loading}
+                    >
+                        Informar Visita
+                    </button>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '';
+                            handleCall(() => (ceaApi as any).cambiarPersonaNotificacionContrato(contract, '', '', '', ''), 'cambiarPersonaNotificacionContrato');
+                        }}
+                        disabled={loading}
+                    >
+                        Cambiar Persona Notif
+                    </button>
+
+                    <button
+                        className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 w-full"
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '';
+                            handleCall(() => (ceaApi as any).cambiarTipoFacturaContrato(contract, '', '', ''), 'cambiarTipoFacturaContrato');
+                        }}
+                        disabled={loading}
+                    >
+                        Cambiar Tipo Factura
                     </button>
                 </div>
             </div>
