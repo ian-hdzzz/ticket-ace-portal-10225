@@ -84,32 +84,32 @@ function DashboardContent() {
           <header className="sticky top-0 z-10 flex h-20 flex-shrink-0 items-center justify-between gap-6 border-b bg-background px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              {/* Mensaje de bienvenida y rol */}
-              {fullName && (
+              {/* Título y descripción de la sección */}
+              {(title || description) && (
                 <div className="flex flex-col items-start">
-                  <span className="font-bold text-primary leading-tight" style={{ fontSize: '1.3rem' }}>
-                    ¡Bienvenido {fullName}!
-                  </span>
-                  <span className="text-sm mt-0.5" style={{ color: '#4B5563' }}>
-                    Rol: {role || "Sin rol"}
-                  </span>
+                  {title && (
+                    <h1 className="text-2xl font-bold tracking-tight text-primary">
+                      {title}
+                    </h1>
+                  )}
+                  {description && (
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {description}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
             
-            {/* Título y descripción de la sección */}
-            {(title || description) && (
+            {/* Mensaje de bienvenida y rol */}
+            {fullName && (
               <div className="flex flex-col items-end text-right">
-                {title && (
-                  <h1 className="text-2xl font-bold tracking-tight text-primary">
-                    {title}
-                  </h1>
-                )}
-                {description && (
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {description}
-                  </p>
-                )}
+                <span className="font-bold text-black leading-tight" style={{ fontSize: '1.3rem' }}>
+                  ¡Bienvenido <span className="text-primary">{fullName}!</span>
+                </span>
+                <span className="text-sm mt-0.5" style={{ color: '#00409aff' }}>
+                  Rol: {role || "Sin rol"}
+                </span>
               </div>
             )}
           </header>

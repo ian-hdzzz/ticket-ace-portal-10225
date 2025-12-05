@@ -697,4 +697,79 @@ export default function TicketDetails() {
                       </Label>
                       <Input
                         id="codigoReparacion"
-   
+                        className="col-span-3"
+                        value={workOrderData.codigoReparacion}
+                        onChange={(e) => setWorkOrderData({ ...workOrderData, codigoReparacion: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      onClick={handleCreateWorkOrder}
+                      disabled={isCreatingWorkOrder || !workOrderData.tipoOrden}
+                    >
+                      {isCreatingWorkOrder ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creando...
+                        </>
+                      ) : (
+                        "Crear Orden"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Información</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Asignado a:</span>
+                <span className="font-medium">{ticket.assignedTo}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Creado:</span>
+                <span className="font-medium">{ticket.createdAt}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Ubicación:</span>
+                <span className="font-medium">{ticket.location}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center gap-2 text-sm">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Categoría:</span>
+                <span className="font-medium">{ticket.category}</span>
+              </div>
+              {ticket.tags && ticket.tags.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">Etiquetas:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {ticket.tags.map((tag: string, index: number) => (
+                        <Badge key={index} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

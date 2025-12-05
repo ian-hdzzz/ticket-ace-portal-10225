@@ -571,11 +571,22 @@ export default function Tickets() {
 
             <Button
               variant="outline"
-              onClick={getTickets}
+              onClick={() => {
+                // Limpiar todos los filtros
+                setSearchQuery("");
+                setStatusFilter("todos");
+                setPriorityFilter("todos");
+                setDateRange({
+                  start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                  end: new Date(),
+                });
+                // Recargar datos
+                getTickets();
+              }}
               disabled={isLoadingSupabase}
               className="gap-2"
             >
-              {isLoadingSupabase ? "🔄 Cargando..." : "Actualizar Datos"}
+              {isLoadingSupabase ? "🔄 Cargando..." : "Refresh"}
             </Button>
             <Button
               className="gap-2"
