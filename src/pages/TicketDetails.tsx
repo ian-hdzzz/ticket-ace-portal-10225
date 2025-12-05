@@ -574,26 +574,7 @@ export default function TicketDetails() {
               <CardTitle>Acciones</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
-                <Button
-                  className="w-full gap-2"
-                  variant="default"
-                  onClick={() => updateTicketStatus("resuelto")}
-                >
-                  <Check className="h-4 w-4" />
-                  Marcar como Resuelto
-                </Button>
-              )}
-              {ticket.status === "resuelto" && (
-                <Button
-                  className="w-full gap-2"
-                  variant="default"
-                  onClick={() => updateTicketStatus("cerrado")}
-                >
-                  <CloseIcon className="h-4 w-4" />
-                  Cerrar Ticket
-                </Button>
-              )}
+
               <Button
                 className="w-full"
                 variant="outline"
@@ -602,6 +583,22 @@ export default function TicketDetails() {
               >
                 {ticket.status === "en_proceso" ? "En Proceso ✓" : "Marcar En Proceso"}
               </Button>
+
+
+              
+
+            
+
+              {/* 4. Tomar Ticket */}
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => updateTicketStatus("en_proceso")}
+              >
+                Tomar Ticket
+              </Button>
+
+              {/* 5. Reabrir Ticket */}
               <Button
                 className="w-full"
                 variant="outline"
@@ -609,13 +606,6 @@ export default function TicketDetails() {
                 disabled={ticket.status === "abierto"}
               >
                 {ticket.status === "abierto" ? "Abierto ✓" : "Reabrir Ticket"}
-              </Button>
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={() => updateTicketStatus("en_proceso")}
-              >
-                Tomar Ticket
               </Button>
               {ticket.contract_number && (
                 <Button
@@ -627,7 +617,6 @@ export default function TicketDetails() {
                 </Button>
               )}
 
-              <Separator className="my-2" />
 
               <Dialog open={isWorkOrderDialogOpen} onOpenChange={setIsWorkOrderDialogOpen}>
                 <DialogTrigger asChild>
@@ -729,6 +718,30 @@ export default function TicketDetails() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+              <Separator className="my-2" />
+              
+
+              {/* 6. Marcar como Resuelto / Cerrar Ticket */}
+              {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
+                <Button
+                  className="w-full gap-2"
+                  variant="default"
+                  onClick={() => updateTicketStatus("resuelto")}
+                >
+                  <Check className="h-4 w-4" />
+                  Marcar como Resuelto
+                </Button>
+              )}
+              {ticket.status === "resuelto" && (
+                <Button
+                  className="w-full gap-2"
+                  variant="default"
+                  onClick={() => updateTicketStatus("cerrado")}
+                >
+                  <CloseIcon className="h-4 w-4" />
+                  Cerrar Ticket
+                </Button>
+              )}
             </CardContent>
           </Card>
 
