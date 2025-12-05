@@ -38,7 +38,11 @@ export function AppSidebar() {
   const currentPath = location.pathname;
 
   const isActive = (path: string) => {
-    if (path === "/") return currentPath === "/";
+    // Para el Dashboard, solo activo si es exactamente /dashboard
+    if (path === "/dashboard") {
+      return currentPath === "/dashboard";
+    }
+    // Para otras rutas, activo si la ruta actual comienza con la ruta del item
     return currentPath.startsWith(path);
   };
 
