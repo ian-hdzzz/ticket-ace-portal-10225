@@ -17,6 +17,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -28,8 +34,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Filter, Ticket as TicketIcon, User } from "lucide-react";
+import { Search, Plus, Filter, Ticket as TicketIcon, User, MoreVertical, BarChart3, PieChart as PieChartIcon, Download } from "lucide-react";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { listTickets, createTicket } from "@/api/tickets";
 import { listAgents } from "@/api/agents";
 import type { Ticket, UserType, ContactChannel, AssignmentGroup } from "@/types/entities";
@@ -47,6 +56,11 @@ export default function Tickets() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [supabaseTickets, setSupabaseTickets] = useState<any[]>([]);
   const [isLoadingSupabase, setIsLoadingSupabase] = useState(false);
+  const [chartModal, setChartModal] = useState<{ 
+    open: boolean; 
+    field: TicketField | null; 
+    type: "bar" | "pie" | null 
+  }>({ open: false, field: null, type: null });
   const [newTicket, setNewTicket] = useState<{
     descripcion_breve: string;
     titular: string;
@@ -307,6 +321,150 @@ export default function Tickets() {
     }
   };
 
+  // Función para generar datos de gráficos
+  const generateChartData = (field: TicketField) => {
+    const counts: Record<string, number> = {};
+    
+    // Contar valores para cada campo
+    supabaseTickets.forEach((ticket) => {
+      const value = getFieldValue(ticket, field);
+      if (value && value !== "-") {
+        counts[value] = (counts[value] || 0) + 1;
+      }
+    });
+
+    // Convertir a array para los gráficos
+    return Object.entries(counts).map(([name, value]) => ({
+      name,
+      value,
+      cantidad: value
+    }));
+  };
+
+  // Colores para los gráficos
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#ff7c7c'];
+
+  // Función para descargar el reporte como PDF
+  const downloadPDF = async () => {
+    if (!chartModal.field) return;
+
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      
+      // Título del reporte
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Reporte de Análisis de Tickets', margin, 20);
+      
+      // Subtítulo con el campo analizado
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Campo: ${FIELD_LABELS[chartModal.field]}`, margin, 30);
+      pdf.text(`Tipo de gráfico: ${chartModal.type === 'bar' ? 'Barras' : 'Pastel'}`, margin, 37);
+      pdf.text(`Fecha: ${new Date().toLocaleDateString('es-MX', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`, margin, 44);
+      
+      // Línea separadora
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, 48, pageWidth - margin, 48);
+      
+      // Capturar el gráfico
+      const chartElement = document.getElementById('chart-container');
+      if (chartElement) {
+        const canvas = await html2canvas(chartElement, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', margin, 55, imgWidth, imgHeight);
+        
+        // Agregar tabla resumen
+        let yPosition = 55 + imgHeight + 15;
+        
+        // Si necesitamos una nueva página para la tabla
+        if (yPosition > pageHeight - 80) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Resumen de Datos', margin, yPosition);
+        yPosition += 10;
+        
+        // Encabezados de tabla
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(margin, yPosition, pageWidth - (margin * 2), 8, 'F');
+        
+        const col1Width = (pageWidth - (margin * 2)) * 0.5;
+        const col2Width = (pageWidth - (margin * 2)) * 0.25;
+        const col3Width = (pageWidth - (margin * 2)) * 0.25;
+        
+        pdf.text(FIELD_LABELS[chartModal.field], margin + 2, yPosition + 5);
+        pdf.text('Cantidad', margin + col1Width + 2, yPosition + 5);
+        pdf.text('Porcentaje', margin + col1Width + col2Width + 2, yPosition + 5);
+        yPosition += 10;
+        
+        // Datos de la tabla
+        pdf.setFont('helvetica', 'normal');
+        const chartData = generateChartData(chartModal.field);
+        const total = chartData.reduce((sum, i) => sum + i.value, 0);
+        
+        chartData.forEach((item, index) => {
+          // Verificar si necesitamos nueva página
+          if (yPosition > pageHeight - 20) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          
+          const percentage = ((item.value / total) * 100).toFixed(1);
+          
+          // Alternar color de fondo
+          if (index % 2 === 0) {
+            pdf.setFillColor(250, 250, 250);
+            pdf.rect(margin, yPosition - 5, pageWidth - (margin * 2), 8, 'F');
+          }
+          
+          pdf.text(item.name, margin + 2, yPosition);
+          pdf.text(item.cantidad.toString(), margin + col1Width + 2, yPosition);
+          pdf.text(`${percentage}%`, margin + col1Width + col2Width + 2, yPosition);
+          yPosition += 8;
+        });
+        
+        // Fila de total
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFillColor(230, 230, 230);
+        pdf.rect(margin, yPosition - 5, pageWidth - (margin * 2), 8, 'F');
+        pdf.text('Total', margin + 2, yPosition);
+        pdf.text(total.toString(), margin + col1Width + 2, yPosition);
+        pdf.text('100%', margin + col1Width + col2Width + 2, yPosition);
+      }
+      
+      // Guardar el PDF
+      const fileName = `reporte_${chartModal.field}_${new Date().getTime()}.pdf`;
+      pdf.save(fileName);
+      
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      alert('Error al generar el PDF. Por favor, intenta de nuevo.');
+    }
+  };
+
   
 
   return (
@@ -420,7 +578,41 @@ export default function Tickets() {
                 <TableRow>
                   {visibleFields.map((field) => (
                     <TableHead key={field} className="whitespace-nowrap">
-                      {FIELD_LABELS[field]}
+                      <div className="flex items-center justify-between gap-2">
+                        <span>{FIELD_LABELS[field]}</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 w-6 p-0 hover:bg-accent"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setChartModal({ open: true, field, type: "bar" });
+                              }}
+                            >
+                              <BarChart3 className="mr-2 h-4 w-4" /> 
+                              Gráfico de barras
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setChartModal({ open: true, field, type: "pie" });
+                              }}
+                            >
+                              <PieChartIcon className="mr-2 h-4 w-4" /> 
+                              Gráfico de pastel
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableHead>
                   ))}
                 </TableRow>
@@ -674,6 +866,130 @@ export default function Tickets() {
               disabled={!newTicket.descripcion_breve.trim() || !newTicket.titular.trim()}
             >
               Crear Ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Chart Modal */}
+      <Dialog open={chartModal.open} onOpenChange={(open) => setChartModal({ open, field: null, type: null })}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {chartModal.type === "bar" ? (
+                <BarChart3 className="h-5 w-5" />
+              ) : (
+                <PieChartIcon className="h-5 w-5" />
+              )}
+              {chartModal.field && `Análisis de ${FIELD_LABELS[chartModal.field]}`}
+            </DialogTitle>
+            <DialogDescription>
+              {chartModal.type === "bar" ? "Gráfico de barras" : "Gráfico de pastel"} mostrando la distribución de {chartModal.field && FIELD_LABELS[chartModal.field].toLowerCase()}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {chartModal.field && chartModal.type && (
+              <div id="chart-container" className="w-full h-[400px]">
+                {chartModal.type === "bar" ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={generateChartData(chartModal.field)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="name" 
+                        angle={-45} 
+                        textAnchor="end" 
+                        height={100}
+                        interval={0}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="cantidad" fill="#8884d8" name="Cantidad de tickets">
+                        {generateChartData(chartModal.field).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={generateChartData(chartModal.field)}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={120}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {generateChartData(chartModal.field).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            )}
+
+            {/* Tabla resumen */}
+            {chartModal.field && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-4">Resumen de datos</h3>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{FIELD_LABELS[chartModal.field]}</TableHead>
+                        <TableHead className="text-right">Cantidad</TableHead>
+                        <TableHead className="text-right">Porcentaje</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {generateChartData(chartModal.field).map((item, index) => {
+                        const total = generateChartData(chartModal.field).reduce((sum, i) => sum + i.value, 0);
+                        const percentage = ((item.value / total) * 100).toFixed(1);
+                        return (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell className="text-right">{item.cantidad}</TableCell>
+                            <TableCell className="text-right">{percentage}%</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      <TableRow className="font-bold bg-muted/50">
+                        <TableCell>Total</TableCell>
+                        <TableCell className="text-right">
+                          {generateChartData(chartModal.field).reduce((sum, i) => sum + i.value, 0)}
+                        </TableCell>
+                        <TableCell className="text-right">100%</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={downloadPDF}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Descargar PDF
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setChartModal({ open: false, field: null, type: null })}
+            >
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>
