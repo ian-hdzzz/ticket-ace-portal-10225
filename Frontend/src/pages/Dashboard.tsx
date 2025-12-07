@@ -116,33 +116,62 @@ function getCategoryData(tickets) {
   }));
 }
 
-// Genera los datos de resolución por hora para hoy
+// Genera los datos de resolución por hora para hoy (tiempo real)
 function getResolutionData(tickets) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  // Inicializa 7 puntos de tiempo (puedes ajustar los intervalos)
-  const hours = [0, 4, 8, 12, 16, 20, 23];
-  return hours.map(h => {
-    const start = new Date(today);
-    start.setHours(h, 0, 0, 0);
-    const end = new Date(today);
-    end.setHours(h === 23 ? 23 : h + 4, h === 23 ? 59 : 0, h === 23 ? 59 : 0, 999);
-    // Tickets resueltos hasta ese momento
-    const resolved = tickets.filter(t => {
+  const currentHour = now.getHours();
+  
+  // Generar intervalos de 4 horas hasta la hora actual
+  const intervals = [];
+  for (let h = 0; h <= 20; h += 4) {
+    intervals.push(h);
+  }
+  // Agregar la hora 23:59 como último punto
+  intervals.push(23);
+  
+  // Filtrar solo tickets de hoy
+  const todayTickets = tickets.filter(t => {
+    const createdAt = new Date(t.created_at);
+    return createdAt >= today && createdAt < new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  });
+  
+  return intervals.map(h => {
+    const isLastInterval = h === 23;
+    const intervalEnd = new Date(today);
+    
+    if (isLastInterval) {
+      intervalEnd.setHours(23, 59, 59, 999);
+    } else {
+      intervalEnd.setHours(h + 4, 0, 0, 0);
+    }
+    
+    // Si el intervalo es futuro, no mostrar datos
+    if (intervalEnd > now) {
+      const time = isLastInterval ? "23:59" : `${h.toString().padStart(2, '0')}:00`;
+      return { time, tasa: 0, resueltos: 0, total: 0 };
+    }
+    
+    // Contar tickets resueltos hasta este momento del día
+    const resueltos = todayTickets.filter(t => {
       if (t.status !== 'resuelto' || !t.resolved_at) return false;
       const resolvedAt = new Date(t.resolved_at);
-      return resolvedAt >= today && resolvedAt <= end;
+      return resolvedAt >= today && resolvedAt <= intervalEnd;
     }).length;
-    // Tickets totales creados hasta ese momento
-    const total = tickets.filter(t => {
+    
+    // Contar tickets totales creados hasta este momento del día
+    const total = todayTickets.filter(t => {
       const createdAt = new Date(t.created_at);
-      return createdAt >= today && createdAt <= end;
+      return createdAt >= today && createdAt <= intervalEnd;
     }).length;
-    // Tasa de resolución (porcentaje)
-    const tasa = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    
+    // Calcular tasa de resolución (porcentaje)
+    const tasa = total > 0 ? Math.round((resueltos / total) * 100) : 0;
+    
     // Formato de hora
-    const time = h === 23 ? "23:59" : `${h.toString().padStart(2, '0')}:00`;
-    return { time, tasa };
+    const time = isLastInterval ? "23:59" : `${h.toString().padStart(2, '0')}:00`;
+    
+    return { time, tasa, resueltos, total };
   });
 }
 
@@ -255,8 +284,8 @@ export default function Dashboard() {
       setTicketTrendData(getLastWeekTrend(filtered));
       // Calcular datos por categoría
       setCategoryData(getCategoryData(filtered));
-      // Calcular datos de resolución en tiempo real (solo tickets de hoy)
-      setResolutionData(getResolutionData(filtered));
+      // Calcular datos de resolución en tiempo real (solo tickets de HOY, sin filtro de rango)
+      setResolutionData(getResolutionData(data || []));
     }
     fetchTickets();
   }, [dateRange]);
@@ -347,7 +376,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Tasa de Resolución en Tiempo Real</CardTitle>
-            <CardDescription>Evolución de la tasa de resolución hoy</CardDescription>
+            <CardDescription>Evolución de la tasa de resolución hoy ({new Date().toLocaleDateString('es-MX')})</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -360,12 +389,34 @@ export default function Dashboard() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="time" className="text-muted-foreground" />
-                <YAxis className="text-muted-foreground" />
+                <YAxis 
+                  className="text-muted-foreground"
+                  domain={[0, 100]}
+                  ticks={[0, 25, 50, 75, 100]}
+                  label={{ value: '%', angle: 0, position: 'insideTopLeft' }}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "var(--radius)",
+                  }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-card border rounded-lg p-3 shadow-lg">
+                          <p className="font-semibold text-sm">{data.time}</p>
+                          <p className="text-sm text-success">
+                            Tasa: {data.tasa}%
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {data.resueltos} resueltos de {data.total} tickets
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
                 />
                 <Area

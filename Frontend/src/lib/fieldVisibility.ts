@@ -8,6 +8,7 @@ export type TicketField =
   | "numero_reporte_cea_app"
   | "descripcion_breve"
   | "titular"
+  | "nombre_cliente"
   | "canal"
   | "estado"
   | "prioridad"
@@ -29,6 +30,7 @@ export const FIELD_LABELS: Record<TicketField, string> = {
   numero_reporte_cea_app: "Número de Reporte CEA APP",
   descripcion_breve: "Descripción Breve",
   titular: "Titular",
+  nombre_cliente: "Nombre Cliente",
   canal: "Canal",
   estado: "Estado",
   prioridad: "Prioridad",
@@ -53,15 +55,15 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "admin") {
     return [
       "numero_ticket",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
-      "descripcion_breve",
       "canal",
       "estado",
       "prioridad",
       "grupo_asignacion",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "observaciones_internas",
@@ -74,15 +76,15 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "coordinacion_general_ejecutiva") {
     return [
       "numero_ticket",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
-      "descripcion_breve",
       "canal",
       "estado",
       "prioridad",
       "grupo_asignacion",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "observaciones_internas",
@@ -95,7 +97,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "coordinacion_planeacion_proyectos_tecnicos") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
@@ -114,7 +117,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "coordinacion_vinculacion_comercial") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "canal",
       "estado",
@@ -122,7 +126,6 @@ export function getVisibleFields(userType: UserType): TicketField[] {
       "grupo_asignacion",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
     ];
@@ -132,7 +135,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_comercial") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "canal",
       "estado",
@@ -140,7 +144,6 @@ export function getVisibleFields(userType: UserType): TicketField[] {
       "grupo_asignacion",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
     ];
@@ -150,7 +153,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_administracion_proyectos") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
@@ -168,13 +172,13 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_cartera_vencida") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "administracion",
@@ -185,14 +189,14 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_contratacion_padron") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "canal",
       "estado",
       "prioridad",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "administracion",
@@ -203,7 +207,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_control_sanitario") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
@@ -220,13 +225,13 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_control_seguimiento_factibilidades") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "administracion",
@@ -237,13 +242,13 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_facturacion") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "administracion",
@@ -254,7 +259,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_infraestructura_informatica") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "canal",
       "estado",
@@ -269,7 +275,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_ingenieria_operacion") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
@@ -287,13 +294,13 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_medicion_consumos") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "administracion",
@@ -304,7 +311,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_operacion_mantenimiento_ptar") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
@@ -322,7 +330,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_programas_inversion") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
@@ -340,7 +349,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_regularizacion_asentamientos") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
@@ -357,13 +367,13 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_tesoreria") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "administracion",
@@ -374,13 +384,13 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_juridica_recuperacion_cartera") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "administracion",
@@ -391,7 +401,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia_tecnica") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
@@ -409,14 +420,14 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "gerencia") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "estado",
       "prioridad",
       "grupo_asignacion",
       "asignado_a",
       "actualizado",
-      "numero_contrato",
       "colonia",
       "direccion",
       "administracion",
@@ -427,7 +438,8 @@ export function getVisibleFields(userType: UserType): TicketField[] {
   if (userType === "call_center_externo") {
     return [
       "numero_ticket",
-      "descripcion_breve",
+      "numero_contrato",
+      // "nombre_cliente", // Comentado temporalmente
       "titular",
       "canal",
       "estado",

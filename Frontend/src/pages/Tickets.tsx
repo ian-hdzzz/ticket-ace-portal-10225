@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Filter, Ticket as TicketIcon, User, MoreVertical, BarChart3, PieChart as PieChartIcon, Download, Calendar } from "lucide-react";
+import { Search, Plus, Filter, Ticket as TicketIcon, User, MoreVertical, BarChart3, PieChart as PieChartIcon, Download, Calendar, ArrowUpAZ, ArrowDownAZ, ArrowUp01, ArrowDown10 } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import jsPDF from 'jspdf';
@@ -68,11 +68,18 @@ export default function Tickets() {
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // Primer día del mes actual
     end: new Date(), // Hoy
   });
+
   const [chartModal, setChartModal] = useState<{ 
     open: boolean; 
     field: TicketField | null; 
     type: "bar" | "pie" | null 
   }>({ open: false, field: null, type: null });
+
+  const [sortConfig, setSortConfig] = useState<{
+    field: TicketField | null;
+    direction: 'asc' | 'desc' | null;
+  }>({ field: null, direction: null });
+
   const [newTicket, setNewTicket] = useState<{
     descripcion_breve: string;
     titular: string;
@@ -114,10 +121,25 @@ export default function Tickets() {
   // Get visible fields for the selected user type
   const visibleFields = useMemo(() => getVisibleFields(selectedUserType), [selectedUserType]);
 
+  // Función para determinar el tipo de campo
+  const getFieldType = (field: TicketField): 'text' | 'number' | 'date' => {
+    const numberFields: TicketField[] = ['numero_ticket', 'numero_contrato', 'numero_orden_aquacis'];
+    const dateFields: TicketField[] = ['actualizado'];
+    
+    if (numberFields.includes(field)) return 'number';
+    if (dateFields.includes(field)) return 'date';
+    return 'text';
+  };
+
+  // Función para ordenar tickets
+  const handleSort = (field: TicketField, direction: 'asc' | 'desc') => {
+    setSortConfig({ field, direction });
+  };
+
   const filteredTickets = useMemo(() => {
     if (!supabaseTickets) return [];
     
-    return supabaseTickets.filter((ticket) => {
+    let filtered = supabaseTickets.filter((ticket) => {
       const matchesSearch =
         (ticket.numero_ticket?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
         (ticket.descripcion_breve?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
@@ -131,7 +153,36 @@ export default function Tickets() {
       
       return matchesSearch && matchesStatus && matchesPriority && matchesDateRange;
     });
-  }, [supabaseTickets, searchQuery, statusFilter, priorityFilter, dateRange]);
+
+    // Aplicar ordenamiento si existe
+    if (sortConfig.field && sortConfig.direction) {
+      filtered = [...filtered].sort((a, b) => {
+        const fieldType = getFieldType(sortConfig.field!);
+        const valueA = getFieldValue(a, sortConfig.field!);
+        const valueB = getFieldValue(b, sortConfig.field!);
+
+        let comparison = 0;
+
+        if (fieldType === 'number') {
+          // Extraer números de strings como "TKT-123" o "523161"
+          const numA = parseInt(valueA.replace(/\D/g, '')) || 0;
+          const numB = parseInt(valueB.replace(/\D/g, '')) || 0;
+          comparison = numA - numB;
+        } else if (fieldType === 'date') {
+          const dateA = new Date(a.actualizado || a.updated_at || a.created_at || 0).getTime();
+          const dateB = new Date(b.actualizado || b.updated_at || b.created_at || 0).getTime();
+          comparison = dateA - dateB;
+        } else {
+          // Texto
+          comparison = valueA.localeCompare(valueB, 'es');
+        }
+
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    return filtered;
+  }, [supabaseTickets, searchQuery, statusFilter, priorityFilter, dateRange, sortConfig]);
   
   // Función mejorada para traer datos del backend
   const getTickets = async () => {
@@ -174,19 +225,23 @@ export default function Tickets() {
         // Procesar cada ticket individualmente con transformación completa
         const processedTickets = result.data.map((ticket, index) => {
           // Extraer nombre del cliente de múltiples fuentes
-          let customerName = 'Sin titular';
+          let customerName = 'Sin nombre';
           
-          if (ticket.customer) {
+          // Priorizar client_name de la tabla tickets
+          if (ticket.client_name) {
+            customerName = ticket.client_name;
+          } else if (ticket.customer) {
+            // Si existe el join con customer, usar esos datos
             customerName = ticket.customer.full_name || ticket.customer.nombre_completo || 
                           ticket.customer.name || ticket.customer.nombre || 
                           ticket.customer.id;
-          } else {
-            customerName = ticket.customer_name || ticket.titular || ticket.contact_name || 
-                          (ticket.metadata && ticket.metadata.titular) || 
-                          (ticket.metadata && ticket.metadata.nombre_cliente) ||
-                          (ticket.metadata && ticket.metadata.customer_name) ||
-                            ticket.customer_id || 'Sin titular';
-            }
+          } else if (ticket.customer_name) {
+            customerName = ticket.customer_name;
+          } else if (ticket.metadata && ticket.metadata.customer_name) {
+            customerName = ticket.metadata.customer_name;
+          } else if (ticket.metadata && ticket.metadata.nombre_cliente) {
+            customerName = ticket.metadata.nombre_cliente;
+          }
             
             const transformedTicket = {
               // Mantener todos los campos originales de la DB
@@ -204,6 +259,8 @@ export default function Tickets() {
               grupo_asignacion: ticket.service_type || ticket.ticket_type || 'general',
               asignado_a: ticket.assigned_to || null,
               numero_contrato: ticket.contract_number || null, // Mapear contract_number a numero_contrato
+              nombre_cliente: customerName, // Agregar el nombre del cliente extraído
+              client_name: ticket.client_name || customerName, // Mantener el campo original de Supabase
               
               assignedTo: ticket.assigned_to || 'Sin asignar',
               createdAt: ticket.created_at 
@@ -261,6 +318,8 @@ export default function Tickets() {
         return ticket.descripcion_breve || ticket.titulo || ticket.descripcion || "-";
       case "titular":
         return ticket.titulo || "Sin titular";
+      case "nombre_cliente":
+        return ticket.nombre_cliente || ticket.client_name || ticket.customer_name || (ticket.customer && (ticket.customer.full_name || ticket.customer.nombre_completo || ticket.customer.name || ticket.customer.nombre)) || (ticket.metadata && ticket.metadata.customer_name) || (ticket.metadata && ticket.metadata.nombre_cliente) || "Sin nombre";
       case "canal":
         return mapChannel(ticket.canal || ticket.channel) || "-";
       case "estado":
@@ -586,7 +645,7 @@ export default function Tickets() {
               disabled={isLoadingSupabase}
               className="gap-2"
             >
-              {isLoadingSupabase ? "🔄 Cargando..." : "Refresh"}
+              {isLoadingSupabase ? "Cargando..." : "Refresh"}
             </Button>
             <Button
               className="gap-2"
@@ -606,10 +665,21 @@ export default function Tickets() {
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-background">
                 <TableRow>
-                  {visibleFields.map((field) => (
+                  {visibleFields.map((field) => {
+                    const fieldType = getFieldType(field);
+                    const isCurrentSort = sortConfig.field === field;
+                    
+                    return (
                     <TableHead key={field} className="whitespace-nowrap">
                       <div className="flex items-center justify-between gap-2">
-                        <span>{FIELD_LABELS[field]}</span>
+                        <div className="flex items-center gap-1">
+                          <span>{FIELD_LABELS[field]}</span>
+                          {isCurrentSort && (
+                            <span className="text-primary">
+                              {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button 
@@ -622,9 +692,91 @@ export default function Tickets() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {/* Opciones de ordenamiento - NO mostrar para estado y prioridad */}
+                            {field !== 'estado' && field !== 'prioridad' && (
+                              <>
+                                {fieldType === 'text' && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleSort(field, 'asc');
+                                      }}
+                                      className={isCurrentSort && sortConfig.direction === 'asc' ? 'bg-accent' : ''}
+                                    >
+                                      <ArrowUpAZ className="mr-2 h-4 w-4" /> 
+                                      Ordenar A-Z
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleSort(field, 'desc');
+                                      }}
+                                      className={isCurrentSort && sortConfig.direction === 'desc' ? 'bg-accent' : ''}
+                                    >
+                                      <ArrowDownAZ className="mr-2 h-4 w-4" /> 
+                                      Ordenar Z-A
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {fieldType === 'number' && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleSort(field, 'asc');
+                                      }}
+                                      className={isCurrentSort && sortConfig.direction === 'asc' ? 'bg-accent' : ''}
+                                    >
+                                      <ArrowUp01 className="mr-2 h-4 w-4" /> 
+                                      Menor a Mayor
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleSort(field, 'desc');
+                                      }}
+                                      className={isCurrentSort && sortConfig.direction === 'desc' ? 'bg-accent' : ''}
+                                    >
+                                      <ArrowDown10 className="mr-2 h-4 w-4" /> 
+                                      Mayor a Menor
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {fieldType === 'date' && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleSort(field, 'asc');
+                                      }}
+                                      className={isCurrentSort && sortConfig.direction === 'asc' ? 'bg-accent' : ''}
+                                    >
+                                      <ArrowUp01 className="mr-2 h-4 w-4" /> 
+                                      Más Antiguo Primero
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleSort(field, 'desc');
+                                      }}
+                                      className={isCurrentSort && sortConfig.direction === 'desc' ? 'bg-accent' : ''}
+                                    >
+                                      <ArrowDown10 className="mr-2 h-4 w-4" /> 
+                                      Más Reciente Primero
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                
+                                {/* Separador solo si hay opciones de ordenamiento */}
+                                <div className="h-px bg-border my-1" />
+                              </>
+                            )}
+                            
+                            {/* Opciones de gráficos - siempre mostrar */}
                             <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onSelect={(e) => {
+                                e.preventDefault();
                                 setChartModal({ open: true, field, type: "bar" });
                               }}
                             >
@@ -632,8 +784,8 @@ export default function Tickets() {
                               Gráfico de barras
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onSelect={(e) => {
+                                e.preventDefault();
                                 setChartModal({ open: true, field, type: "pie" });
                               }}
                             >
@@ -644,7 +796,8 @@ export default function Tickets() {
                         </DropdownMenu>
                       </div>
                     </TableHead>
-                  ))}
+                    );
+                  })}
                 </TableRow>
               </TableHeader>
               <TableBody>

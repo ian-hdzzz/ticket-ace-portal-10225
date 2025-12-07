@@ -148,8 +148,7 @@ export default function Contratos() {
             </div>
             <div className="relative w-40">
               <Input
-                placeholder="Explotación (ej: 01)"
-                placeholder="Número de contrato"
+                placeholder="Explotación (e.g. 01)"
                 value={explotacionQuery}
                 onChange={(e) => setExplotacionQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
