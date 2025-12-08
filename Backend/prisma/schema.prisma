@@ -6,9 +6,52 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  output   = "./generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  password              String
+  full_name             String
+  is_temporary_password Boolean  @default(false)
+
+  roles UserRole[]
+}
+
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  privileges  RolePrivilege[]
+  users       UserRole[]
+}
+
+model Privilege {
+  id          Int          @id @default(autoincrement())
+  description String
+  roles       RolePrivilege[]
+}
+
+model UserRole {
+  userId String
+  roleId Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePrivilege {
+  roleId      Int
+  privilegeId Int
+
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  privilege Privilege @relation(fields: [privilegeId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, privilegeId])
 }
