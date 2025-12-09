@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import JWTService from "../utils/jwt.js";
+import JWTService from "../services/jwt.service.js";
 
 // Extend Express Request type to include user
 declare global {
@@ -8,6 +8,10 @@ declare global {
             user?: {
                 userId: string;
                 email: string;
+                is_temporary_password: boolean;
+                full_name: string;
+                roles: string[];
+                privileges: string[];
             };
         }
     }
@@ -44,6 +48,10 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         req.user = {
             userId: payload.userId,
             email: payload.email,
+            is_temporary_password: payload.is_temporary_password,
+            full_name: payload.full_name,
+            roles: payload.roles,
+            privileges: payload.privileges,
         };
 
         next();
@@ -69,6 +77,10 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
                 req.user = {
                     userId: payload.userId,
                     email: payload.email,
+                    is_temporary_password: payload.is_temporary_password,
+                    full_name: payload.full_name,
+                    roles: payload.roles,
+                    privileges: payload.privileges,
                 };
             }
         }

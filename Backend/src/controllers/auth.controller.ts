@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import AuthServices from "../services/auth.service.js";
-import JWTService from "../utils/jwt.js";
+import AuthUseCases from "../usecases/auth.service.js";
+import JWTService from "../services/jwt.service.js";
 
 export default class AuthController {
 
@@ -16,35 +16,43 @@ export default class AuthController {
             }
 
             // find user using credentials
-            const user = await AuthServices.findUser(email);
+            const user = await AuthUseCases.findUser(email);
             if (!user || !user.password) {
                 return res.status(401).json({ success: false, message: "Usuario no encontrado" });
             }
 
             // verify password hash
-            const passwordsMatch = await AuthServices.verifyPassword(password, user.password);
+            const passwordsMatch = await AuthUseCases.verifyPassword(password, user.password);
             if (!passwordsMatch) {
                 return res.status(401).json({ success: false, message: "Contraseña incorrecta" });
             }
 
-            // generate access and refresh tokens
-            const accessToken = JWTService.generateAccessToken({
-                userId: user.id,
-                email: user.email,
-                is_temporary_password: user.is_temporary_password,
-                full_name: user.full_name,
-                roles: user.roles.map((role) => role.name),
-                privileges: user.roles.map((role) => role.privileges.map((privilege) => privilege.name)),
-            });
+            // Extract roles and privileges from the nested structure
+            const roles: string[] = user.roles.map((userRole: any) => userRole.role.name as string);
+            const allPrivileges = user.roles.flatMap((userRole: any) =>
+                userRole.role.privileges.map((rolePrivilege: any) => rolePrivilege.privilege.description as string)
+            );
+            const privileges: string[] = Array.from(new Set(allPrivileges));
 
-            const refreshToken = JWTService.generateRefreshToken({
+            // generate access and refresh tokens
+            const tokenPayload: {
+                userId: string;
+                email: string;
+                is_temporary_password: boolean;
+                full_name: string;
+                roles: string[];
+                privileges: string[];
+            } = {
                 userId: user.id,
                 email: user.email,
                 is_temporary_password: user.is_temporary_password,
                 full_name: user.full_name,
-                roles: user.roles.map((role) => role.name),
-                privileges: user.roles.map((role) => role.privileges.map((privilege) => privilege.name)),
-            });
+                roles,
+                privileges,
+            };
+
+            const accessToken = JWTService.generateAccessToken(tokenPayload);
+            const refreshToken = JWTService.generateRefreshToken(tokenPayload);
 
             // set tokens as HTTP-only cookies
             JWTService.setTokenCookies(res, accessToken, refreshToken);
@@ -108,10 +116,14 @@ export default class AuthController {
                 });
             }
 
-            // Generate new access token
+            // Generate new access token with all payload data
             const newAccessToken = JWTService.generateAccessToken({
                 userId: payload.userId,
                 email: payload.email,
+                is_temporary_password: payload.is_temporary_password,
+                full_name: payload.full_name,
+                roles: payload.roles,
+                privileges: payload.privileges,
             });
 
             // Set new access token cookie (keep existing refresh token)

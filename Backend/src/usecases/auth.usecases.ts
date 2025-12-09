@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 
-export default class AuthServices {
+export default class AuthUseCases {
     /**
      * Find user by email
      */

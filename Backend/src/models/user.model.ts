@@ -7,6 +7,21 @@ export default class User {
         try {
             const user = await prisma.user.findUnique({
                 where: { email: email },
+                include: {
+                    roles: {
+                        include: {
+                            role: {
+                                include: {
+                                    privileges: {
+                                        include: {
+                                            privilege: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             });
     
             return user;
