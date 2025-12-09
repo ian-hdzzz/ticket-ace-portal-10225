@@ -31,11 +31,19 @@ export default class AuthController {
             const accessToken = JWTService.generateAccessToken({
                 userId: user.id,
                 email: user.email,
+                is_temporary_password: user.is_temporary_password,
+                full_name: user.full_name,
+                roles: user.roles.map((role) => role.name),
+                privileges: user.roles.map((role) => role.privileges.map((privilege) => privilege.name)),
             });
 
             const refreshToken = JWTService.generateRefreshToken({
                 userId: user.id,
                 email: user.email,
+                is_temporary_password: user.is_temporary_password,
+                full_name: user.full_name,
+                roles: user.roles.map((role) => role.name),
+                privileges: user.roles.map((role) => role.privileges.map((privilege) => privilege.name)),
             });
 
             // set tokens as HTTP-only cookies
