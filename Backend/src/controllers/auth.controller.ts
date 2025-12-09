@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import AuthUseCases from "../usecases/auth.usecases.js";
 import JWTService from "../services/jwt.service.js";
+import type { TokenPayload } from "../types/jwtPayload.type.js";
 
 export default class AuthController {
 
@@ -35,14 +36,7 @@ export default class AuthController {
             const privileges: string[] = Array.from(new Set(allPrivileges));
 
             // generate access and refresh tokens
-            const tokenPayload: {
-                userId: string;
-                email: string;
-                is_temporary_password: boolean;
-                full_name: string;
-                roles: string[];
-                privileges: string[];
-            } = {
+            const tokenPayload: TokenPayload = {
                 userId: user.id,
                 email: user.email,
                 is_temporary_password: user.is_temporary_password,

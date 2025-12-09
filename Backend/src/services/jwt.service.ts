@@ -1,14 +1,6 @@
 import jwt from "jsonwebtoken";
 import type { Response } from "express";
-
-interface TokenPayload {
-    userId: string;
-    email: string;
-    is_temporary_password: boolean;
-    full_name: string;
-    roles: string[];
-    privileges: string[];
-}
+import type { TokenPayload } from "../types/jwtPayload.type.js";
 
 export default class JWTService {
     private static readonly ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET || "your-access-secret-change-in-production";
