@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import AuthUseCases from "../usecases/auth.service.js";
+import AuthUseCases from "../usecases/auth.usecases.js";
 import JWTService from "../services/jwt.service.js";
 
 export default class AuthController {
