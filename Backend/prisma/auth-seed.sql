@@ -100,6 +100,16 @@ async function main() {
     },
   });
 
+  const myUser = await.prisma.user.upsert({
+    where: { email: andrezala03@gmail.com },
+    update: {},
+    create: {
+      email: "fam@gmail.com",
+      full_name: "Andre Zaldivar Agle",
+      password: "famchi123"
+    }
+  })
+
   console.log("✓ Users created");
 
   // --- Assign Roles to Users ---
