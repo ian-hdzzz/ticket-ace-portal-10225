@@ -10,6 +10,7 @@ export default class AuthController {
      */
     static async login(req: Request, res: Response) {
         try {
+            console.log("Login endpoint called");
             // destruct body for email and password
             const { email, password } = req.body;
             if (!email || !password) {
