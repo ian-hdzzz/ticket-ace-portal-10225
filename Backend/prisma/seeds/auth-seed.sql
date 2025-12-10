@@ -1,4 +1,4 @@
-import { PrismaClient } from './generated/prisma';
+import { PrismaClient } from '../generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -9,27 +9,6 @@ async function main() {
   -- );
 
   console.log("🌱 Starting seed...");
-
-  // --- Create Privileges ---
-  const readPrivilege = await prisma.privilege.upsert({
-    where: { id: 1 },
-    update: {},
-    create: { description: "read_data" },
-  });
-
-  const writePrivilege = await prisma.privilege.upsert({
-    where: { id: 2 },
-    update: {},
-    create: { description: "write_data" },
-  });
-
-  const deletePrivilege = await prisma.privilege.upsert({
-    where: { id: 3 },
-    update: {},
-    create: { description: "delete_data" },
-  });
-
-  console.log("✓ Privileges created");
 
   // --- Create Roles ---
   const adminRole = await prisma.role.upsert({

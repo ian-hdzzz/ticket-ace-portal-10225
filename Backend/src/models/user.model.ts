@@ -5,16 +5,16 @@ export default class User {
 
     static async getUserByEmail(email: string) {
         try {
-            const user = await prisma.user.findUnique({
-                where: { email: email },
+            const user = await prisma.usuario.findUnique({
+                where: { correo: email },
                 include: {
                     roles: {
                         include: {
-                            role: {
+                            rol: {
                                 include: {
-                                    privileges: {
+                                    privilegios: {
                                         include: {
-                                            privilege: true
+                                            privilegio: true
                                         }
                                     }
                                 }

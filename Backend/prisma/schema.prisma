@@ -13,45 +13,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                    String   @id @default(uuid())
-  email                 String   @unique
-  password              String
-  full_name             String
-  is_temporary_password Boolean  @default(false)
+model Usuario {
+  id                       String   @id @default(uuid())
+  correo                   String   @unique
+  contrasena               String
+  nombre_completo          String
+  telefono                 String
+  activo                   Boolean  @default(true)
+  fecha_creacion           DateTime @default(now())
+  fecha_actualizacion      DateTime @updatedAt
+  contrasena_es_temporal   Boolean  @default(false)
 
-  roles UserRole[]
+  roles UsuarioRol[]
+
+  @@map("usuarios")
 }
 
-model Role {
-  id          Int          @id @default(autoincrement())
-  name        String       @unique
-  privileges  RolePrivilege[]
-  users       UserRole[]
+model Rol {
+  id                    String    @id @default(uuid())
+  nombre                String    @unique
+  descripcion           String
+  nivel_jerarquico      Int
+  activo                Boolean   @default(true)
+  fecha_creacion        DateTime  @default(now())
+  fecha_actualizacion   DateTime  @updatedAt
+
+  privilegios           RolPrivilegio[]
+  usuarios              UsuarioRol[]
+
+  @@map("roles")
 }
 
-model Privilege {
-  id          Int          @id @default(autoincrement())
-  description String
-  roles       RolePrivilege[]
+model Privilegio {
+  id          String    @id @default(uuid())
+  descripcion String    @unique
+  
+  roles       RolPrivilegio[]
+
+  @@map("privilegios")
 }
 
-model UserRole {
-  userId String
-  roleId Int
+model UsuarioRol {
+  id_usuario          String
+  id_rol              String
+  asignado_por        String
+  fecha_asignacion    DateTime  @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  rol     Rol     @relation(fields: [id_rol], references: [id], onDelete: Cascade)
 
-  @@id([userId, roleId])
+  @@id([id_usuario, id_rol])
+  @@map("usuario_roles")
 }
 
-model RolePrivilege {
-  roleId      Int
-  privilegeId Int
+model RolPrivilegio {
+  id_rol         String
+  id_privilegio  String
 
-  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  privilege Privilege @relation(fields: [privilegeId], references: [id], onDelete: Cascade)
+  rol        Rol        @relation(fields: [id_rol], references: [id], onDelete: Cascade)
+  privilegio Privilegio @relation(fields: [id_privilegio], references: [id], onDelete: Cascade)
 
-  @@id([roleId, privilegeId])
+  @@id([id_rol, id_privilegio])
+  @@map("rol_privilegios")
 }
