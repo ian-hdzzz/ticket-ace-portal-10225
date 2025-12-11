@@ -185,7 +185,7 @@ model TicketClarification {
   montoReclamado  Decimal? @db.Decimal(10,2)
   montoAjustado   Decimal? @db.Decimal(10,2)
   folioAnterior   String?  @db.VarChar(30)
-  documentosAnexos String[]?
+  documentosAnexos String[]
   createdAt       DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
 
   ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
@@ -254,7 +254,7 @@ model Ticket {
   closedAt       DateTime? @db.Timestamptz
   slaDeadline    DateTime? @db.Timestamptz
   slaBreached    Boolean?   @default(false)
-  tags           String[]?
+  tags           String[]
   metadata       Json?     @default("{}")
   createdAt      DateTime @default(now()) @db.Timestamptz
   updatedAt      DateTime @updatedAt @db.Timestamptz
@@ -312,7 +312,7 @@ model TicketTemplate {
   nombre           String   @db.VarChar(255)
   mensajeInicial   String?  @db.Text
   camposRequeridos Json?
-  documentosRequeridos String[]?
+  documentosRequeridos String[]
   active           Boolean? @default(true)
   createdAt        DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
 
@@ -324,7 +324,7 @@ model CannedResponse {
   categoria String?  @db.VarChar(100)
   titulo    String?  @db.VarChar(255)
   mensaje   String   @db.Text
-  shortcuts String[]?
+  shortcuts String[]
   usoCount  Int?     @default(0)
   active    Boolean? @default(true)
   createdAt DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
