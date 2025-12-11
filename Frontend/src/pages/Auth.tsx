@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '../supabase/client.ts'
+import { authService } from '../services/auth.service'
 
 export default function Auth() {
   // Solo login, no registro
@@ -17,37 +18,32 @@ export default function Auth() {
     e.preventDefault();
     setErrorMsg("");
     try {
-      // Validación sencilla contra la tabla users
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, email, password, full_name, is_temporary_password')
-        .eq('email', email)
-        .eq('password', password)
-        .single();
-      if (error || !data) {
-        setErrorMsg("Correo o contraseña incorrectos.");
+      // Call backend API for authentication
+      const response = await authService.login(email, password);
+      
+      if (!response.success) {
+        setErrorMsg(response.message || "Correo o contraseña incorrectos.");
         return;
       }
-      if (data.is_temporary_password) {
-        // Mostrar formulario para cambiar contraseña
+
+      // Check if user has temporary password
+      if (response.user.is_temporary_password) {
+        // Show change password form
         setShowChangePassword(true);
-        // Guardar el usuario temporalmente para el cambio de contraseña
+        // Store user temporarily for password change
         localStorage.setItem("user_temp", JSON.stringify({
-          id: data.id,
-          email: data.email,
-          full_name: data.full_name
+          id: response.user.id,
+          email: response.user.email,
+          full_name: response.user.full_name
         }));
         return;
       }
-      // Guardar el usuario en localStorage para protección de rutas
-      localStorage.setItem("user", JSON.stringify({
-        id: data.id,
-        email: data.email,
-        full_name: data.full_name
-      }));
+
+      // Store user in localStorage for route protection
+      authService.setCurrentUser(response.user);
       navigate("/dashboard");
-    } catch (error) {
-      setErrorMsg("Ocurrió un error inesperado. Por favor intenta de nuevo más tarde.");
+    } catch (error: any) {
+      setErrorMsg(error.message || "Ocurrió un error inesperado. Por favor intenta de nuevo más tarde.");
       console.error("Error en autenticación:", error);
     }
   };
