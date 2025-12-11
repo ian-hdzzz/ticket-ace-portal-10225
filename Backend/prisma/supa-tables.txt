@@ -1,0 +1,393 @@
+conver the following into prisma-usable syntax:
+create table cea.meter_readings (
+  id uuid not null default gen_random_uuid (),
+  ticket_id uuid null,
+  customer_id uuid null,
+  lectura_anterior numeric(10, 2) null,
+  lectura_actual numeric(10, 2) not null,
+  consumo_m3 numeric GENERATED ALWAYS as (
+    (
+      lectura_actual - COALESCE(lectura_anterior, (0)::numeric)
+    )
+  ) STORED (10, 2) null,
+  fecha_lectura date not null,
+  foto_url text null,
+  validado boolean null default false,
+  observaciones text null,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  media_id uuid null,
+  constraint meter_readings_pkey primary key (id),
+  constraint meter_readings_customer_id_fkey foreign KEY (customer_id) references cea.customers (id) on delete CASCADE,
+  constraint meter_readings_media_id_fkey foreign KEY (media_id) references cea.media_assets (id),
+  constraint meter_readings_ticket_id_fkey foreign KEY (ticket_id) references cea.tickets (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create table cea.customer_media (
+  id uuid not null default gen_random_uuid (),
+  customer_id uuid not null,
+  media_id uuid not null,
+  purpose public.media_purpose null default 'other'::media_purpose,
+  description text null,
+  metadata jsonb null default '{}'::jsonb,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint customer_media_pkey primary key (id),
+  constraint customer_media_customer_id_media_id_key unique (customer_id, media_id),
+  constraint customer_media_customer_id_fkey foreign KEY (customer_id) references cea.customers (id) on delete CASCADE,
+  constraint customer_media_media_id_fkey foreign KEY (media_id) references cea.media_assets (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create index IF not exists idx_customer_media_customer on cea.customer_media using btree (customer_id) TABLESPACE pg_default;
+
+create table cea.media_assets (
+  id uuid not null default gen_random_uuid (),
+  kind public.media_kind not null,
+  bucket text not null,
+  path text not null,
+  mime_type text null,
+  size_bytes bigint null,
+  sha256 text null,
+  source public.media_source null default 'customer'::media_source,
+  uploaded_by uuid null,
+  metadata jsonb null default '{}'::jsonb,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint media_assets_pkey primary key (id),
+  constraint media_assets_bucket_path_key unique (bucket, path)
+) TABLESPACE pg_default;
+
+create index IF not exists idx_media_kind on cea.media_assets using btree (kind) TABLESPACE pg_default;
+
+create index IF not exists idx_media_bucket on cea.media_assets using btree (bucket) TABLESPACE pg_default;
+
+create index IF not exists idx_media_created on cea.media_assets using btree (created_at) TABLESPACE pg_default;
+
+create index IF not exists idx_media_metadata_gin on cea.media_assets using gin (metadata) TABLESPACE pg_default;
+
+create table cea.customers (
+  id uuid not null default gen_random_uuid (),
+  numero_contrato character varying(20) null,
+  nombre_titular character varying(255) null,
+  email character varying(255) null,
+  telefono character varying(20) null,
+  whatsapp text null,
+  direccion_servicio text null,
+  colonia character varying(100) null,
+  codigo_postal character varying(10) null,
+  municipio character varying(100) null default 'Querétaro'::character varying,
+  recibo_digital boolean null default false,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  first_interaction_channel text null,
+  constraint customers_pkey primary key (id),
+  constraint customers_numero_contrato_key unique (numero_contrato)
+) TABLESPACE pg_default;
+
+create index IF not exists idx_customers_contrato on cea.customers using btree (numero_contrato) TABLESPACE pg_default;
+
+create index IF not exists idx_customers_nombre on cea.customers using gin (nombre_titular gin_trgm_ops) TABLESPACE pg_default;
+
+create index IF not exists idx_customers_telefono on cea.customers using btree (telefono) TABLESPACE pg_default;
+
+create trigger update_customers_timestamp BEFORE
+update on cea.customers for EACH row
+execute FUNCTION cea.trigger_update_timestamp ();
+
+create table cea.ticket_clarifications (
+  id uuid not null default gen_random_uuid (),
+  ticket_id uuid null,
+  periodo_recibo character varying(20) null,
+  tipo_aclaracion character varying(100) null,
+  monto_reclamado numeric(10, 2) null,
+  monto_ajustado numeric(10, 2) null,
+  folio_anterior character varying(30) null,
+  documentos_anexos text[] null,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint ticket_clarifications_pkey primary key (id),
+  constraint ticket_clarifications_ticket_id_key unique (ticket_id),
+  constraint ticket_clarifications_ticket_id_fkey foreign KEY (ticket_id) references cea.tickets (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create table cea.ticket_leaks (
+  id uuid not null default gen_random_uuid (),
+  ticket_id uuid null,
+  tipo_fuga character varying(50) null,
+  ubicacion_exacta text not null,
+  entre_calles text null,
+  coordenadas point null,
+  magnitud character varying(50) null,
+  riesgo_inmediato boolean null default false,
+  brigada_asignada character varying(50) null,
+  tiempo_estimado_llegada integer null,
+  fecha_reparacion timestamp with time zone null,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint ticket_leaks_pkey primary key (id),
+  constraint ticket_leaks_ticket_id_key unique (ticket_id),
+  constraint ticket_leaks_ticket_id_fkey foreign KEY (ticket_id) references cea.tickets (id) on delete CASCADE,
+  constraint ticket_leaks_magnitud_check check (
+    (
+      (magnitud)::text = any (
+        (
+          array[
+            'goteo'::character varying,
+            'flujo_moderado'::character varying,
+            'flujo_alto'::character varying,
+            'inundacion'::character varying
+          ]
+        )::text[]
+      )
+    )
+  ),
+  constraint ticket_leaks_tipo_fuga_check check (
+    (
+      (tipo_fuga)::text = any (
+        (
+          array[
+            'via_publica'::character varying,
+            'interna'::character varying,
+            'medidor'::character varying
+          ]
+        )::text[]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create table cea.payment_records (
+  id uuid not null default gen_random_uuid (),
+  ticket_id uuid null,
+  customer_id uuid null,
+  numero_recibo character varying(30) null,
+  periodo character varying(20) null,
+  monto numeric(10, 2) not null,
+  metodo_pago public.payment_method null,
+  referencia_pago character varying(100) null,
+  fecha_pago timestamp with time zone null,
+  confirmado boolean null default false,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint payment_records_pkey primary key (id),
+  constraint payment_records_customer_id_fkey foreign KEY (customer_id) references cea.customers (id) on delete CASCADE,
+  constraint payment_records_ticket_id_fkey foreign KEY (ticket_id) references cea.tickets (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create table cea.tickets (
+  id uuid not null default gen_random_uuid (),
+  folio character varying(30) not null,
+  customer_id uuid null,
+  service_type public.service_type not null,
+  ticket_type public.ticket_type_code not null,
+  status public.ticket_status null default 'abierto'::ticket_status,
+  priority public.priority_level null default 'media'::priority_level,
+  channel public.channel_type not null,
+  titulo character varying(255) not null,
+  descripcion text null,
+  assigned_to uuid null,
+  assigned_at timestamp with time zone null,
+  escalated_to uuid null,
+  escalated_at timestamp with time zone null,
+  resolution_notes text null,
+  resolved_at timestamp with time zone null,
+  closed_at timestamp with time zone null,
+  sla_deadline timestamp with time zone null,
+  sla_breached boolean null default false,
+  tags text[] null,
+  metadata jsonb null default '{}'::jsonb,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  client_name text null,
+  contract_number integer null,
+  constraint tickets_pkey primary key (id),
+  constraint tickets_folio_key unique (folio),
+  constraint tickets_customer_id_fkey foreign KEY (customer_id) references cea.customers (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create trigger auto_generate_folio BEFORE INSERT on cea.tickets for EACH row
+execute FUNCTION cea.trigger_generate_folio ();
+
+create trigger auto_set_sla BEFORE INSERT on cea.tickets for EACH row
+execute FUNCTION cea.trigger_set_sla_deadline ();
+
+create trigger update_tickets_timestamp BEFORE
+update on cea.tickets for EACH row
+execute FUNCTION cea.trigger_update_timestamp ();
+
+create table cea.contract_changes (
+  id uuid not null default gen_random_uuid (),
+  ticket_id uuid null,
+  tipo_tramite character varying(50) null,
+  titular_anterior character varying(255) null,
+  titular_nuevo character varying(255) null,
+  documentos_requeridos jsonb null,
+  documentos_recibidos jsonb null,
+  estado_tramite character varying(50) null,
+  fecha_efectiva date null,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint contract_changes_pkey primary key (id),
+  constraint contract_changes_ticket_id_key unique (ticket_id),
+  constraint contract_changes_ticket_id_fkey foreign KEY (ticket_id) references cea.tickets (id) on delete CASCADE,
+  constraint contract_changes_tipo_tramite_check check (
+    (
+      (tipo_tramite)::text = any (
+        (
+          array[
+            'nueva_contratacion'::character varying,
+            'cambio_titular'::character varying,
+            'baja_servicio'::character varying
+          ]
+        )::text[]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create table cea.sla_config (
+  id uuid not null default gen_random_uuid (),
+  service_type public.service_type not null,
+  priority public.priority_level not null,
+  response_time_minutes integer not null,
+  resolution_time_minutes integer not null,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint sla_config_pkey primary key (id),
+  constraint sla_config_service_type_priority_key unique (service_type, priority)
+) TABLESPACE pg_default;
+
+create table cea.ticket_templates (
+  id uuid not null default gen_random_uuid (),
+  service_type public.service_type not null,
+  nombre character varying(255) not null,
+  mensaje_inicial text null,
+  campos_requeridos jsonb null,
+  documentos_requeridos text[] null,
+  active boolean null default true,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint ticket_templates_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create table cea.canned_responses (
+  id uuid not null default gen_random_uuid (),
+  categoria character varying(100) null,
+  titulo character varying(255) null,
+  mensaje text not null,
+  shortcuts text[] null,
+  uso_count integer null default 0,
+  active boolean null default true,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint canned_responses_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create table cea.ticket_conversations (
+  id uuid not null default gen_random_uuid (),
+  ticket_id uuid null,
+  sender_type character varying(20) null,
+  sender_id uuid null,
+  sender_name character varying(255) null,
+  message text not null,
+  attachments jsonb null default '[]'::jsonb,
+  metadata jsonb null default '{}'::jsonb,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint ticket_conversations_pkey primary key (id),
+  constraint ticket_conversations_ticket_id_fkey foreign KEY (ticket_id) references cea.tickets (id) on delete CASCADE,
+  constraint ticket_conversations_sender_type_check check (
+    (
+      (sender_type)::text = any (
+        (
+          array[
+            'customer'::character varying,
+            'agent'::character varying,
+            'system'::character varying
+          ]
+        )::text[]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create table cea.ticket_media (
+  id uuid not null default gen_random_uuid (),
+  ticket_id uuid not null,
+  media_id uuid not null,
+  purpose public.media_purpose null default 'evidence'::media_purpose,
+  description text null,
+  metadata jsonb null default '{}'::jsonb,
+  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+  constraint ticket_media_pkey primary key (id),
+  constraint ticket_media_ticket_id_media_id_key unique (ticket_id, media_id),
+  constraint ticket_media_media_id_fkey foreign KEY (media_id) references cea.media_assets (id) on delete CASCADE,
+  constraint ticket_media_ticket_id_fkey foreign KEY (ticket_id) references cea.tickets (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create index IF not exists idx_ticket_media_ticket on cea.ticket_media using btree (ticket_id) TABLESPACE pg_default;
+
+create index IF not exists idx_ticket_media_purpose on cea.ticket_media using btree (purpose) TABLESPACE pg_default;
+
+create index IF not exists idx_ticket_media_metadata_gin on cea.ticket_media using gin (metadata) TABLESPACE pg_default;
+
+create view cea.v_ticket_dashboard as
+select
+  t.id,
+  t.folio,
+  t.status,
+  t.priority,
+  t.service_type,
+  t.titulo,
+  c.nombre_titular,
+  c.numero_contrato,
+  t.created_at,
+  t.sla_deadline,
+  case
+    when t.sla_deadline < CURRENT_TIMESTAMP
+    and (
+      t.status <> all (
+        array[
+          'resuelto'::ticket_status,
+          'cerrado'::ticket_status
+        ]
+      )
+    ) then true
+    else false
+  end as sla_breached,
+  t.assigned_to,
+  count(tc.id) as message_count
+from
+  cea.tickets t
+  left join cea.customers c on t.customer_id = c.id
+  left join cea.ticket_conversations tc on t.id = tc.ticket_id
+group by
+  t.id,
+  c.nombre_titular,
+  c.numero_contrato;
+
+create view cea.v_ticket_statistics as
+select
+  date (created_at) as fecha,
+  service_type,
+  count(*) as total_tickets,
+  count(*) filter (
+    where
+      status = 'resuelto'::ticket_status
+  ) as resolved_tickets,
+  count(*) filter (
+    where
+      status = 'abierto'::ticket_status
+  ) as open_tickets,
+  count(*) filter (
+    where
+      priority = 'urgente'::priority_level
+  ) as urgent_tickets,
+  avg(
+    EXTRACT(
+      epoch
+      from
+        resolved_at - created_at
+    ) / 60::numeric
+  )::integer as avg_resolution_minutes
+from
+  cea.tickets
+group by
+  (date (created_at)),
+  service_type;
+
+create table cea.n8n_chat_historial_bot (
+  id serial not null,
+  session_id character varying(255) not null,
+  message jsonb not null,
+  constraint n8n_chat_historial_bot_pkey primary key (id)
+) TABLESPACE pg_default;

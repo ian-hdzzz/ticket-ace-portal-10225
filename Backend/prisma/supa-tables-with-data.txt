@@ -1,0 +1,23 @@
+SELECT * FROM cea.customer_media; (empty)
+SELECT * FROM cea.meter_readings; (empty)
+SELECT * FROM cea.media_assets; (empty)
+SELECT * FROM cea.customers;
+SELECT * FROM cea.ticket_clarifications; (empty)
+SELECT * FROM cea.ticket_leaks; (empty)
+SELECT * FROM cea.payment_records; (empty)
+SELECT * FROM cea.tickets;
+SELECT * FROM cea.contract_changes; (empty)
+SELECT * FROM cea.sla_config; (empty)
+SELECT * FROM cea.ticket_templates; (empty)
+SELECT * FROM cea.canned_responses; (empty)
+SELECT * FROM cea.ticket_conversations; (empty)
+SELECT * FROM cea.ticket_media; (empty)
+SELECT * FROM cea.v_ticket_dashboard;
+SELECT * FROM cea.v_ticket_statistics; (empty)
+SELECT * FROM cea.n8n_chat_historial_bot;
+// already accounted for
+SELECT * FROM cea.users;
+SELECT * FROM cea.users_roles; 
+SELECT * FROM cea.roles_privileges;
+SELECT * FROM cea.privileges;
+SELECT * FROM cea.roles;
