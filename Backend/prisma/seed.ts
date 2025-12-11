@@ -23,9 +23,9 @@ async function main() {
 
   try {
     // Import in dependency order
-    // await importCustomers();
+    await importCustomers();
     await importTickets();
-    // await importN8nChatHistory();
+    await importN8nChatHistory();
 
     // Reset sequences for auto-increment tables
     // await resetSequences();
