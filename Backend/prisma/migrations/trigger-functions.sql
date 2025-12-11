@@ -62,14 +62,14 @@ DECLARE
   resolution_minutes INTEGER;
 BEGIN
   -- Look up resolution time from sla_config table
-  SELECT resolution_time_minutes INTO resolution_minutes
+  SELECT "resolutionTimeMinutes" INTO resolution_minutes
   FROM public.sla_config
-  WHERE service_type = NEW.service_type 
+  WHERE "serviceType" = NEW."serviceType" 
     AND priority = NEW.priority;
   
   -- If configuration exists, calculate deadline
   IF resolution_minutes IS NOT NULL THEN
-    NEW.sla_deadline := NEW.created_at + (resolution_minutes || ' minutes')::INTERVAL;
+    NEW."slaDeadline" := NEW."createdAt" + (resolution_minutes || ' minutes')::INTERVAL;
   END IF;
   
   RETURN NEW;

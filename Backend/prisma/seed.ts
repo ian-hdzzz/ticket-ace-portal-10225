@@ -1,6 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
-import * as path from 'path';
+// import * as path from 'path';
+
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 import { parse } from 'csv-parse/sync';
 
 const prisma = new PrismaClient();
@@ -16,12 +23,12 @@ async function main() {
 
   try {
     // Import in dependency order
-    await importCustomers();
+    // await importCustomers();
     await importTickets();
-    await importN8nChatHistory();
+    // await importN8nChatHistory();
 
     // Reset sequences for auto-increment tables
-    await resetSequences();
+    // await resetSequences();
 
     console.log('\n✅ Database seeded successfully!');
     console.log('\n📊 Summary:');
@@ -67,27 +74,27 @@ async function importCustomers() {
           id: record.id,
           
           // Basic fields
-          numeroContrato: record.numero_contrato || null,
-          nombreTitular: record.nombre_titular || null,
-          email: record.email || null,
-          telefono: record.telefono || null,
-          whatsapp: record.whatsapp || null,
+          numeroContrato: parseNullableString(record.numero_contrato),
+          nombreTitular: parseNullableString(record.nombre_titular),
+          email: parseNullableString(record.email),
+          telefono: parseNullableString(record.telefono),
+          whatsapp: parseNullableString(record.whatsapp),
           
           // Address fields
-          direccionServicio: record.direccion_servicio || null,
-          colonia: record.colonia || null,
-          codigoPostal: record.codigo_postal || null,
-          municipio: record.municipio || 'Querétaro',
+          direccionServicio: parseNullableString(record.direccion_servicio),
+          colonia: parseNullableString(record.colonia),
+          codigoPostal: parseNullableString(record.codigo_postal),
+          municipio: parseNullableString(record.municipio) || 'Querétaro',
           
           // Boolean fields
           reciboDigital: record.recibo_digital === 'true' || record.recibo_digital === 't',
           
           // Metadata
-          firstInteractionChannel: record.first_interaction_channel || null,
+          firstInteractionChannel: parseNullableString(record.first_interaction_channel),
           
           // Timestamps - preserve original
-          createdAt: record.created_at ? new Date(record.created_at) : new Date(),
-          updatedAt: record.updated_at ? new Date(record.updated_at) : new Date(),
+          createdAt: parseNullableDate(record.created_at) || new Date(),
+          updatedAt: parseNullableDate(record.updated_at) || new Date(),
         },
       });
       imported++;
@@ -134,41 +141,41 @@ async function importTickets() {
           
           // Basic fields
           folio: record.folio,
-          customerId: record.customer_id || null,
+          customerId: parseNullableString(record.customer_id),
           serviceType: record.service_type as any,
           ticketType: record.ticket_type as any,
           status: (record.status || 'abierto') as any,
           priority: (record.priority || 'media') as any,
           channel: record.channel as any,
           titulo: record.titulo,
-          descripcion: record.descripcion || null,
+          descripcion: parseNullableString(record.descripcion),
           
           // Assignment fields
-          assignedTo: record.assigned_to || null,
-          assignedAt: record.assigned_at ? new Date(record.assigned_at) : null,
-          escalatedTo: record.escalated_to || null,
-          escalatedAt: record.escalated_at ? new Date(record.escalated_at) : null,
+          assignedTo: parseNullableString(record.assigned_to),
+          assignedAt: parseNullableDate(record.assigned_at),
+          escalatedTo: parseNullableString(record.escalated_to),
+          escalatedAt: parseNullableDate(record.escalated_at),
           
           // Resolution fields
-          resolutionNotes: record.resolution_notes || null,
-          resolvedAt: record.resolved_at ? new Date(record.resolved_at) : null,
-          closedAt: record.closed_at ? new Date(record.closed_at) : null,
+          resolutionNotes: parseNullableString(record.resolution_notes),
+          resolvedAt: parseNullableDate(record.resolved_at),
+          closedAt: parseNullableDate(record.closed_at),
           
           // SLA fields
-          slaDeadline: record.sla_deadline ? new Date(record.sla_deadline) : null,
+          slaDeadline: parseNullableDate(record.sla_deadline),
           slaBreached: record.sla_breached === 'true' || record.sla_breached === 't',
           
           // Array and JSON fields
-          tags: record.tags ? parseJsonSafe(record.tags, []) : null,
+          tags: record.tags ? parseJsonSafe(record.tags, []) : [],
           metadata: record.metadata ? parseJsonSafe(record.metadata, {}) : {},
           
           // Additional fields
-          clientName: record.client_name || null,
-          contractNumber: record.contract_number ? parseInt(record.contract_number) : null,
+          clientName: parseNullableString(record.client_name),
+          contractNumber: parseNullableInt(record.contract_number),
           
           // Timestamps - preserve original
-          createdAt: record.created_at ? new Date(record.created_at) : new Date(),
-          updatedAt: record.updated_at ? new Date(record.updated_at) : new Date(),
+          createdAt: parseNullableDate(record.created_at) || new Date(),
+          updatedAt: parseNullableDate(record.updated_at) || new Date(),
         },
       });
       imported++;
@@ -252,7 +259,7 @@ async function resetSequences() {
  * Safely parse JSON strings, returning default value on error
  */
 function parseJsonSafe(jsonString: string, defaultValue: any): any {
-  if (!jsonString || jsonString === '') {
+  if (!jsonString || jsonString === '' || jsonString === 'null') {
     return defaultValue;
   }
   
@@ -262,6 +269,48 @@ function parseJsonSafe(jsonString: string, defaultValue: any): any {
     console.warn(`   ⚠️  Invalid JSON encountered, using default:`, jsonString.substring(0, 50));
     return defaultValue;
   }
+}
+
+/**
+ * Parse nullable string - handles "null" string, empty strings, and undefined
+ */
+function parseNullableString(value: string | undefined): string | null {
+  if (!value || value === '' || value === 'null' || value === 'undefined') {
+    return null;
+  }
+  return value;
+}
+
+/**
+ * Parse nullable date - handles "null" string, empty strings, and invalid dates
+ */
+function parseNullableDate(value: string | undefined): Date | null {
+  if (!value || value === '' || value === 'null' || value === 'undefined') {
+    return null;
+  }
+  
+  const date = new Date(value);
+  if (isNaN(date.getTime())) {
+    return null;
+  }
+  
+  return date;
+}
+
+/**
+ * Parse nullable integer - handles "null" string, empty strings, and NaN
+ */
+function parseNullableInt(value: string | undefined): number | null {
+  if (!value || value === '' || value === 'null' || value === 'undefined') {
+    return null;
+  }
+  
+  const num = parseInt(value);
+  if (isNaN(num)) {
+    return null;
+  }
+  
+  return num;
 }
 
 // Run the seed
