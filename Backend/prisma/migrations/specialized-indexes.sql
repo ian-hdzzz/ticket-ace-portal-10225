@@ -10,16 +10,16 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- GIN index for JSONB metadata search on media_assets
 CREATE INDEX IF NOT EXISTS idx_media_metadata_gin 
-  ON cea.media_assets USING gin (metadata);
+  ON public.media_assets USING gin (metadata);
 
 -- GIN index for JSONB metadata search on ticket_media
 CREATE INDEX IF NOT EXISTS idx_ticket_media_metadata_gin 
-  ON cea.ticket_media USING gin (metadata);
+  ON public.ticket_media USING gin (metadata);
 
 -- Trigram GIN index for fuzzy name search on customers
 -- This enables fast LIKE/ILIKE queries and similarity searches
 CREATE INDEX IF NOT EXISTS idx_customers_nombre 
-  ON cea.customers USING gin (nombre_titular gin_trgm_ops);
+  ON public.customers USING gin ("nombreTitular" gin_trgm_ops);
 
 -- ============================================================================
 -- End of Specialized Indexes

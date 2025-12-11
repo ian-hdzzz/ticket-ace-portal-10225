@@ -15,7 +15,7 @@
 -- Examples: CEA-2025-00001, CEA-2025-00002, etc.
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION cea.trigger_generate_folio()
+CREATE OR REPLACE FUNCTION public.trigger_generate_folio()
 RETURNS TRIGGER AS $$
 DECLARE
   year_part TEXT;
@@ -29,7 +29,7 @@ BEGIN
     -- Looks for the highest number in existing folios for current year
     SELECT COALESCE(MAX(CAST(SUBSTRING(folio FROM 10) AS INTEGER)), 0) + 1
     INTO seq_num
-    FROM cea.tickets
+    FROM public.tickets
     WHERE folio LIKE 'CEA-' || year_part || '-%';
     
     -- Format: CEA-2025-00001
@@ -41,11 +41,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Attach trigger to tickets table
-DROP TRIGGER IF EXISTS auto_generate_folio ON cea.tickets;
+DROP TRIGGER IF EXISTS auto_generate_folio ON public.tickets;
 CREATE TRIGGER auto_generate_folio
-  BEFORE INSERT ON cea.tickets
+  BEFORE INSERT ON public.tickets
   FOR EACH ROW 
-  EXECUTE FUNCTION cea.trigger_generate_folio();
+  EXECUTE FUNCTION public.trigger_generate_folio();
 
 -- ============================================================================
 -- 2. Set SLA Deadline Function
@@ -56,14 +56,14 @@ CREATE TRIGGER auto_generate_folio
 -- - resolution_time_minutes from sla_config table
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION cea.trigger_set_sla_deadline()
+CREATE OR REPLACE FUNCTION public.trigger_set_sla_deadline()
 RETURNS TRIGGER AS $$
 DECLARE
   resolution_minutes INTEGER;
 BEGIN
   -- Look up resolution time from sla_config table
   SELECT resolution_time_minutes INTO resolution_minutes
-  FROM cea.sla_config
+  FROM public.sla_config
   WHERE service_type = NEW.service_type 
     AND priority = NEW.priority;
   
@@ -77,11 +77,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Attach trigger to tickets table
-DROP TRIGGER IF EXISTS auto_set_sla ON cea.tickets;
+DROP TRIGGER IF EXISTS auto_set_sla ON public.tickets;
 CREATE TRIGGER auto_set_sla
-  BEFORE INSERT ON cea.tickets
+  BEFORE INSERT ON public.tickets
   FOR EACH ROW 
-  EXECUTE FUNCTION cea.trigger_set_sla_deadline();
+  EXECUTE FUNCTION public.trigger_set_sla_deadline();
 
 -- ============================================================================
 -- End of Trigger Functions

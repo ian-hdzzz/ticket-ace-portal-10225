@@ -12,7 +12,7 @@
 -- Provides a dashboard view of tickets with related customer info and metrics
 -- ============================================================================
 
-CREATE OR REPLACE VIEW cea.v_ticket_dashboard AS
+CREATE OR REPLACE VIEW public.v_ticket_dashboard AS
 SELECT
   t.id,
   t.folio,
@@ -32,9 +32,9 @@ SELECT
   END as sla_breached,
   t.assigned_to,
   COUNT(tc.id) as message_count
-FROM cea.tickets t
-LEFT JOIN cea.customers c ON t.customer_id = c.id
-LEFT JOIN cea.ticket_conversations tc ON t.id = tc.ticket_id
+FROM public.tickets t
+LEFT JOIN public.customers c ON t.customer_id = c.id
+LEFT JOIN public.ticket_conversations tc ON t.id = tc.ticket_id
 GROUP BY
   t.id,
   c.nombre_titular,
@@ -46,7 +46,7 @@ GROUP BY
 -- Provides daily statistics aggregated by service_type
 -- ============================================================================
 
-CREATE OR REPLACE VIEW cea.v_ticket_statistics AS
+CREATE OR REPLACE VIEW public.v_ticket_statistics AS
 SELECT
   DATE(created_at) as fecha,
   service_type,
@@ -58,7 +58,7 @@ SELECT
     AVG(EXTRACT(epoch FROM resolved_at - created_at) / 60) 
     AS INTEGER
   ) as avg_resolution_minutes
-FROM cea.tickets
+FROM public.tickets
 GROUP BY DATE(created_at), service_type;
 
 -- ============================================================================
@@ -70,6 +70,6 @@ GROUP BY DATE(created_at), service_type;
 -- - They exist in the database
 -- - Prisma won't try to manage them
 -- - You can still query them via raw SQL if needed:
---   await prisma.$queryRaw`SELECT * FROM cea.v_ticket_dashboard`
+--   await prisma.$queryRaw`SELECT * FROM public.v_ticket_dashboard`
 -- ============================================================================
 

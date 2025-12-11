@@ -237,8 +237,8 @@ async function resetSequences() {
     // Reset N8n chat history sequence
     await prisma.$executeRawUnsafe(`
       SELECT setval(
-        'cea.n8n_chat_historial_bot_id_seq',
-        COALESCE((SELECT MAX(id) FROM cea.n8n_chat_historial_bot), 1),
+        'public.n8n_chat_historial_bot_id_seq',
+        COALESCE((SELECT MAX(id) FROM public.n8n_chat_historial_bot), 1),
         true
       );
     `);
