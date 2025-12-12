@@ -27,7 +27,8 @@ import {
   PieChart as PieChartIcon, 
   Download,
   Filter,
-  X
+  X,
+  Share2
 } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import jsPDF from 'jspdf';
@@ -61,6 +62,7 @@ export default function CrearReportes() {
   const [isLoading, setIsLoading] = useState(false);
   const [charts, setCharts] = useState<ChartConfig[]>([]);
   const [isAddChartDialogOpen, setIsAddChartDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   // Filtros
   const [dateRange, setDateRange] = useState<{
@@ -85,7 +87,21 @@ export default function CrearReportes() {
   });
 
   // Obtener campos disponibles para graficar
-  const availableFields = useMemo(() => getVisibleFields("admin"), []);
+  const availableFields = useMemo(() => {
+    const allFields = getVisibleFields("admin");
+    // Excluir campos que no son útiles para análisis de gráficas
+    const excludedFields = [
+      "numero_contrato",
+      "titular",
+      "actualizado",
+      "colonia",
+      "direccion",
+      "observaciones_internas",
+      "numero_orden_aquacis",
+      "administracion"
+    ];
+    return allFields.filter(field => !excludedFields.includes(field));
+  }, []);
 
   // Cargar tickets al montar
   useEffect(() => {
@@ -319,6 +335,45 @@ export default function CrearReportes() {
     }
   };
 
+  // Compartir reporte
+  const handleShareReport = () => {
+    setIsShareDialogOpen(true);
+  };
+
+  const copyReportLink = () => {
+    const reportConfig = {
+      charts: charts.map(c => ({ field: c.field, type: c.type, title: c.title })),
+      filters: {
+        dateRange,
+        status: statusFilter,
+        priority: priorityFilter,
+      },
+    };
+    
+    // En producción, esto generaría una URL corta en el servidor
+    const configString = btoa(JSON.stringify(reportConfig));
+    const shareUrl = `${window.location.origin}/dashboard/crear-reportes?config=${configString}`;
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert('Enlace copiado al portapapeles');
+    }).catch(() => {
+      alert('Error al copiar el enlace');
+    });
+  };
+
+  const shareByEmail = () => {
+    const subject = encodeURIComponent('Reporte de Tickets - CEA Querétaro');
+    const body = encodeURIComponent(
+      `Hola,\n\nTe comparto el siguiente reporte de análisis de tickets:\n\n` +
+      `- Período: ${dateRange.start.toLocaleDateString('es-MX')} - ${dateRange.end.toLocaleDateString('es-MX')}\n` +
+      `- Total de tickets: ${filteredTickets.length}\n` +
+      `- Gráficas incluidas: ${charts.length}\n\n` +
+      `Puedes descargar el reporte desde el sistema.`
+    );
+    
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
   // Limpiar filtros
   const clearFilters = () => {
     setDateRange({
@@ -442,12 +497,21 @@ export default function CrearReportes() {
         <div className="flex gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
           <Button
             variant="outline"
+            onClick={handleShareReport}
+            disabled={charts.length === 0}
+            className="flex-1 sm:flex-initial"
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            <span>Compartir</span>
+          </Button>
+          <Button
+            variant="outline"
             onClick={downloadFullReport}
             disabled={charts.length === 0}
             className="flex-1 sm:flex-initial"
           >
             <Download className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Descargar PDF</span>
+            <span className="hidden sm:inline">Exportar PDF</span>
             <span className="sm:hidden">PDF</span>
           </Button>
           <Button onClick={() => setIsAddChartDialogOpen(true)} className="flex-1 sm:flex-initial">
@@ -681,6 +745,88 @@ export default function CrearReportes() {
             <Button onClick={handleAddChart} disabled={!newChart.field}>
               <Plus className="h-4 w-4 mr-2" />
               Agregar Gráfica
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para compartir */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="h-5 w-5" />
+              Compartir Reporte
+            </DialogTitle>
+            <DialogDescription>
+              Comparte este reporte con tu equipo o genera un enlace para acceso posterior
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">Información del Reporte</h4>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>• Período: {dateRange.start.toLocaleDateString('es-MX')} - {dateRange.end.toLocaleDateString('es-MX')}</p>
+                <p>• Total de tickets: {filteredTickets.length}</p>
+                <p>• Gráficas incluidas: {charts.length}</p>
+                {statusFilter !== "todos" && <p>• Filtro de estado: {mapStatus(statusFilter)}</p>}
+                {priorityFilter !== "todos" && <p>• Filtro de prioridad: {mapPriority(priorityFilter)}</p>}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={copyReportLink}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Copiar enlace del reporte
+              </Button>
+              <p className="text-xs text-muted-foreground px-1">
+                Copia un enlace que recrea este reporte con las mismas gráficas y filtros
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={shareByEmail}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Compartir por email
+              </Button>
+              <p className="text-xs text-muted-foreground px-1">
+                Abre tu cliente de correo con la información del reporte
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setIsShareDialogOpen(false);
+                  downloadFullReport();
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar a PDF y compartir
+              </Button>
+              <p className="text-xs text-muted-foreground px-1">
+                Descarga el reporte en PDF para compartir el archivo
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsShareDialogOpen(false)}
+            >
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>

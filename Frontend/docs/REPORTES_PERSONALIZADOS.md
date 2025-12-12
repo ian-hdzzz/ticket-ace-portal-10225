@@ -63,8 +63,25 @@ Las gráficas se organizan en una cuadrícula responsiva:
 - **Altura fija**: 300px por gráfica + tabla resumen
 - **Scroll**: Vista desplazable para múltiples gráficas
 
-### 4. **Exportación a PDF**
+### 4. **Compartir y Exportar**
 
+#### Compartir Reporte
+El botón de **Compartir** ofrece múltiples opciones:
+
+1. **Copiar Enlace**:
+   - Genera un enlace con la configuración del reporte
+   - Incluye las gráficas y filtros aplicados
+   - Permite recrear el reporte exacto
+
+2. **Compartir por Email**:
+   - Abre el cliente de correo predeterminado
+   - Pre-rellena el asunto y cuerpo con información del reporte
+   - Incluye resumen de tickets y gráficas
+
+3. **Exportar a PDF y Compartir**:
+   - Descarga el PDF y abre opciones para compartir el archivo
+
+#### Exportación a PDF
 Genera un reporte completo en PDF con:
 - **Portada** con información general:
   - Fecha de generación
@@ -83,7 +100,9 @@ Genera un reporte completo en PDF con:
 4. Selecciona campo, tipo de gráfico y título
 5. La gráfica aparece en la cuadrícula
 6. Repite pasos 3-5 para agregar más gráficas
-7. Opcionalmente descarga el reporte completo en PDF
+7. Comparte el reporte o lo exporta como PDF
+   - Compartir: Genera enlace, email o descarga
+   - Exportar PDF: Descarga documento completo
 ```
 
 ## Casos de Uso
@@ -143,7 +162,7 @@ Configuración:
 │ Gráficas Personalizadas                     │
 │ 3 gráficas agregadas                        │
 │                                              │
-│         [📥 Descargar PDF] [➕ Agregar]     │
+│   [🔗 Compartir] [📥 Exportar PDF] [➕ Agregar]  │
 └─────────────────────────────────────────────┘
 ```
 
@@ -166,6 +185,7 @@ Configuración:
 ✅ **Flexibilidad**: Crea los reportes que necesites, cuando los necesites
 ✅ **Múltiples Vistas**: Compara diferentes métricas simultáneamente
 ✅ **Filtros Dinámicos**: Los datos se actualizan automáticamente al cambiar filtros
+✅ **Compartir Fácil**: Enlace directo, email o PDF para compartir
 ✅ **Exportación Profesional**: PDFs listos para presentar
 ✅ **Sin Límites**: Agrega tantas gráficas como necesites
 ✅ **Interactivo**: Tooltips y tablas para análisis detallado
@@ -179,7 +199,8 @@ Configuración:
 | Persistencia | Temporal (modal) | Permanente en vista |
 | Comparación | No disponible | Sí, lado a lado |
 | Filtros | Por gráfica | Globales para todas |
-| Exportación | Una gráfica | Todas juntas |
+| Compartir | No | Sí, enlace y email |
+| Exportación | Una gráfica | Todas juntas en PDF |
 | Personalización | Limitada | Completa |
 
 ## Tecnologías Utilizadas
