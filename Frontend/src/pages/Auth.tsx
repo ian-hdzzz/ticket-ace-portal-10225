@@ -17,6 +17,8 @@ export default function Auth() {
     e.preventDefault();
     setErrorMsg("");
     try {
+      console.log('🔐 Intentando login con email:', email);
+      
       // Validación sencilla contra la tabla users
       const { data, error } = await supabase
         .from('users')
@@ -24,11 +26,21 @@ export default function Auth() {
         .eq('email', email)
         .eq('password', password)
         .single();
+      
       if (error || !data) {
+        console.error('❌ Error en login:', error);
         setErrorMsg("Correo o contraseña incorrectos.");
         return;
       }
+      
+      console.log('✅ Usuario encontrado:', { 
+        id: data.id, 
+        email: data.email, 
+        is_temporary: data.is_temporary_password 
+      });
+      
       if (data.is_temporary_password) {
+        console.log('⚠️ Usuario tiene contraseña temporal, solicitando cambio...');
         // Mostrar formulario para cambiar contraseña
         setShowChangePassword(true);
         // Guardar el usuario temporalmente para el cambio de contraseña
@@ -75,19 +87,43 @@ export default function Auth() {
       setErrorMsg("Error interno. Intenta de nuevo.");
       return;
     }
-    // Actualizar la contraseña y el flag en la base de datos
-    const { error } = await supabase
-      .from('users')
-      .update({ password: newPassword, is_temporary_password: false })
-      .eq('id', userTemp.id);
-    if (error) {
-      setErrorMsg("No se pudo actualizar la contraseña. Intenta de nuevo.");
-      return;
+    
+    try {
+      console.log('🔄 Intentando actualizar contraseña para usuario:', userTemp.id);
+      
+      // Actualizar la contraseña y el flag en la base de datos
+      const { data, error } = await supabase
+        .from('users')
+        .update({ 
+          password: newPassword, 
+          is_temporary_password: false 
+        })
+        .eq('id', userTemp.id)
+        .select();
+
+      if (error) {
+        console.error('❌ Error al actualizar contraseña:', error);
+        setErrorMsg(
+          `No se pudo actualizar la contraseña: ${error.message}. ` +
+          `Por favor contacta al administrador del sistema.`
+        );
+        return;
+      }
+
+      console.log('✅ Contraseña actualizada exitosamente:', data);
+
+      // Guardar el usuario definitivo y limpiar el temporal
+      localStorage.setItem("user", JSON.stringify(userTemp));
+      localStorage.removeItem("user_temp");
+      
+      // Pequeño delay para asegurar que se guardó en la BD
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('❌ Error inesperado al cambiar contraseña:', error);
+      setErrorMsg("Ocurrió un error inesperado. Por favor intenta de nuevo.");
     }
-    // Guardar el usuario definitivo y limpiar el temporal
-    localStorage.setItem("user", JSON.stringify(userTemp));
-    localStorage.removeItem("user_temp");
-    navigate("/dashboard");
   };
 
   return (
