@@ -8,6 +8,7 @@ import {
   User,
   LogOut,
   FileText,
+  BarChart3,
 } from "lucide-react";
 
 import {
@@ -26,6 +27,7 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Tickets", url: "/dashboard/tickets", icon: Ticket },
+  { title: "Reportes", url: "/dashboard/crear-reportes", icon: BarChart3 },
   { title: "Contratos", url: "/dashboard/contratos", icon: FileText },
   { title: "Agentes IA", url: "/dashboard/agents", icon: Bot },
   { title: "Admin", url: "/dashboard/admin", icon: User },

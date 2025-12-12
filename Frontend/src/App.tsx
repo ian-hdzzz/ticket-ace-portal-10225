@@ -13,6 +13,7 @@ import TicketDetails from "./pages/TicketDetails";
 import CreateTicket from "./pages/CreateTicket";
 import { TabProvider } from "./contexts/TabContext";
 import { TicketsWithTabs } from "./components/TicketsWithTabs";
+import CrearReportes from "./pages/CrearReportes";
 import Contratos from "./pages/Contratos";
 import ContractDetails from "./pages/ContractDetails";
 import Lecturas from "./pages/Lecturas";
@@ -71,6 +72,16 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredPermissions={["crear_ticket", "create_ticket"]}>
                     <CreateTicket />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Crear Reportes - Requiere permiso de ver tickets */}
+              <Route 
+                path="crear-reportes" 
+                element={
+                  <ProtectedRoute requiredPermissions={["ver_tickets", "view_tickets"]}>
+                    <CrearReportes />
                   </ProtectedRoute>
                 } 
               />
