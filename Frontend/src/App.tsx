@@ -11,6 +11,8 @@ import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
 import TicketDetails from "./pages/TicketDetails";
 import CreateTicket from "./pages/CreateTicket";
+import { TabProvider } from "./contexts/TabContext";
+import { TicketsWithTabs } from "./components/TicketsWithTabs";
 import Contratos from "./pages/Contratos";
 import ContractDetails from "./pages/ContractDetails";
 import Lecturas from "./pages/Lecturas";
@@ -29,10 +31,11 @@ import TestPermissions from "./pages/TestPermissions";
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <ChatwootWidget />
-      <BrowserRouter>
+      <TabProvider>
+        <Toaster />
+        <Sonner />
+        <ChatwootWidget />
+        <BrowserRouter>
         <Routes>
           
           <Route path="/" element={<RootRedirect />} />
@@ -57,7 +60,7 @@ const App = () => (
                 path="tickets" 
                 element={
                   <ProtectedRoute requiredPermissions={["ver_tickets", "view_tickets"]}>
-                    <Tickets />
+                    <TicketsWithTabs />
                   </ProtectedRoute>
                 } 
               />
@@ -158,6 +161,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </TabProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

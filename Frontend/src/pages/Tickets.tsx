@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useTabContext } from "@/contexts/TabContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +51,7 @@ import { supabase } from '../supabase/client.ts'
 
 export default function Tickets() {
   const navigate = useNavigate();
+  const { addTab } = useTabContext();
   
   // Establecer el título de la página
   usePageTitle("Tickets", "Gestiona todos los tickets del sistema");
@@ -542,7 +544,7 @@ export default function Tickets() {
   
 
   return (
-    <div className="flex h-full flex-col overflow-hidden -m-6">
+    <div className="flex h-full flex-col overflow-hidden">
       <div className="flex-shrink-0 space-y-6 p-6">
         {/* Date Range Filter and Ticket Count */}
         <div className="flex items-center justify-between gap-4 text-sm">
@@ -649,7 +651,11 @@ export default function Tickets() {
             </Button>
             <Button
               className="gap-2"
-              onClick={() => navigate('/dashboard/tickets/new')}
+              onClick={() => addTab({ 
+                id: 'new-ticket', 
+                type: 'new-ticket', 
+                title: 'Nuevo Ticket' 
+              })}
             >
               <Plus className="h-4 w-4" />
               Nuevo Ticket
@@ -818,7 +824,12 @@ export default function Tickets() {
                     <TableRow
                       key={ticket.id}
                       className="cursor-pointer"
-                      onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
+                      onClick={() => addTab({ 
+                        id: `ticket-${ticket.id}`, 
+                        type: 'ticket-detail', 
+                        title: `${ticket.numero_ticket || `TKT-${ticket.id}`}`,
+                        ticketId: ticket.id
+                      })}
                     >
                       {visibleFields.map((field) => {
                         const value = getFieldValue(ticket, field);

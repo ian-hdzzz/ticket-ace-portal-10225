@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useTabContext } from '@/contexts/TabContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,6 +59,7 @@ export default function CreateTicket() {
   usePageTitle("Crear Ticket", "Registra un nuevo ticket en el sistema");
   
   const navigate = useNavigate();
+  const { removeTab, setActiveTab } = useTabContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentTag, setCurrentTag] = useState('');
 
@@ -131,7 +133,8 @@ export default function CreateTicket() {
       toast.success('Ticket creado exitosamente', {
         description: `Folio: ${newTicket.folio}`
       });
-      navigate('/dashboard/tickets');
+      removeTab('new-ticket');
+      setActiveTab('tickets-list');
     } catch (error) {
       console.error('Error creando ticket:', error);
       toast.error('Error al crear el ticket', {
@@ -143,14 +146,17 @@ export default function CreateTicket() {
   };
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden">
-      <div className="container mx-auto py-8 px-4 min-h-full max-w-4xl">
+    <div className="w-full h-full overflow-auto">
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/dashboard/tickets')}
+              onClick={() => {
+                removeTab('new-ticket');
+                setActiveTab('tickets-list');
+              }}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Regresar
@@ -330,7 +336,10 @@ export default function CreateTicket() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/dashboard/tickets')}
+                  onClick={() => {
+                    removeTab('new-ticket');
+                    setActiveTab('tickets-list');
+                  }}
                   disabled={isSubmitting}
                 >
                   Cancelar
