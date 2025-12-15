@@ -10,7 +10,7 @@ export default class AuthController {
      */
     static async login(req: Request, res: Response) {
         try {
-            console.log("Login endpoint called");
+            // console.log("Login endpoint called");
             // destruct body for email and password
             const { email, password } = req.body;
             if (!email || !password) {
@@ -19,29 +19,30 @@ export default class AuthController {
 
             // find user using credentials
             const user = await AuthUseCases.findUser(email);
-            if (!user || !user.contrasena) {
+            if (!user || !user.password) {
                 return res.status(401).json({ success: false, message: "Usuario no encontrado" });
             }
 
             // verify password hash
-            const passwordsMatch = await AuthUseCases.verifyPassword(password, user.contrasena);
+            // const passwordsMatch = await AuthUseCases.verifyPassword(password, user.password);
+            const passwordsMatch = password === user.password;
             if (!passwordsMatch) {
                 return res.status(401).json({ success: false, message: "Contraseña incorrecta" });
             }
 
             // Extract roles and privileges from the nested structure
-            const roles: string[] = user.roles.map((userRole: any) => userRole.rol.nombre as string);
-            const allPrivileges = user.roles.flatMap((userRole: any) =>
-                userRole.rol.privilegios.map((rolePrivilege: any) => rolePrivilege.privilegio.descripcion as string)
+            const roles: string[] = user.userRoles.map((userRole: any) => userRole.role.name as string);
+            const allPrivileges = user.userRoles.flatMap((userRole: any) =>
+                userRole.role.rolePrivileges.map((rolePrivilege: any) => rolePrivilege.privilege.name as string)
             );
             const privileges: string[] = Array.from(new Set(allPrivileges));
 
             // generate access and refresh tokens
             const tokenPayload: TokenPayload = {
                 userId: user.id,
-                email: user.correo,
-                is_temporary_password: user.contrasena_es_temporal,
-                full_name: user.nombre_completo,
+                email: user.email,
+                is_temporary_password: user.isTemporaryPassword,
+                full_name: user.fullName,
                 roles,
                 privileges,
             };
@@ -58,9 +59,9 @@ export default class AuthController {
                 message: "Inicio de sesión exitoso",
                 user: {
                     id: user.id,
-                    email: user.correo,
-                    full_name: user.nombre_completo,
-                    is_temporary_password: user.contrasena_es_temporal,
+                    email: user.email,
+                    full_name: user.fullName,
+                    is_temporary_password: user.isTemporaryPassword,
                 },
             });
 

@@ -5,16 +5,16 @@ export default class User {
 
     static async getUserByEmail(email: string) {
         try {
-            const user = await prisma.usuario.findUnique({
-                where: { correo: email },
+            const user = await prisma.user.findUnique({
+                where: { email: email },
                 include: {
-                    roles: {
+                    userRoles: {
                         include: {
-                            rol: {
+                            role: {
                                 include: {
-                                    privilegios: {
+                                    rolePrivileges: {
                                         include: {
-                                            privilegio: true
+                                            privilege: true
                                         }
                                     }
                                 }
@@ -26,6 +26,7 @@ export default class User {
     
             return user;
         } catch (error) {
+            console.error(error);
             throw new Error("Conexión con BD ha fallido");
         }
     }

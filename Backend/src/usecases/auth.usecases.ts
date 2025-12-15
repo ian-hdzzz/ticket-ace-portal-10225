@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import User from "../models/user.model.js";
 
 export default class AuthUseCases {
@@ -14,6 +14,7 @@ export default class AuthUseCases {
      * Verify password against hash
      */
     static async verifyPassword(password: string, passwordHash: string): Promise<boolean> {
+        // console.log(password, passwordHash);
         const isMatch = await bcrypt.compare(password, passwordHash);
         return isMatch;
     }

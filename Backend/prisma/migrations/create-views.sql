@@ -18,27 +18,27 @@ SELECT
   t.folio,
   t.status,
   t.priority,
-  t.service_type,
+  t."serviceType" as service_type,
   t.titulo,
-  c.nombre_titular,
-  c.numero_contrato,
-  t.created_at,
-  t.sla_deadline,
+  c."nombreTitular" as nombre_titular,
+  c."numeroContrato" as numero_contrato,
+  t."createdAt" as created_at,
+  t."slaDeadline" as sla_deadline,
   CASE
-    WHEN t.sla_deadline < CURRENT_TIMESTAMP
+    WHEN t."slaDeadline" < CURRENT_TIMESTAMP
     AND t.status NOT IN ('resuelto', 'cerrado')
     THEN true
     ELSE false
   END as sla_breached,
-  t.assigned_to,
+  t."assignedTo" as assigned_to,
   COUNT(tc.id) as message_count
 FROM public.tickets t
-LEFT JOIN public.customers c ON t.customer_id = c.id
-LEFT JOIN public.ticket_conversations tc ON t.id = tc.ticket_id
+LEFT JOIN public.customers c ON t."customerId" = c.id
+LEFT JOIN public.ticket_conversations tc ON t.id = tc."ticketId"
 GROUP BY
   t.id,
-  c.nombre_titular,
-  c.numero_contrato;
+  c."nombreTitular",
+  c."numeroContrato";
 
 -- ============================================================================
 -- 2. v_ticket_statistics
@@ -48,18 +48,18 @@ GROUP BY
 
 CREATE OR REPLACE VIEW public.v_ticket_statistics AS
 SELECT
-  DATE(created_at) as fecha,
-  service_type,
+  DATE("createdAt") as fecha,
+  "serviceType" as service_type,
   COUNT(*) as total_tickets,
   COUNT(*) FILTER (WHERE status = 'resuelto') as resolved_tickets,
   COUNT(*) FILTER (WHERE status = 'abierto') as open_tickets,
   COUNT(*) FILTER (WHERE priority = 'urgente') as urgent_tickets,
   CAST(
-    AVG(EXTRACT(epoch FROM resolved_at - created_at) / 60) 
+    AVG(EXTRACT(epoch FROM "resolvedAt" - "createdAt") / 60) 
     AS INTEGER
   ) as avg_resolution_minutes
 FROM public.tickets
-GROUP BY DATE(created_at), service_type;
+GROUP BY DATE("createdAt"), "serviceType";
 
 -- ============================================================================
 -- 3. user_permissions_view
