@@ -62,6 +62,77 @@ FROM public.tickets
 GROUP BY DATE(created_at), service_type;
 
 -- ============================================================================
+-- 3. user_permissions_view
+-- ============================================================================
+-- Flattened view of user permissions (one row per user-privilege combo)
+-- ============================================================================
+
+CREATE OR REPLACE VIEW public.user_permissions_view AS
+SELECT
+  u.id as user_id,
+  u."fullName" as full_name,
+  u.email,
+  r.id as role_id,
+  r.name as role_name,
+  p.id as privilege_id,
+  p.name as privilege_name,
+  p.module as privilege_module
+FROM public.users u
+JOIN public.users_roles ur ON u.id = ur."userId"
+JOIN public.roles r ON ur."roleId" = r.id
+JOIN public.roles_privileges rp ON r.id = rp."roleId"
+JOIN public.privileges p ON rp."privilegeId" = p.id
+WHERE u.active = true
+  AND r.active = true;
+
+-- ============================================================================
+-- 4. user_privileges
+-- ============================================================================
+-- Detailed view of user privileges with description
+-- ============================================================================
+
+CREATE OR REPLACE VIEW public.user_privileges AS
+SELECT
+  u.id as user_id,
+  u."fullName" as full_name,
+  u.email,
+  r.id as role_id,
+  r.name as role_name,
+  p.id as privilege_id,
+  p.name as privilege_name,
+  p.module as privilege_module,
+  p.description as privilege_description
+FROM public.users u
+JOIN public.users_roles ur ON u.id = ur."userId"
+JOIN public.roles r ON ur."roleId" = r.id
+JOIN public.roles_privileges rp ON r.id = rp."roleId"
+JOIN public.privileges p ON rp."privilegeId" = p.id
+WHERE u.active = true
+  AND r.active = true;
+
+-- ============================================================================
+-- 5. user_privileges_summary
+-- ============================================================================
+-- Aggregated view with all roles and privileges per user as JSON arrays
+-- ============================================================================
+
+CREATE OR REPLACE VIEW public.user_privileges_summary AS
+SELECT
+  u.id as user_id,
+  u."fullName" as full_name,
+  u.email,
+  json_agg(DISTINCT r.name) as roles,
+  json_agg(DISTINCT p.name) as privileges
+FROM public.users u
+JOIN public.users_roles ur ON u.id = ur."userId"
+JOIN public.roles r ON ur."roleId" = r.id
+JOIN public.roles_privileges rp ON r.id = rp."roleId"
+JOIN public.privileges p ON rp."privilegeId" = p.id
+WHERE u.active = true
+  AND r.active = true
+GROUP BY u.id, u."fullName", u.email;
+
+-- ============================================================================
 -- End of Views
 -- ============================================================================
 -- 
@@ -71,5 +142,6 @@ GROUP BY DATE(created_at), service_type;
 -- - Prisma won't try to manage them
 -- - You can still query them via raw SQL if needed:
 --   await prisma.$queryRaw`SELECT * FROM public.v_ticket_dashboard`
+--   await prisma.$queryRaw`SELECT * FROM public.user_privileges_summary WHERE user_id = ${userId}`
 -- ============================================================================
 
