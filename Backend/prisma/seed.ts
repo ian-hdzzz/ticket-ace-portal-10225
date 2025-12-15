@@ -23,15 +23,28 @@ async function main() {
 
   try {
     // Import in dependency order
+    // 1. Independent tables (no foreign keys)
+    await importUsers();
+    await importRoles();
+    await importPrivileges();
     await importCustomers();
+    
+    // 2. Junction tables (depend on tables above)
+    await importUsersRoles();
+    await importRolesPrivileges();
+    
+    // 3. Tickets and related
     await importTickets();
     await importN8nChatHistory();
 
     // Reset sequences for auto-increment tables
-    // await resetSequences();
+    await resetSequences();
 
     console.log('\n✅ Database seeded successfully!');
     console.log('\n📊 Summary:');
+    console.log(`   Users: ${await prisma.user.count()}`);
+    console.log(`   Roles: ${await prisma.role.count()}`);
+    console.log(`   Privileges: ${await prisma.privilege.count()}`);
     console.log(`   Customers: ${await prisma.customer.count()}`);
     console.log(`   Tickets: ${await prisma.ticket.count()}`);
     console.log(`   N8n Chat Messages: ${await prisma.n8nChatHistorialBot.count()}`);
@@ -231,6 +244,241 @@ async function importN8nChatHistory() {
   }
 
   console.log(`   ✅ Imported ${imported} chat messages${skipped > 0 ? ` (${skipped} skipped)` : ''}`);
+}
+
+/**
+ * Import users from CSV
+ * Preserves original UUIDs
+ */
+async function importUsers() {
+  const csvPath = path.join(__dirname, 'csv', 'supabase_migration_users.csv');
+  
+  if (!fs.existsSync(csvPath)) {
+    console.log('⏭️  Skipping users - file not found');
+    return;
+  }
+
+  const fileContent = fs.readFileSync(csvPath, 'utf-8');
+  const records = parse(fileContent, {
+    columns: true,
+    skip_empty_lines: true,
+    relax_quotes: true,
+    relax_column_count: true,
+  });
+
+  console.log(`📥 Importing ${records.length} users...`);
+
+  let imported = 0;
+  let skipped = 0;
+
+  for (const record of records) {
+    try {
+      await prisma.user.create({
+        data: {
+          id: record.id,
+          fullName: record.full_name,
+          email: record.email,
+          password: record.password,
+          phone: parseNullableString(record.phone),
+          active: record.active === 'true' || record.active === 't',
+          isTemporaryPassword: record.is_temporary_password === 'true' || record.is_temporary_password === 't',
+          createdAt: parseNullableDate(record.created_at) || new Date(),
+          updatedAt: parseNullableDate(record.updated_at) || new Date(),
+        },
+      });
+      imported++;
+    } catch (error: any) {
+      console.error(`   ⚠️  Error importing user ${record.email}:`, error.message);
+      skipped++;
+    }
+  }
+
+  console.log(`   ✅ Imported ${imported} users${skipped > 0 ? ` (${skipped} skipped)` : ''}`);
+}
+
+/**
+ * Import roles from CSV
+ * Preserves original UUIDs
+ */
+async function importRoles() {
+  const csvPath = path.join(__dirname, 'csv', 'supabase_migration_roles.csv');
+  
+  if (!fs.existsSync(csvPath)) {
+    console.log('⏭️  Skipping roles - file not found');
+    return;
+  }
+
+  const fileContent = fs.readFileSync(csvPath, 'utf-8');
+  const records = parse(fileContent, {
+    columns: true,
+    skip_empty_lines: true,
+    relax_quotes: true,
+    relax_column_count: true,
+  });
+
+  console.log(`📥 Importing ${records.length} roles...`);
+
+  let imported = 0;
+  let skipped = 0;
+
+  for (const record of records) {
+    try {
+      await prisma.role.create({
+        data: {
+          id: record.id,
+          name: record.name,
+          description: parseNullableString(record.description),
+          hierarchicalLevel: parseNullableInt(record.hierarchical_level),
+          active: record.active === 'true' || record.active === 't',
+          createdAt: parseNullableDate(record.created_at) || new Date(),
+          updatedAt: parseNullableDate(record.updated_at) || new Date(),
+        },
+      });
+      imported++;
+    } catch (error: any) {
+      console.error(`   ⚠️  Error importing role ${record.name}:`, error.message);
+      skipped++;
+    }
+  }
+
+  console.log(`   ✅ Imported ${imported} roles${skipped > 0 ? ` (${skipped} skipped)` : ''}`);
+}
+
+/**
+ * Import privileges from CSV
+ * Preserves original UUIDs
+ */
+async function importPrivileges() {
+  const csvPath = path.join(__dirname, 'csv', 'supabase_migration_privileges.csv');
+  
+  if (!fs.existsSync(csvPath)) {
+    console.log('⏭️  Skipping privileges - file not found');
+    return;
+  }
+
+  const fileContent = fs.readFileSync(csvPath, 'utf-8');
+  const records = parse(fileContent, {
+    columns: true,
+    skip_empty_lines: true,
+    relax_quotes: true,
+    relax_column_count: true,
+  });
+
+  console.log(`📥 Importing ${records.length} privileges...`);
+
+  let imported = 0;
+  let skipped = 0;
+
+  for (const record of records) {
+    try {
+      await prisma.privilege.create({
+        data: {
+          id: record.id,
+          name: record.name,
+          description: parseNullableString(record.description),
+          module: parseNullableString(record.module),
+          createdAt: parseNullableDate(record.created_at) || new Date(),
+        },
+      });
+      imported++;
+    } catch (error: any) {
+      console.error(`   ⚠️  Error importing privilege ${record.name}:`, error.message);
+      skipped++;
+    }
+  }
+
+  console.log(`   ✅ Imported ${imported} privileges${skipped > 0 ? ` (${skipped} skipped)` : ''}`);
+}
+
+/**
+ * Import users_roles junction table from CSV
+ * Preserves original UUIDs and relationships
+ */
+async function importUsersRoles() {
+  const csvPath = path.join(__dirname, 'csv', 'supabase_migration_users_roles.csv');
+  
+  if (!fs.existsSync(csvPath)) {
+    console.log('⏭️  Skipping users_roles - file not found');
+    return;
+  }
+
+  const fileContent = fs.readFileSync(csvPath, 'utf-8');
+  const records = parse(fileContent, {
+    columns: true,
+    skip_empty_lines: true,
+    relax_quotes: true,
+    relax_column_count: true,
+  });
+
+  console.log(`📥 Importing ${records.length} user-role assignments...`);
+
+  let imported = 0;
+  let skipped = 0;
+
+  for (const record of records) {
+    try {
+      await prisma.userRole.create({
+        data: {
+          id: record.id,
+          userId: record.user_id,
+          roleId: record.role_id,
+          assignedBy: parseNullableString(record.assigned_by),
+          assignmentDate: parseNullableDate(record.assignment_date) || new Date(),
+        },
+      });
+      imported++;
+    } catch (error: any) {
+      console.error(`   ⚠️  Error importing user-role assignment:`, error.message);
+      skipped++;
+    }
+  }
+
+  console.log(`   ✅ Imported ${imported} user-role assignments${skipped > 0 ? ` (${skipped} skipped)` : ''}`);
+}
+
+/**
+ * Import roles_privileges junction table from CSV
+ * Preserves original UUIDs and relationships
+ */
+async function importRolesPrivileges() {
+  const csvPath = path.join(__dirname, 'csv', 'supabase_migration_roles_privileges.csv');
+  
+  if (!fs.existsSync(csvPath)) {
+    console.log('⏭️  Skipping roles_privileges - file not found');
+    return;
+  }
+
+  const fileContent = fs.readFileSync(csvPath, 'utf-8');
+  const records = parse(fileContent, {
+    columns: true,
+    skip_empty_lines: true,
+    relax_quotes: true,
+    relax_column_count: true,
+  });
+
+  console.log(`📥 Importing ${records.length} role-privilege assignments...`);
+
+  let imported = 0;
+  let skipped = 0;
+
+  for (const record of records) {
+    try {
+      await prisma.rolePrivilege.create({
+        data: {
+          id: record.id,
+          roleId: record.role_id,
+          privilegeId: record.privilege_id,
+          createdAt: parseNullableDate(record.created_at) || new Date(),
+        },
+      });
+      imported++;
+    } catch (error: any) {
+      console.error(`   ⚠️  Error importing role-privilege assignment:`, error.message);
+      skipped++;
+    }
+  }
+
+  console.log(`   ✅ Imported ${imported} role-privilege assignments${skipped > 0 ? ` (${skipped} skipped)` : ''}`);
 }
 
 /**
