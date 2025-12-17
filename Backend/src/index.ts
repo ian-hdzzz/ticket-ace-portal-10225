@@ -52,9 +52,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Health check endpoint
-app.get("/", (req, res) => {
-  res.json({ message: "CEA Backend API is running", status: "ok" });
-});
+// app.get("/", (req, res) => {
+//   res.json({ mes('/cea', ceaRoutes)API is running", status: "ok" });
+// });
 
 // Routes
 app.use('/api/auth', authRouter);
