@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useTabContext } from "@/contexts/TabContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,9 +109,15 @@ const channelLabels = {
   system: "Sistema",
 };
 
-export default function TicketDetails() {
-  const { id } = useParams();
+interface TicketDetailsProps {
+  ticketId?: string;
+}
+
+export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsProps = {}) {
+  const { id: idFromParams } = useParams();
+  const id = ticketIdProp || idFromParams;
   const navigate = useNavigate();
+  const { removeTab, setActiveTab } = useTabContext();
   
   // Establecer título de la página (se actualizará cuando cargue el ticket)
   const [pageTitle, setPageTitle] = useState("Detalles del Ticket");
@@ -406,7 +413,14 @@ export default function TicketDetails() {
             ID buscado: {id}
           </p>
           <div className="flex gap-2 justify-center mt-4">
-            <Button onClick={() => navigate("/dashboard/tickets")}>
+            <Button onClick={() => {
+              if (ticketIdProp) {
+                removeTab(`ticket-${id}`);
+                setActiveTab('tickets-list');
+              } else {
+                navigate("/dashboard/tickets");
+              }
+            }}>
               Volver a Tickets
             </Button>
             <Button
@@ -424,12 +438,19 @@ export default function TicketDetails() {
   console.log('Renderizando ticket:', ticket);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 h-full overflow-auto">
       <div className="flex items-center gap-4">
         <Button
           variant="outline"
           size="icon"
-          onClick={() => navigate("/dashboard/tickets")}
+          onClick={() => {
+            if (ticketIdProp) {
+              removeTab(`ticket-${id}`);
+              setActiveTab('tickets-list');
+            } else {
+              navigate("/dashboard/tickets");
+            }
+          }}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
