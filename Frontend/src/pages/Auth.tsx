@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '../supabase/client.ts'
-import { authService } from '../services/auth.service'
 
 export default function Auth() {
   // Solo login, no registro
@@ -20,44 +19,57 @@ export default function Auth() {
     try {
       console.log('🔐 Intentando login con email:', email);
       
-      // Validación sencilla contra la tabla users
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, email, password, full_name, is_temporary_password')
-        .eq('email', email)
-        .eq('password', password)
-        .single();
+      // Use Supabase Auth for authentication
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (error || !data) {
-        console.error('❌ Error en login:', error);
+      if (authError || !authData.user) {
+        console.error('❌ Error en login:', authError);
         setErrorMsg("Correo o contraseña incorrectos.");
         return;
       }
-      
-      console.log('✅ Usuario encontrado:', { 
-        id: data.id, 
-        email: data.email, 
-        is_temporary: data.is_temporary_password 
+
+      console.log('✅ Usuario autenticado con Supabase:', authData.user.id);
+
+      // Fetch user details from our users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, email, full_name, is_temporary_password')
+        .eq('email', email)
+        .single();
+
+      if (userError || !userData) {
+        console.error('❌ Error obteniendo datos de usuario:', userError);
+        setErrorMsg("Error obteniendo información del usuario.");
+        return;
+      }
+
+      console.log('✅ Datos de usuario obtenidos:', { 
+        id: userData.id, 
+        email: userData.email, 
+        is_temporary: userData.is_temporary_password 
       });
       
-      if (data.is_temporary_password) {
+      if (userData.is_temporary_password) {
         console.log('⚠️ Usuario tiene contraseña temporal, solicitando cambio...');
         // Mostrar formulario para cambiar contraseña
         setShowChangePassword(true);
         // Guardar el usuario temporalmente para el cambio de contraseña
         localStorage.setItem("user_temp", JSON.stringify({
-          id: data.id,
-          email: data.email,
-          full_name: data.full_name
+          id: userData.id,
+          email: userData.email,
+          full_name: userData.full_name
         }));
         return;
       }
 
-      // Guardar el usuario en localStorage para protección de rutas
+      // Guardar el usuario en localStorage para protección de rutas y compatibilidad
       localStorage.setItem("user", JSON.stringify({
-        id: data.id,
-        email: data.email,
-        full_name: data.full_name
+        id: userData.id,
+        email: userData.email,
+        full_name: userData.full_name
       }));
       navigate("/dashboard");
     } catch (error: any) {
@@ -93,26 +105,34 @@ export default function Auth() {
     try {
       console.log('🔄 Intentando actualizar contraseña para usuario:', userTemp.id);
       
-      // Actualizar la contraseña y el flag en la base de datos
-      const { data, error } = await supabase
-        .from('users')
-        .update({ 
-          password: newPassword, 
-          is_temporary_password: false 
-        })
-        .eq('id', userTemp.id)
-        .select();
+      // Update password using Supabase Auth
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
 
-      if (error) {
-        console.error('❌ Error al actualizar contraseña:', error);
+      if (updateError) {
+        console.error('❌ Error al actualizar contraseña en Supabase:', updateError);
         setErrorMsg(
-          `No se pudo actualizar la contraseña: ${error.message}. ` +
+          `No se pudo actualizar la contraseña: ${updateError.message}. ` +
           `Por favor contacta al administrador del sistema.`
         );
         return;
       }
 
-      console.log('✅ Contraseña actualizada exitosamente:', data);
+      // Update the temporary password flag in our users table
+      const { error: dbError } = await supabase
+        .from('users')
+        .update({ 
+          is_temporary_password: false 
+        })
+        .eq('id', userTemp.id);
+
+      if (dbError) {
+        console.error('❌ Error al actualizar flag en base de datos:', dbError);
+        // Continue anyway since password was updated in Supabase
+      }
+
+      console.log('✅ Contraseña actualizada exitosamente');
 
       // Guardar el usuario definitivo y limpiar el temporal
       localStorage.setItem("user", JSON.stringify(userTemp));
