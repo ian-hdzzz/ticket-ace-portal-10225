@@ -129,6 +129,17 @@ export default function ApiTest() {
                     >
                         Get Lecturas
                     </button>
+                    <button
+                        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
+                        onClick={() => {
+                            const contract = (document.getElementById('contractInput') as HTMLInputElement).value || '523160';
+                            const explotacion = (document.getElementById('explotacionInput') as HTMLInputElement).value || '12';
+                            handleCall(() => (ceaApi as any).getConsumos(explotacion, contract), 'getConsumos');
+                        }}
+                        disabled={loading}
+                    >
+                        Get Consumos
+                    </button>
 
                     <h3 className="text-lg font-semibold mt-4 col-span-2">New Endpoints</h3>
 
