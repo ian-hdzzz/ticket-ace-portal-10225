@@ -48,7 +48,6 @@ export default function Contratos() {
   usePageTitle("Contratos", "Búsqueda y gestión de contratos");
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [explotacionQuery, setExplotacionQuery] = useState("1");
   const [isSearching, setIsSearching] = useState(false);
   const [contratos, setContratos] = useState<ContratoInfo[]>([]);
   const [lastSearchedContract, setLastSearchedContract] = useState<string | null>(null);
@@ -93,7 +92,7 @@ export default function Contratos() {
         fechaAlta: contrato.fechaAlta ? new Date(contrato.fechaAlta).toLocaleDateString('es-MX') : 'No disponible',
         fechaBaja: contrato.fechaBaja ? new Date(contrato.fechaBaja).toLocaleDateString('es-MX') : null,
         estado: contrato.fechaBaja ? 'inactivo' : 'activo',
-        explotacion: explotacionQuery || contrato.explotacion || '1',
+        explotacion: contrato.explotacion || '1', // Obtener explotación del contrato o usar '1' por defecto
         rawData: data,
       };
 
@@ -107,6 +106,10 @@ export default function Contratos() {
       });
 
       setLastSearchedContract(contratoInfo.numeroContrato);
+      
+      // Guardar explotación en localStorage para uso posterior
+      localStorage.setItem(`contrato_${contratoInfo.numeroContrato}_explotacion`, contratoInfo.explotacion);
+      
       toast.success(`Contrato ${contratoInfo.numeroContrato} cargado correctamente`);
 
     } catch (error: any) {
@@ -146,19 +149,9 @@ export default function Contratos() {
                 disabled={isSearching}
               />
             </div>
-            <div className="relative w-40">
-              <Input
-                placeholder="Explotación (e.g. 01)"
-                value={explotacionQuery}
-                onChange={(e) => setExplotacionQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                disabled={isSearching}
-                maxLength={2}
-              />
-            </div>
             <Button
               onClick={handleSearch}
-              disabled={isSearching || !searchQuery.trim() || !explotacionQuery.trim()}
+              disabled={isSearching || !searchQuery.trim()}
               className="gap-2"
             >
               {isSearching ? (
@@ -175,7 +168,7 @@ export default function Contratos() {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-2">
-            Busca contratos por número y explotación para ver su información detallada
+            Busca contratos por número para ver su información detallada. La explotación se detecta automáticamente.
           </p>
         </CardContent>
       </Card>

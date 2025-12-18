@@ -256,10 +256,10 @@ export const crearOrdenTrabajo = async (data: {
             <idPtoServicio>${xmlEscape(data.idPtoServicio)}</idPtoServicio>
             <fechaEstimdaFin>${xmlEscape(data.fechaEstimdaFin)}</fechaEstimdaFin>
             <observaciones>${xmlEscape(data.observaciones)}</observaciones>
-			 <codigoObsCambCont></codigoObsCambCont>
+       <codigoObsCambCont></codigoObsCambCont>
             <codigoReparacion>${xmlEscape(data.codigoReparacion)}</codigoReparacion>  
             <anyoExpediente>${xmlEscape(data.anyoExpediente)}</anyoExpediente>
-			 <numeroExpediente></numeroExpediente>
+       <numeroExpediente></numeroExpediente>
             <instalaValvulaPaso>0</instalaValvulaPaso>
          </ordenTrabajo>
          <enCurso>0</enCurso>
@@ -290,14 +290,14 @@ export const getPuntoServicioPorContador = async (listaNumSerieContador: string,
 // CEA getDeuda
 export const getDeuda = async (tipoIdentificador: string, valor: string, explotacion: string, idioma: string = 'es') => {
   const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://interfazgenericagestiondeuda.occamcxf.occam.agbar.com/" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
- 	<soapenv:Header>
- 		<wsse:Security mustUnderstand="1">
+  <soapenv:Header>
+    <wsse:Security mustUnderstand="1">
         <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
           <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
           <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
         </wsse:UsernameToken>
       </wsse:Security>
- 	</soapenv:Header>
+  </soapenv:Header>
    <soapenv:Body>
       <int:getDeuda>
          <tipoIdentificador>${xmlEscape(tipoIdentificador)}</tipoIdentificador>
@@ -341,6 +341,180 @@ export const getLecturas = async (explotacion: string, contrato: string, idioma:
   return sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
 };
 
+// CEA GetConsumos
+export const getConsumos = async (explotacion: string, contrato: string, idioma: string = 'es') => {
+  console.log('[getConsumos] Parámetros recibidos:', { 
+    explotacion, 
+    contrato, 
+    idioma,
+    explotacionType: typeof explotacion,
+    contratoType: typeof contrato 
+  });
+
+  // Asegurar formato correcto con ceros a la izquierda si es necesario
+  const explotacionFormatted = explotacion.padStart(2, '0');
+  
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+   <soapenv:Header>
+      <wsse:Security mustUnderstand="1">
+        <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
+          <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
+          <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
+        </wsse:UsernameToken>
+      </wsse:Security>
+   </soapenv:Header>
+   <soapenv:Body>
+      <occ:getConsumos>
+      <explotacion>${xmlEscape(explotacionFormatted)}</explotacion>
+      <contrato>${xmlEscape(contrato)}</contrato>
+      <idioma>${xmlEscape(idioma)}</idioma>
+      </occ:getConsumos>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+  console.log('[getConsumos] Request params formateados:', { explotacion: explotacionFormatted, contrato, idioma });
+  console.log('[getConsumos] SOAP Request XML:', xml);
+
+  const response = await sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
+  
+  console.log('[getConsumos] SOAP Response:', response);
+  
+  return response;
+};
+
+// CEA GetConceptos
+export const getConceptos = async (explotacion: string, idioma: string = 'es') => {
+  console.log('[getConceptos] Parámetros recibidos:', { 
+    explotacion, 
+    idioma,
+    explotacionType: typeof explotacion 
+  });
+
+  // Asegurar formato correcto con ceros a la izquierda
+  const explotacionFormatted = explotacion.padStart(2, '0');
+
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <occ:getConceptos>
+         <explotacion>${xmlEscape(explotacionFormatted)}</explotacion>
+         <idioma>${xmlEscape(idioma)}</idioma>
+      </occ:getConceptos>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+  console.log('[getConceptos] Request params formateados:', { explotacion: explotacionFormatted, idioma });
+  console.log('[getConceptos] SOAP Request XML:', xml);
+
+  const response = await sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
+  
+  console.log('[getConceptos] SOAP Response:', response);
+  
+  return response;
+};
+
+// CEA GetTarifaDeAguaPorContrato
+export const getTarifaDeAguaPorContrato = async (explotacion: string, contrato: string, idioma: string = 'es') => {
+  console.log('[getTarifaDeAguaPorContrato] Parámetros recibidos:', { 
+    explotacion, 
+    contrato, 
+    idioma,
+    explotacionType: typeof explotacion,
+    contratoType: typeof contrato 
+  });
+
+  // Asegurar formato correcto con ceros a la izquierda
+  const explotacionFormatted = explotacion.padStart(2, '0');
+
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <occ:getTarifaDeAguaPorContrato>
+         <explotacion>${xmlEscape(explotacionFormatted)}</explotacion>
+         <contrato>${xmlEscape(contrato)}</contrato>
+         <idioma>${xmlEscape(idioma)}</idioma>
+      </occ:getTarifaDeAguaPorContrato>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+  console.log('[getTarifaDeAguaPorContrato] Request params formateados:', { explotacion: explotacionFormatted, contrato, idioma });
+  console.log('[getTarifaDeAguaPorContrato] SOAP Request XML:', xml);
+
+  const response = await sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
+  
+  console.log('[getTarifaDeAguaPorContrato] SOAP Response:', response);
+  
+  return response;
+};
+
+export const getTarifaDeAguaPorContratoJson = async (explotacion: string, contrato: string, idioma: string = 'es') => {
+  const xmlDoc = await getTarifaDeAguaPorContrato(explotacion, contrato, idioma);
+  console.log('[getTarifaDeAguaPorContratoJson] XML Document:', xmlDoc);
+  
+  // Serializar el XML para verlo
+  const serializer = new XMLSerializer();
+  const xmlString = serializer.serializeToString(xmlDoc);
+  console.log('[getTarifaDeAguaPorContratoJson] XML String COMPLETO:', xmlString);
+  console.log('[getTarifaDeAguaPorContratoJson] Longitud del XML:', xmlString.length);
+  
+  // Buscar todos los tags posibles
+  console.log('[getTarifaDeAguaPorContratoJson] Buscando elementos...');
+  const allElements = xmlDoc.getElementsByTagName('*');
+  console.log('[getTarifaDeAguaPorContratoJson] Total de elementos XML encontrados:', allElements.length);
+  
+  // Listar todos los nombres de tags
+  const tagNames = new Set<string>();
+  for (let i = 0; i < allElements.length; i++) {
+    tagNames.add(allElements[i].tagName);
+  }
+  console.log('[getTarifaDeAguaPorContratoJson] Tags encontrados:', Array.from(tagNames));
+  
+  const returnElement = xmlDoc.getElementsByTagName('getTarifaDeAguaPorContratoReturn')[0] || 
+                        xmlDoc.getElementsByTagName('getTarifaDeAguaPorContratoResponse')[0] ||
+                        xmlDoc.getElementsByTagName('return')[0];
+  
+  console.log('[getTarifaDeAguaPorContratoJson] Return Element encontrado:', returnElement);
+  
+  if (returnElement) {
+    console.log('[getTarifaDeAguaPorContratoJson] ✓ Parseando desde returnElement');
+    const jsonData = xmlToJson(returnElement as Element);
+    console.log('[getTarifaDeAguaPorContratoJson] JSON parseado desde returnElement:', jsonData);
+    console.log('[getTarifaDeAguaPorContratoJson] Tipo de jsonData:', typeof jsonData);
+    console.log('[getTarifaDeAguaPorContratoJson] Es null?:', jsonData === null);
+    console.log('[getTarifaDeAguaPorContratoJson] Keys de jsonData:', jsonData ? Object.keys(jsonData) : 'NO HAY KEYS');
+    return jsonData;
+  }
+  
+  console.log('[getTarifaDeAguaPorContratoJson] ⚠️  No se encontró returnElement, usando documento completo');
+  const fullJson = xmlToJson(xmlDoc);
+  console.log('[getTarifaDeAguaPorContratoJson] JSON completo (fallback):', fullJson);
+  console.log('[getTarifaDeAguaPorContratoJson] Keys del JSON completo:', fullJson ? Object.keys(fullJson) : 'NO HAY KEYS');
+  return fullJson;
+};
+
+// CEA GetConsumosParaGraficas
+export const getConsumosParaGraficas = async (explotacion: string, contrato: string, idioma: string = 'es') => {
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <occ:getConsumosParaGraficas>
+         <explotacion>${xmlEscape(explotacion)}</explotacion>
+         <contrato>${xmlEscape(contrato)}</contrato>
+         <idioma>${xmlEscape(idioma)}</idioma>
+      </occ:getConsumosParaGraficas>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+  console.log('[getConsumosParaGraficas] Request params:', { explotacion, contrato, idioma });
+  console.log('[getConsumosParaGraficas] SOAP Request XML:', xml);
+
+  const response = await sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
+  
+  console.log('[getConsumosParaGraficas] SOAP Response:', response);
+  
+  return response;
+};
+
 // CEASolicitudRecibo (Reusing getContrato structure as per user request, but maybe it's different? The user request listed 'getContrato' under 'CEASolicitudRecibo' endpoint too, but also 'cambiarEmailNotificacionPersona' etc. I will add those.)
 
 export const cambiarEmailNotificacionPersona = async (nif: string, nombre: string, apellido1: string, apellido2: string, contrato: string, emailAntiguo: string, emailNuevo: string, codigoOficina: string, usuario: string) => {
@@ -350,7 +524,7 @@ export const cambiarEmailNotificacionPersona = async (nif: string, nombre: strin
       <occ:cambiarEmailNotificacionPersona>
       <nif>${xmlEscape(nif)}</nif>
       <nombre>${xmlEscape(nombre)}</nombre> 
-   		<apellido1>${xmlEscape(apellido1)}</apellido1>
+      <apellido1>${xmlEscape(apellido1)}</apellido1>
       <apellido2>${xmlEscape(apellido2)}</apellido2>
       <contrato>${xmlEscape(contrato)}</contrato>
       <emailAntigo>${xmlEscape(emailAntiguo)}</emailAntigo>
@@ -369,13 +543,13 @@ export const getContratos = async (numeroContrato: string, actividad: string, ac
   const estadosXml = estados.map(e => `<string>${xmlEscape(e)}</string>`).join('');
   const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
    <soapenv:Header>
- 		<wsse:Security mustUnderstand="1">
+    <wsse:Security mustUnderstand="1">
         <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
           <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
           <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
         </wsse:UsernameToken>
       </wsse:Security>
- 	</soapenv:Header>
+  </soapenv:Header>
    <soapenv:Body>
       <occ:getContratos>
          <numeroContrato>${xmlEscape(numeroContrato)}</numeroContrato>
@@ -406,13 +580,13 @@ export const resolveOT = async (data: any) => {
 
   const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://interfazgenericaordenesservicio.occamcxf.occam.agbar.com/" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
    <soapenv:Header>
- 		<wsse:Security mustUnderstand="1">
+    <wsse:Security mustUnderstand="1">
         <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
           <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
           <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
         </wsse:UsernameToken>
       </wsse:Security>
- 	</soapenv:Header>
+  </soapenv:Header>
    <soapenv:Body>
       <int:resolveOT>
          <otResolution>
@@ -454,13 +628,13 @@ export const resolveOT = async (data: any) => {
 export const informarVisita = async (data: any) => {
   const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://interfazgenericaordenesservicio.occamcxf.occam.agbar.com/" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
    <soapenv:Header>
- 		<wsse:Security mustUnderstand="1">
+    <wsse:Security mustUnderstand="1">
         <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
           <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
           <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
         </wsse:UsernameToken>
       </wsse:Security>
- 	</soapenv:Header>
+  </soapenv:Header>
    <soapenv:Body>
       <int:informarVisita>
          <id>${xmlEscape(data.id)}</id>
@@ -495,13 +669,13 @@ export const informarVisita = async (data: any) => {
 export const cambiarPersonaNotificacionContrato = async (contrato: string, nif: string, email1: string, email2: string, usuario: string) => {
   const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
    <soapenv:Header>
- 		<wsse:Security mustUnderstand="1">
+    <wsse:Security mustUnderstand="1">
         <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
           <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
           <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
         </wsse:UsernameToken>
       </wsse:Security>
- 	</soapenv:Header>
+  </soapenv:Header>
    <soapenv:Body>
       <occ:cambiarPersonaNotificacionContrato>
          <contrato>${xmlEscape(contrato)}</contrato>
@@ -519,13 +693,13 @@ export const cambiarPersonaNotificacionContrato = async (contrato: string, nif: 
 export const cambiarTipoFacturaContrato = async (contrato: string, nif: string, tipoFactura: string, usuario: string = '0000004874') => {
   const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
    <soapenv:Header>
- 		<wsse:Security mustUnderstand="1">
+    <wsse:Security mustUnderstand="1">
         <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
           <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
           <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
         </wsse:UsernameToken>
       </wsse:Security>
- 	</soapenv:Header>
+  </soapenv:Header>
    <soapenv:Body>
       <occ:cambiarTipoFacturaContrato>
          <contrato>${xmlEscape(contrato)}</contrato>
@@ -538,3 +712,4 @@ export const cambiarTipoFacturaContrato = async (contrato: string, nif: string, 
 
   return sendSoapRequest(CEA_SOAP_RECEIPT_URL, '', xml);
 };
+

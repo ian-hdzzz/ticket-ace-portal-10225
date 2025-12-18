@@ -578,9 +578,12 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 </div>
                 <Textarea placeholder="Escribe un mensaje al cliente..." className="min-h-[80px]" />
                 <div className="flex justify-end">
-                  <Button className="gap-2">
+                  <Button 
+                    className="gap-2"
+                    onClick={() => window.open('https://chatwoot.fitcluv.com', '_blank')}
+                  >
                     <MessageSquare className="h-4 w-4" />
-                    Enviar Mensaje
+                    Abrir Conversación
                   </Button>
                 </div>
               </div>
