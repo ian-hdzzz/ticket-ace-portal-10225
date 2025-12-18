@@ -10,7 +10,7 @@ export default class AuthController {
      */
     static async login(req: Request, res: Response) {
         try {
-            // console.log("Login endpoint called");
+            console.log("Login endpoint called");
             // destruct body for email and password
             const { email, password } = req.body;
             if (!email || !password) {
@@ -22,6 +22,7 @@ export default class AuthController {
             if (!user || !user.password) {
                 return res.status(401).json({ success: false, message: "Usuario no encontrado" });
             }
+            console.log("user found", user);
 
             // verify password hash
             // const passwordsMatch = await AuthUseCases.verifyPassword(password, user.password);

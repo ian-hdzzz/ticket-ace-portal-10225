@@ -57,7 +57,7 @@ app.use(cookieParser());
 // });
 
 // Routes
-app.use('/api/auth', authRouter);
+app.use('/auth', authRouter);
 app.use('/api/cea', ceaRouter);
 
 app.listen(config.port, () => {
