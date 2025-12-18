@@ -21,6 +21,15 @@ app.get("/", (req, res) => {
   res.send("Servidor funcionando");
 });
 
+// Health check endpoint for Cloud Run
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 app.listen(config.port, () => {
     console.log(` Server running on: http://localhost:${config.port}`);
     });

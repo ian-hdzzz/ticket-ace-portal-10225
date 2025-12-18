@@ -76,11 +76,11 @@ const App = () => (
                 } 
               />
               
-              {/* Crear Reportes - Requiere permiso de ver tickets */}
+              {/* Crear Reportes - Requiere permiso de generar reportes */}
               <Route 
                 path="crear-reportes" 
                 element={
-                  <ProtectedRoute requiredPermissions={["ver_tickets", "view_tickets"]}>
+                  <ProtectedRoute requiredPermissions={["generar_reportes", "generate_reports"]}>
                     <CrearReportes />
                   </ProtectedRoute>
                 } 
