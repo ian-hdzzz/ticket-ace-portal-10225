@@ -23,19 +23,26 @@ class SupabaseService {
             const supabaseUrl = process.env.SUPABASE_URL;
             const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+            // Debug: Check if env vars are loaded
+            console.log('🔍 Supabase Config Check:');
+            console.log('  SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
+            console.log('  SERVICE_ROLE_KEY:', supabaseServiceKey ? `✅ Set (${supabaseServiceKey.substring(0, 20)}...)` : '❌ Missing');
+
             if (!supabaseUrl || !supabaseServiceKey) {
                 throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
             }
 
+            // Note: We'll use .schema('cea') in queries instead of global config
+            // This is more explicit and reliable
             this.client = createClient(supabaseUrl, supabaseServiceKey, {
                 auth: {
                     autoRefreshToken: false,
                     persistSession: false
-                },
-                db: {
-                    schema: 'cea'
                 }
             });
+
+            console.log('✅ Supabase client initialized with SERVICE_ROLE_KEY');
+            console.log('🔑 Key type:', supabaseServiceKey.includes('service_role') ? 'Service Role' : 'Unknown');
         }
 
         return this.client;

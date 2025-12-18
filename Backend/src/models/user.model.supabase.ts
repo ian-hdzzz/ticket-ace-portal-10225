@@ -17,10 +17,41 @@ export default class User {
         try {
             const supabase = SupabaseService.getSupabaseClient();
 
+            console.log('🔍 Attempting to query users table with email:', email);
+            
+            // First, try a simple query without joins to test access
+            const { data: simpleTest, error: simpleError } = await supabase
+                .from('users')
+                .select('id, email')
+                .eq('email', email)
+                .single();
+
+            console.log('Simple query result:', { data: simpleTest, error: simpleError });
+
+            if (simpleError) {
+                console.error('❌ Simple query failed:', simpleError);
+                // Try with schema prefix
+                console.log('🔄 Trying with explicit schema...');
+                const { data: schemaTest, error: schemaError } = await supabase
+                    .schema('cea')
+                    .from('users')
+                    .select('id, email')
+                    .eq('email', email)
+                    .single();
+                
+                console.log('Schema query result:', { data: schemaTest, error: schemaError });
+                
+                if (schemaError) {
+                    console.error('❌ Schema query also failed:', schemaError);
+                    throw new Error("Error al buscar usuario");
+                }
+            }
+
             // Query user with roles and privileges using Supabase joins
             // Note: Using !users_roles_user_id_fkey to specify which relationship to use
             // (there are two FKs: user_id and assigned_by)
             const { data: user, error } = await supabase
+                .schema('cea')
                 .from('users')
                 .select(`
                     id,
