@@ -85,7 +85,7 @@ Successfully tagged ticket-ace-backend:local
 
 ```bash
 cd ../Frontend
-docker build -t ticket-ace-frontend:local .
+`docker build -t ticket-ace-frontend:local .`
 ```
 
 **Qué hace:** Lo mismo que el paso anterior pero para el frontend.
