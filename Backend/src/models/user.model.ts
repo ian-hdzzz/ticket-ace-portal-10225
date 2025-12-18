@@ -30,4 +30,21 @@ export default class User {
             throw new Error("Conexión con BD ha fallido");
         }
     }
+
+    static async updatePassword(userId: string, newPassword: string) {
+        try {
+            const updatedUser = await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    password: newPassword,
+                    isTemporaryPassword: false,
+                }
+            });
+
+            return updatedUser;
+        } catch (error) {
+            console.error(error);
+            throw new Error("Error al actualizar contraseña");
+        }
+    }
 }

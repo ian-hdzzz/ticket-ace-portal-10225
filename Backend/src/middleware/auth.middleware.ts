@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import JWTService from "../services/jwt.service.js";
-import SupabaseService from "../services/supabase.service.js";
+import JWTService from "../utils/jwt.service.js";
 
 // Extend Express Request type to include user
 declare global {
@@ -13,28 +12,20 @@ declare global {
                 full_name: string;
                 roles: string[];
                 privileges: string[];
-                supabaseUserId?: string;
             };
         }
     }
 }
 
 /**
- * Middleware to verify JWT access token from cookies (Supabase Auth)
+ * Middleware to verify JWT access token from cookies
  * Adds user payload to req.user if valid
  */
-export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
     try {
-        console.log("in authentication token middleware")
-        // Check for Supabase session token in cookies
-        // Supabase stores tokens with specific cookie names based on the project
-        const supabaseAccessToken = req.cookies['sb-access-token'] || 
-                                     req.cookies['supabase-auth-token'] ||
-                                     req.cookies.accessToken;
+        const accessToken = req.cookies.accessToken;
 
-        console.log("supabaseAccessToken", supabaseAccessToken);
-
-        if (!supabaseAccessToken) {
+        if (!accessToken) {
             res.status(401).json({
                 success: false,
                 message: "Token de acceso no proporcionado",
@@ -42,10 +33,10 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             return;
         }
 
-        // Verify the Supabase token and get user data
-        const userData = await SupabaseService.verifyToken(supabaseAccessToken);
+        // Verify the access token
+        const payload = JWTService.verifyAccessToken(accessToken);
 
-        if (!userData) {
+        if (!payload) {
             res.status(401).json({
                 success: false,
                 message: "Token de acceso inválido o expirado",
@@ -55,18 +46,16 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
         // Attach user info to request
         req.user = {
-            userId: userData.userId,
-            email: userData.email,
-            is_temporary_password: userData.is_temporary_password,
-            full_name: userData.full_name,
-            roles: userData.roles,
-            privileges: userData.privileges,
-            supabaseUserId: userData.supabaseUserId,
+            userId: payload.userId,
+            email: payload.email,
+            is_temporary_password: payload.is_temporary_password,
+            full_name: payload.full_name,
+            roles: payload.roles,
+            privileges: payload.privileges,
         };
 
         next();
     } catch (error) {
-        console.error('Auth middleware error:', error);
         res.status(500).json({
             success: false,
             message: "Error al verificar token de acceso",
@@ -78,23 +67,20 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
  * Optional authentication middleware
  * Adds user to request if token exists and is valid, but doesn't reject if missing
  */
-export const optionalAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const optionalAuth = (req: Request, res: Response, next: NextFunction): void => {
     try {
-        const supabaseAccessToken = req.cookies['sb-access-token'] || 
-                                     req.cookies['supabase-auth-token'] ||
-                                     req.cookies.accessToken;
+        const accessToken = req.cookies.accessToken;
 
-        if (supabaseAccessToken) {
-            const userData = await SupabaseService.verifyToken(supabaseAccessToken);
-            if (userData) {
+        if (accessToken) {
+            const payload = JWTService.verifyAccessToken(accessToken);
+            if (payload) {
                 req.user = {
-                    userId: userData.userId,
-                    email: userData.email,
-                    is_temporary_password: userData.is_temporary_password,
-                    full_name: userData.full_name,
-                    roles: userData.roles,
-                    privileges: userData.privileges,
-                    supabaseUserId: userData.supabaseUserId,
+                    userId: payload.userId,
+                    email: payload.email,
+                    is_temporary_password: payload.is_temporary_password,
+                    full_name: payload.full_name,
+                    roles: payload.roles,
+                    privileges: payload.privileges,
                 };
             }
         }
@@ -105,4 +91,3 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
         next();
     }
 };
-

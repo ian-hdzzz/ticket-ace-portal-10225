@@ -18,4 +18,12 @@ export default class AuthUseCases {
         const isMatch = await bcrypt.compare(password, passwordHash);
         return isMatch;
     }
+
+    /**
+     * Update user password and clear temporary password flag
+     */
+    static async updatePassword(userId: string, newPassword: string) {
+        const updatedUser = await User.updatePassword(userId, newPassword);
+        return updatedUser;
+    }
 }

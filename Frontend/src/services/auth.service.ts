@@ -24,6 +24,17 @@ export interface RefreshTokenResponse {
   message: string;
 }
 
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+  user: {
+    id: string;
+    email: string;
+    full_name: string;
+    is_temporary_password: boolean;
+  };
+}
+
 export interface ApiError {
   success: false;
   message: string;
@@ -104,6 +115,33 @@ class AuthService {
       throw {
         success: false,
         message: error.message || 'Error al actualizar token',
+      };
+    }
+  }
+
+  /**
+   * Change password for authenticated user
+   * Used especially for users with temporary passwords
+   * 
+   * @param newPassword - New password to set
+   * @param confirmPassword - Confirmation of new password
+   * @returns Promise with updated user data
+   */
+  async changePassword(newPassword: string, confirmPassword: string): Promise<ChangePasswordResponse> {
+    try {
+      const response = await apiClient.post<ChangePasswordResponse>('/auth/change-password', {
+        newPassword,
+        confirmPassword,
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.data) {
+        throw error.response.data;
+      }
+      
+      throw {
+        success: false,
+        message: error.message || 'Error al cambiar contraseña',
       };
     }
   }

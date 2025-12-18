@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from '../supabase/client.ts'
+import { authService } from '../services/auth.service'
 
 export default function Auth() {
   // Solo login, no registro
@@ -17,60 +17,29 @@ export default function Auth() {
     e.preventDefault();
     setErrorMsg("");
     try {
-      console.log('🔐 Intentando login con email:', email);
+      // Call backend API for authentication
+      const response = await authService.login(email, password);
       
-      // Use Supabase Auth for authentication
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (authError || !authData.user) {
-        console.error('❌ Error en login:', authError);
-        setErrorMsg("Correo o contraseña incorrectos.");
+      if (!response.success) {
+        setErrorMsg(response.message || "Correo o contraseña incorrectos.");
         return;
       }
 
-      console.log('✅ Usuario autenticado con Supabase:', authData.user.id);
-
-      // Fetch user details from our users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id, email, full_name, is_temporary_password')
-        .eq('email', email)
-        .single();
-
-      if (userError || !userData) {
-        console.error('❌ Error obteniendo datos de usuario:', userError);
-        setErrorMsg("Error obteniendo información del usuario.");
-        return;
-      }
-
-      console.log('✅ Datos de usuario obtenidos:', { 
-        id: userData.id, 
-        email: userData.email, 
-        is_temporary: userData.is_temporary_password 
-      });
-      
-      if (userData.is_temporary_password) {
-        console.log('⚠️ Usuario tiene contraseña temporal, solicitando cambio...');
-        // Mostrar formulario para cambiar contraseña
+      // Check if user has temporary password
+      if (response.user.is_temporary_password) {
+        // Show change password form
         setShowChangePassword(true);
-        // Guardar el usuario temporalmente para el cambio de contraseña
+        // Store user temporarily for password change
         localStorage.setItem("user_temp", JSON.stringify({
-          id: userData.id,
-          email: userData.email,
-          full_name: userData.full_name
+          id: response.user.id,
+          email: response.user.email,
+          full_name: response.user.full_name
         }));
         return;
       }
 
-      // Guardar el usuario en localStorage para protección de rutas y compatibilidad
-      localStorage.setItem("user", JSON.stringify({
-        id: userData.id,
-        email: userData.email,
-        full_name: userData.full_name
-      }));
+      // Store user in localStorage for route protection
+      authService.setCurrentUser(response.user);
       navigate("/dashboard");
     } catch (error: any) {
       setErrorMsg(error.message || "Ocurrió un error inesperado. Por favor intenta de nuevo más tarde.");
@@ -96,55 +65,23 @@ export default function Auth() {
       setErrorMsg("Las contraseñas no coinciden.");
       return;
     }
-    const userTemp = JSON.parse(localStorage.getItem("user_temp") || "null");
-    if (!userTemp) {
-      setErrorMsg("Error interno. Intenta de nuevo.");
-      return;
-    }
-    
-    try {
-      console.log('🔄 Intentando actualizar contraseña para usuario:', userTemp.id);
-      
-      // Update password using Supabase Auth
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-      });
 
-      if (updateError) {
-        console.error('❌ Error al actualizar contraseña en Supabase:', updateError);
-        setErrorMsg(
-          `No se pudo actualizar la contraseña: ${updateError.message}. ` +
-          `Por favor contacta al administrador del sistema.`
-        );
+    try {
+      // Call backend API to change password
+      const response = await authService.changePassword(newPassword, confirmPassword);
+      
+      if (!response.success) {
+        setErrorMsg(response.message || "No se pudo actualizar la contraseña.");
         return;
       }
 
-      // Update the temporary password flag in our users table
-      const { error: dbError } = await supabase
-        .from('users')
-        .update({ 
-          is_temporary_password: false 
-        })
-        .eq('id', userTemp.id);
-
-      if (dbError) {
-        console.error('❌ Error al actualizar flag en base de datos:', dbError);
-        // Continue anyway since password was updated in Supabase
-      }
-
-      console.log('✅ Contraseña actualizada exitosamente');
-
-      // Guardar el usuario definitivo y limpiar el temporal
-      localStorage.setItem("user", JSON.stringify(userTemp));
+      // Save updated user and clean temporary storage
+      authService.setCurrentUser(response.user);
       localStorage.removeItem("user_temp");
-      
-      // Pequeño delay para asegurar que se guardó en la BD
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       navigate("/dashboard");
-    } catch (error) {
-      console.error('❌ Error inesperado al cambiar contraseña:', error);
-      setErrorMsg("Ocurrió un error inesperado. Por favor intenta de nuevo.");
+    } catch (error: any) {
+      setErrorMsg(error.message || "No se pudo actualizar la contraseña. Intenta de nuevo.");
+      console.error("Error al cambiar contraseña:", error);
     }
   };
 

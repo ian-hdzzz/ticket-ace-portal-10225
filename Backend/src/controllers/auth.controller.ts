@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import AuthUseCases from "../usecases/auth.usecases.js";
-import JWTService from "../services/jwt.service.js";
+import JWTService from "../utils/jwt.service.js";
 import type { TokenPayload } from "../types/jwtPayload.type.js";
 
 export default class AuthController {
@@ -137,6 +137,90 @@ export default class AuthController {
         } catch (err) {
             const error = err as Error;
             const errMessage = error.message || "Error al actualizar token";
+            return res.status(500).json({ success: false, message: errMessage });
+        }
+    }
+
+    /**
+     * Change password endpoint - allows authenticated users to change their password
+     * Especially for users with temporary passwords
+     */
+    static async changePassword(req: Request, res: Response) {
+        try {
+            // User must be authenticated (from middleware)
+            if (!req.user) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Usuario no autenticado",
+                });
+            }
+
+            const { newPassword, confirmPassword } = req.body;
+
+            // Validate input
+            if (!newPassword || !confirmPassword) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Nueva contraseña y confirmación son requeridas",
+                });
+            }
+
+            if (newPassword !== confirmPassword) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Las contraseñas no coinciden",
+                });
+            }
+
+            if (newPassword.length < 8) {
+                return res.status(400).json({
+                    success: false,
+                    message: "La nueva contraseña debe tener al menos 8 caracteres",
+                });
+            }
+
+            // Update password (plain text for now, will hash later)
+            const updatedUser = await AuthUseCases.updatePassword(
+                req.user.userId,
+                newPassword
+            );
+
+            if (!updatedUser) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Usuario no encontrado",
+                });
+            }
+
+            // Generate new tokens with updated is_temporary_password flag
+            const tokenPayload: TokenPayload = {
+                userId: updatedUser.id,
+                email: updatedUser.email,
+                is_temporary_password: false,
+                full_name: updatedUser.fullName,
+                roles: req.user.roles,
+                privileges: req.user.privileges,
+            };
+
+            const accessToken = JWTService.generateAccessToken(tokenPayload);
+            const refreshToken = JWTService.generateRefreshToken(tokenPayload);
+
+            // Set new tokens
+            JWTService.setTokenCookies(res, accessToken, refreshToken);
+
+            return res.status(200).json({
+                success: true,
+                message: "Contraseña actualizada exitosamente",
+                user: {
+                    id: updatedUser.id,
+                    email: updatedUser.email,
+                    full_name: updatedUser.fullName,
+                    is_temporary_password: false,
+                },
+            });
+        } catch (err) {
+            const error = err as Error;
+            const errMessage = error.message || "Error al cambiar contraseña";
             return res.status(500).json({ success: false, message: errMessage });
         }
     }

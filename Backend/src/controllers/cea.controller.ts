@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import CEAService from "../services/cea.service.js";
+import CEAService from "../api/cea.service.js";
 
 export default class CEAController {
     
