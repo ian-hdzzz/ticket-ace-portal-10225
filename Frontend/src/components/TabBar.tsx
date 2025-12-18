@@ -20,15 +20,15 @@ export const TabBar = () => {
   };
 
   return (
-    <div className="flex items-center gap-0.5 border-b bg-muted/30 px-2 py-1 overflow-x-auto flex-shrink-0">
+    <div className="flex items-center gap-1 border-b-2 border-border bg-muted px-3 py-2 overflow-x-auto flex-shrink-0 shadow-sm">
       {tabs.map((tab) => (
         <div
           key={tab.id}
           className={cn(
-            'group flex items-center gap-2 rounded-t-md border border-b-0 px-3 py-2 text-sm transition-all cursor-pointer',
+            'group flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-sm font-medium transition-all cursor-pointer',
             activeTabId === tab.id
-              ? 'bg-background border-border shadow-sm relative z-10 -mb-px'
-              : 'bg-transparent border-transparent hover:bg-muted/50'
+              ? 'bg-background border-border shadow-md relative z-10 -mb-px scale-105'
+              : 'bg-muted/50 border-transparent hover:bg-muted/80 hover:shadow-sm'
           )}
         >
           <button
