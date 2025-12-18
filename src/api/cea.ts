@@ -371,6 +371,74 @@ export const getConsumos = async (explotacion: string, contrato: string, idioma:
   return response;
 };
 
+// CEA GetConceptos
+export const getConceptos = async (explotacion: string, idioma: string = 'es') => {
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <occ:getConceptos>
+         <explotacion>${xmlEscape(explotacion)}</explotacion>
+         <idioma>${xmlEscape(idioma)}</idioma>
+      </occ:getConceptos>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+  console.log('[getConceptos] Request params:', { explotacion, idioma });
+  console.log('[getConceptos] SOAP Request XML:', xml);
+
+  const response = await sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
+  
+  console.log('[getConceptos] SOAP Response:', response);
+  
+  return response;
+};
+
+// CEA GetTarifaDeAguaPorContrato
+export const getTarifaDeAguaPorContrato = async (explotacion: string, contrato: string, idioma: string = 'es') => {
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <occ:getTarifaDeAguaPorContrato>
+         <explotacion>${xmlEscape(explotacion)}</explotacion>
+         <contrato>${xmlEscape(contrato)}</contrato>
+         <idioma>${xmlEscape(idioma)}</idioma>
+      </occ:getTarifaDeAguaPorContrato>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+  console.log('[getTarifaDeAguaPorContrato] Request params:', { explotacion, contrato, idioma });
+  console.log('[getTarifaDeAguaPorContrato] SOAP Request XML:', xml);
+
+  const response = await sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
+  
+  console.log('[getTarifaDeAguaPorContrato] SOAP Response:', response);
+  
+  return response;
+};
+
+// CEA GetConsumosParaGraficas
+export const getConsumosParaGraficas = async (explotacion: string, contrato: string, idioma: string = 'es') => {
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <occ:getConsumosParaGraficas>
+         <explotacion>${xmlEscape(explotacion)}</explotacion>
+         <contrato>${xmlEscape(contrato)}</contrato>
+         <idioma>${xmlEscape(idioma)}</idioma>
+      </occ:getConsumosParaGraficas>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+  console.log('[getConsumosParaGraficas] Request params:', { explotacion, contrato, idioma });
+  console.log('[getConsumosParaGraficas] SOAP Request XML:', xml);
+
+  const response = await sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
+  
+  console.log('[getConsumosParaGraficas] SOAP Response:', response);
+  
+  return response;
+};
+
 // CEASolicitudRecibo (Reusing getContrato structure as per user request, but maybe it's different? The user request listed 'getContrato' under 'CEASolicitudRecibo' endpoint too, but also 'cambiarEmailNotificacionPersona' etc. I will add those.)
 
 export const cambiarEmailNotificacionPersona = async (nif: string, nombre: string, apellido1: string, apellido2: string, contrato: string, emailAntiguo: string, emailNuevo: string, codigoOficina: string, usuario: string) => {
