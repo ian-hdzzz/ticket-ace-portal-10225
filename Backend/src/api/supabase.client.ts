@@ -32,8 +32,8 @@ class SupabaseService {
                 throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
             }
 
-            // Note: We'll use .schema('cea') in queries instead of global config
-            // This is more explicit and reliable
+            // IMPORTANT: We use .schema('cea') in each query to specify the schema
+            // The global db.schema config doesn't work properly with PostgREST
             this.client = createClient(supabaseUrl, supabaseServiceKey, {
                 auth: {
                     autoRefreshToken: false,
@@ -42,7 +42,7 @@ class SupabaseService {
             });
 
             console.log('✅ Supabase client initialized with SERVICE_ROLE_KEY');
-            console.log('🔑 Key type:', supabaseServiceKey.includes('service_role') ? 'Service Role' : 'Unknown');
+            console.log('📋 Remember to use .schema("cea") in all queries!');
         }
 
         return this.client;
