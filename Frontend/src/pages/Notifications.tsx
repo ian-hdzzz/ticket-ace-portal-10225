@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -8,21 +8,17 @@ import {
   Check,
   CheckCheck,
   Trash2,
-  Filter,
   Search,
   ExternalLink,
+  Clock,
+  Target,
+  Inbox,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Notifications: React.FC = () => {
   const { 
@@ -36,63 +32,62 @@ const Notifications: React.FC = () => {
   const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterRead, setFilterRead] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'assigned' | 'queue'>('all');
 
-  // Filtrar notificaciones
-  const filteredNotifications = notifications.filter((notif) => {
-    const matchesSearch = 
+  // Separar notificaciones por tipo
+  const assignedNotifications = useMemo(() => 
+    notifications.filter(n => n.type === 'TICKET_ASSIGNED'),
+    [notifications]
+  );
+
+  const queueNotifications = useMemo(() => 
+    notifications.filter(n => n.type === 'TICKET_QUEUE'),
+    [notifications]
+  );
+
+  // Filtrar por búsqueda
+  const filterBySearch = (notifs: typeof notifications) => {
+    if (!searchQuery) return notifs;
+    return notifs.filter((notif) =>
       notif.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notif.message.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesType = filterType === 'all' || notif.type === filterType;
-    
-    const matchesRead = 
-      filterRead === 'all' || 
-      (filterRead === 'unread' && !notif.read) ||
-      (filterRead === 'read' && notif.read);
-
-    return matchesSearch && matchesType && matchesRead;
-  });
-
-  const handleNotificationClick = (notification: any) => {
-    if (!notification.read) {
-      markAsRead(notification.id);
-    }
-    if (notification.ticketId) {
-      navigate(`/dashboard/tickets/${notification.ticketId}`);
-    }
+      notif.message.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   };
+
+  const filteredAllNotifications = filterBySearch(notifications);
+  const filteredAssignedNotifications = filterBySearch(assignedNotifications);
+  const filteredQueueNotifications = filterBySearch(queueNotifications);
+
+  // Contador de no leídas por tipo
+  const allUnreadCount = notifications.filter(n => !n.read).length;
+  const assignedUnreadCount = assignedNotifications.filter(n => !n.read).length;
+  const queueUnreadCount = queueNotifications.filter(n => !n.read).length;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'TICKET_CREATED':
-        return '';
+      case 'TICKET_QUEUE':
+        return '⏳'; // En cola
       case 'TICKET_ASSIGNED':
-        return '👤';
-      case 'TICKET_STATUS_CHANGED':
-        return '🔄';
-      case 'TICKET_PRIORITY_CHANGED':
-        return '⚡';
-      case 'TICKET_COMMENT':
-        return '💬';
-      case 'SYSTEM_ALERT':
-        return '🔔';
+        return '🎯'; // Asignado a mí
       default:
-        return '📋';
+        return '';
     }
   };
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      TICKET_CREATED: 'Ticket Creado',
-      TICKET_ASSIGNED: 'Ticket Asignado',
-      TICKET_STATUS_CHANGED: 'Estado Cambiado',
-      TICKET_PRIORITY_CHANGED: 'Prioridad Cambiada',
-      TICKET_COMMENT: 'Nuevo Comentario',
-      SYSTEM_ALERT: 'Alerta del Sistema',
+      TICKET_QUEUE: 'En Cola',
+      TICKET_ASSIGNED: 'Asignado a Mí',
     };
     return labels[type] || type;
+  };
+
+  const getTypeDescription = (type: string) => {
+    const descriptions: Record<string, string> = {
+      TICKET_QUEUE: 'Cliente esperando asesor',
+      TICKET_ASSIGNED: 'Ticket asignado directamente',
+    };
+    return descriptions[type] || '';
   };
 
   const getPriorityColor = (priority?: string) => {
@@ -110,6 +105,140 @@ const Notifications: React.FC = () => {
         return 'bg-blue-100 text-blue-800';
     }
   };
+
+  const renderNotificationCard = (notification: typeof notifications[0]) => (
+    <Card
+      key={notification.id}
+      className={`p-4 transition-all hover:shadow-md relative ${
+        !notification.read ? 'border-l-4 border-l-blue-600 bg-blue-50' : ''
+      }`}
+    >
+      <div className="flex gap-4">
+        {/* Icon */}
+        <div className="text-4xl flex-shrink-0">
+          {getNotificationIcon(notification.type)}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Title and Time */}
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg text-gray-900">
+                {notification.title}
+              </h3>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge 
+                  variant={notification.type === 'TICKET_ASSIGNED' ? 'default' : 'secondary'} 
+                  className="text-xs"
+                >
+                  {getTypeLabel(notification.type)}
+                </Badge>
+                <span className="text-xs text-gray-400">•</span>
+                <span className="text-xs text-gray-500">
+                  {getTypeDescription(notification.type)}
+                </span>
+                <span className="text-xs text-gray-400">•</span>
+                <span className="text-xs text-gray-500">
+                  {formatDistanceToNow(new Date(notification.createdAt), {
+                    addSuffix: true,
+                    locale: es,
+                  })}
+                </span>
+              </div>
+            </div>
+            {!notification.read && (
+              <Badge variant="destructive" className="ml-2">
+                Nuevo
+              </Badge>
+            )}
+          </div>
+
+          {/* Message */}
+          <p className="text-gray-700 mb-3">{notification.message}</p>
+
+          {/* Metadata */}
+          {notification.metadata && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {notification.metadata.ticketNumber && (
+                <Badge variant="outline" className="text-sm">
+                  Ticket #{notification.metadata.ticketNumber}
+                </Badge>
+              )}
+              {notification.metadata.priority && (
+                <Badge 
+                  className={`text-sm ${getPriorityColor(notification.metadata.priority)}`}
+                  style={{ 
+                    backgroundColor: notification.metadata.priority?.toLowerCase() === 'urgente' || notification.metadata.priority?.toLowerCase() === 'urgent' ? 'rgb(254, 226, 226)' :
+                               notification.metadata.priority?.toLowerCase() === 'alta' || notification.metadata.priority?.toLowerCase() === 'high' ? 'rgb(255, 237, 213)' :
+                               notification.metadata.priority?.toLowerCase() === 'media' || notification.metadata.priority?.toLowerCase() === 'medium' ? 'rgb(254, 249, 195)' : 'rgb(219, 234, 254)',
+                    color: notification.metadata.priority?.toLowerCase() === 'urgente' || notification.metadata.priority?.toLowerCase() === 'urgent' ? 'rgb(153, 27, 27)' :
+                           notification.metadata.priority?.toLowerCase() === 'alta' || notification.metadata.priority?.toLowerCase() === 'high' ? 'rgb(154, 52, 18)' :
+                           notification.metadata.priority?.toLowerCase() === 'media' || notification.metadata.priority?.toLowerCase() === 'medium' ? 'rgb(133, 77, 14)' : 'rgb(30, 64, 175)',
+                    pointerEvents: 'none'
+                  }}
+                >
+                  Prioridad: {notification.metadata.priority}
+                </Badge>
+              )}
+              {notification.metadata.status && (
+                <Badge variant="outline" className="text-sm">
+                  Estado: {notification.metadata.status}
+                </Badge>
+              )}
+              {notification.metadata.customerName && (
+                <Badge variant="outline" className="text-sm">
+                  Cliente: {notification.metadata.customerName}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            {notification.ticketId && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/dashboard/tickets/${notification.ticketId}`);
+                }}
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Ver Ticket
+              </Button>
+            )}
+            {!notification.read && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  markAsRead(notification.id);
+                }}
+              >
+                <Check className="h-3 w-3 mr-1" />
+                Marcar como leída
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteNotification(notification.id);
+              }}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Eliminar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
 
   return (
     <div className="container mx-auto p-6 max-w-5xl">
@@ -135,189 +264,116 @@ const Notifications: React.FC = () => {
           )}
         </div>
 
-        {/* Filters */}
-        <Card className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Buscar notificaciones..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Type Filter */}
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="TICKET_CREATED">Tickets Creados</SelectItem>
-                <SelectItem value="TICKET_ASSIGNED">Asignaciones</SelectItem>
-                <SelectItem value="TICKET_STATUS_CHANGED">Cambios de Estado</SelectItem>
-                <SelectItem value="TICKET_PRIORITY_CHANGED">Cambios de Prioridad</SelectItem>
-                <SelectItem value="TICKET_COMMENT">Comentarios</SelectItem>
-                <SelectItem value="SYSTEM_ALERT">Alertas</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Read/Unread Filter */}
-            <Select value={filterRead} onValueChange={setFilterRead}>
-              <SelectTrigger className="w-full md:w-[150px]">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="unread">Sin leer</SelectItem>
-                <SelectItem value="read">Leídas</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </Card>
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Buscar notificaciones..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
       </div>
 
-      {/* Notifications List */}
+      {/* Tabs */}
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando notificaciones...</p>
         </div>
-      ) : filteredNotifications.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Bell className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-xl font-semibold mb-2">No hay notificaciones</h3>
-          <p className="text-gray-600">
-            {searchQuery || filterType !== 'all' || filterRead !== 'all'
-              ? 'No se encontraron notificaciones con los filtros aplicados'
-              : 'Cuando recibas notificaciones, aparecerán aquí'}
-          </p>
-        </Card>
       ) : (
-        <div className="space-y-3">
-          {filteredNotifications.map((notification) => (
-            <Card
-              key={notification.id}
-              className={`p-4 cursor-pointer transition-all hover:shadow-md relative ${
-                !notification.read ? 'border-l-4 border-l-blue-600 bg-blue-50' : ''
-              }`}
-              onClick={() => handleNotificationClick(notification)}
-            >
-              <div className="flex gap-4">
-                {/* Icon */}
-                <div className="text-3xl flex-shrink-0">
-                  {getNotificationIcon(notification.type)}
-                </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'all' | 'assigned' | 'queue')} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="all" className="relative">
+              <Inbox className="h-4 w-4 mr-2" />
+              Todas ({notifications.length})
+              {allUnreadCount > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                  {allUnreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="assigned" className="relative">
+              <Target className="h-4 w-4 mr-2" />
+              Asignados ({assignedNotifications.length})
+              {assignedUnreadCount > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                  {assignedUnreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="queue" className="relative">
+              <Clock className="h-4 w-4 mr-2" />
+              En Cola ({queueNotifications.length})
+              {queueUnreadCount > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                  {queueUnreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {/* Title and Time */}
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-gray-900">
-                        {notification.title}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {getTypeLabel(notification.type)}
-                        </Badge>
-                        <span className="text-xs text-gray-500">
-                          {formatDistanceToNow(new Date(notification.createdAt), {
-                            addSuffix: true,
-                            locale: es,
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                    {!notification.read && (
-                      <Badge variant="default" className="ml-2">
-                        Nuevo
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Message */}
-                  <p className="text-gray-700 mb-3">{notification.message}</p>
-
-                  {/* Metadata */}
-                  {notification.metadata && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {notification.metadata.ticketNumber && (
-                        <Badge variant="outline" className="text-sm">
-                          Ticket #{notification.metadata.ticketNumber}
-                        </Badge>
-                      )}
-                      {notification.metadata.priority && (
-                        <Badge className={`text-sm ${getPriorityColor(notification.metadata.priority)}`}>
-                          Prioridad: {notification.metadata.priority}
-                        </Badge>
-                      )}
-                      {notification.metadata.status && (
-                        <Badge variant="outline" className="text-sm">
-                          Estado: {notification.metadata.status}
-                        </Badge>
-                      )}
-                      {notification.metadata.customerName && (
-                        <Badge variant="outline" className="text-sm">
-                          Cliente: {notification.metadata.customerName}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    {notification.ticketId && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/dashboard/tickets/${notification.ticketId}`);
-                        }}
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        Ver Ticket
-                      </Button>
-                    )}
-                    {!notification.read && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markAsRead(notification.id);
-                        }}
-                      >
-                        <Check className="h-3 w-3 mr-1" />
-                        Marcar como leída
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Eliminar
-                    </Button>
-                  </div>
-                </div>
+          {/* Tab: Todas */}
+          <TabsContent value="all" className="mt-0">
+            {filteredAllNotifications.length === 0 ? (
+              <Card className="p-12 text-center">
+                <Inbox className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-xl font-semibold mb-2">No hay notificaciones</h3>
+                <p className="text-gray-600">
+                  {searchQuery
+                    ? 'No se encontraron notificaciones con tu búsqueda'
+                    : 'Todas tus notificaciones aparecerán aquí'}
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {filteredAllNotifications.map((notification) => renderNotificationCard(notification))}
               </div>
-            </Card>
-          ))}
-        </div>
+            )}
+          </TabsContent>
+
+          {/* Tab: Asignados */}
+          <TabsContent value="assigned" className="mt-0">
+            {filteredAssignedNotifications.length === 0 ? (
+              <Card className="p-12 text-center">
+                <Target className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-xl font-semibold mb-2">No tienes tickets asignados</h3>
+                <p className="text-gray-600">
+                  {searchQuery
+                    ? 'No se encontraron tickets asignados con tu búsqueda'
+                    : 'Los tickets que te asignen específicamente aparecerán aquí'}
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {filteredAssignedNotifications.map((notification) => (
+                  renderNotificationCard(notification)
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Tab: En Cola */}
+          <TabsContent value="queue" className="mt-0">
+            {filteredQueueNotifications.length === 0 ? (
+              <Card className="p-12 text-center">
+                <Clock className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-xl font-semibold mb-2">No hay tickets en cola</h3>
+                <p className="text-gray-600">
+                  {searchQuery
+                    ? 'No se encontraron tickets en cola con tu búsqueda'
+                    : 'Los tickets que necesiten un asesor aparecerán aquí'}
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {filteredQueueNotifications.map((notification) => renderNotificationCard(notification))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );

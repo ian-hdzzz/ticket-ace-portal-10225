@@ -55,7 +55,7 @@ export const NotificationWidget: React.FC = () => {
       case 'SYSTEM_ALERT':
         return '🔔';
       default:
-        return '📋';
+        return '';
     }
   };
 
@@ -83,6 +83,12 @@ export const NotificationWidget: React.FC = () => {
             size="lg"
             className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 relative"
             variant="default"
+            onClick={() => {
+              // Si no hay notificaciones, ir directamente a la página
+              if (recentNotifications.length === 0) {
+                navigate('/dashboard/notifications');
+              }
+            }}
           >
             <Bell className="h-6 w-6" />
             {unreadCount > 0 && (
@@ -110,30 +116,7 @@ export const NotificationWidget: React.FC = () => {
                   <Badge variant="secondary">{unreadCount} nuevas</Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => markAllAsRead()}
-                    className="text-xs"
-                  >
-                    <CheckCheck className="h-4 w-4 mr-1" />
-                    Marcar todas
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate('/dashboard/notifications');
-                  }}
-                  className="text-xs"
-                >
-                  Ver todas
-                </Button>
-              </div>
+              
             </div>
 
             {/* Notifications List */}

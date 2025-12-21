@@ -439,21 +439,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
 
   return (
     <div className="space-y-6 p-6 h-full overflow-auto">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => {
-            if (ticketIdProp) {
-              removeTab(`ticket-${id}`);
-              setActiveTab('tickets-list');
-            } else {
-              navigate("/dashboard/tickets");
-            }
-          }}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+      <div className="flex items-center gap-4 pl-5">
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{ticket.title}</h1>
           <p className="text-muted-foreground">#{ticket.folio}</p>
