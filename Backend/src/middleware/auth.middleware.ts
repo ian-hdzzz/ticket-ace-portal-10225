@@ -54,6 +54,8 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
             privileges: payload.privileges,
         };
 
+        console.log(req.user);
+
         next();
     } catch (error) {
         res.status(500).json({

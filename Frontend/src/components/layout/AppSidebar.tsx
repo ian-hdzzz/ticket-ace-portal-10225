@@ -23,6 +23,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
+import authService from "@/services/auth.service";
 
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -48,9 +49,17 @@ export function AppSidebar() {
     return currentPath.startsWith(path);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      localStorage.removeItem("user");
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Clear local data even if API call fails
+      localStorage.removeItem("user");
+      window.location.href = "/";
+    }
   };
 
   return (

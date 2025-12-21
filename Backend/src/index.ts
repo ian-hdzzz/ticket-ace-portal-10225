@@ -69,9 +69,7 @@ app.listen(config.port, async () => {
     console.log('\n🔍 Testing database connection...');
     try {
         await prisma.$connect();
-        const userCount = await prisma.user.count();
         console.log('✅ Database connected successfully!');
-        console.log(`📊 Found ${userCount} users in cea.users table\n`);
     } catch (error: any) {
         console.error('❌ Database connection FAILED:');
         console.error('   Error:', error.message);
