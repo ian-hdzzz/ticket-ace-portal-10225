@@ -15,7 +15,7 @@ import { TabProvider } from "./contexts/TabContext";
 import { TicketsWithTabs } from "./components/TicketsWithTabs";
 import CrearReportes from "./pages/CrearReportes";
 import Contratos from "./pages/Contratos";
-import ContractDetails from "./pages/ContractDetails";
+import ContratoDetail from "./pages/ContratoDetail";
 import Lecturas from "./pages/Lecturas";
 import Deuda from "./pages/Deuda";
 import Agents from "./pages/Agents";
@@ -76,11 +76,11 @@ const App = () => (
                 } 
               />
               
-              {/* Crear Reportes - Requiere permiso de ver tickets */}
+              {/* Crear Reportes - Requiere permiso de generar reportes */}
               <Route 
                 path="crear-reportes" 
                 element={
-                  <ProtectedRoute requiredPermissions={["ver_tickets", "view_tickets"]}>
+                  <ProtectedRoute requiredPermissions={["generar_reportes", "generate_reports"]}>
                     <CrearReportes />
                   </ProtectedRoute>
                 } 
@@ -108,10 +108,10 @@ const App = () => (
               
               {/* Detalles de Contrato */}
               <Route 
-                path="contratos/detail/:id" 
+                path="contratos/detail/:contratoId" 
                 element={
                   <ProtectedRoute requiredPermissions={["view_contract_details", "ver_numero_contratos"]}>
-                    <ContractDetails />
+                    <ContratoDetail />
                   </ProtectedRoute>
                 } 
               />

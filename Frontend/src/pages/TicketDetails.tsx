@@ -497,91 +497,31 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                Historial de Conversación
+                Atención al Cliente
               </CardTitle>
-              <p className="text-sm text-muted-foreground mt-2">
-                Timeline completo de todas las interacciones con el cliente
-              </p>
             </CardHeader>
             <CardContent>
-              <div className="relative space-y-6 before:absolute before:left-5 before:top-2 before:h-[calc(100%-1rem)] before:w-0.5 before:bg-border">
-                {ticket.conversations.map((conversation) => {
-                  const ChannelIcon = channelIcons[conversation.channel as keyof typeof channelIcons];
-                  const channelColor = channelColors[conversation.channel as keyof typeof channelColors];
-
-                  return (
-                    <div key={conversation.id} className="relative flex gap-4 pb-6">
-                      <div className={cn(
-                        "relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-background",
-                        conversation.type === "system" ? "bg-muted" : "bg-card"
-                      )}>
-                        <ChannelIcon className={cn("h-5 w-5", channelColor)} />
-                      </div>
-
-                      <div className="flex-1 space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium">
-                            {channelLabels[conversation.channel as keyof typeof channelLabels]}
-                          </span>
-                          {conversation.type === "incoming" && (
-                            <Badge variant="secondary" className="text-xs">Entrante</Badge>
-                          )}
-                          {conversation.type === "outgoing" && (
-                            <Badge variant="outline" className="text-xs">Saliente</Badge>
-                          )}
-                          {conversation.type === "internal" && (
-                            <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20 text-xs">Interno</Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground ml-auto">
-                            {conversation.timestamp}
-                          </span>
-                        </div>
-
-                        {conversation.from && (
-                          <div className="text-xs text-muted-foreground">
-                            <span className="font-medium">De:</span> {conversation.from}
-                            {conversation.to && <> → <span className="font-medium">Para:</span> {conversation.to}</>}
-                          </div>
-                        )}
-
-                        {conversation.subject && (
-                          <div className="text-sm font-medium text-foreground">
-                            {conversation.subject}
-                          </div>
-                        )}
-
-                        <div className="rounded-lg border bg-muted/50 p-3 text-sm">
-                          {conversation.message}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <Separator className="my-6" />
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Phone className="h-4 w-4" />
-                    Llamar
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    WhatsApp
-                  </Button>
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <MessageSquare className="h-12 w-12 text-primary" />
                 </div>
-                <Textarea placeholder="Escribe un mensaje al cliente..." className="min-h-[80px]" />
-                <div className="flex justify-end">
-                  <Button className="gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Enviar Mensaje
-                  </Button>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold">Continuar Conversación</h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Toda la comunicación con el cliente se gestiona a través de Chatwoot. 
+                    Haz clic en el botón para abrir la conversación y continuar atendiendo este ticket.
+                  </p>
+                </div>
+                <Button 
+                  size="lg"
+                  className="gap-2 mt-4"
+                  onClick={() => window.open('https://chatwoot.fitcluv.com', '_blank')}
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  Abrir Conversación en Chatwoot
+                </Button>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>Se abrirá en una nueva pestaña</span>
                 </div>
               </div>
             </CardContent>

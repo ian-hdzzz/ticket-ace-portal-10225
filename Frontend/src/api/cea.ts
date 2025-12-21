@@ -712,3 +712,4 @@ export const cambiarTipoFacturaContrato = async (contrato: string, nif: string, 
 
   return sendSoapRequest(CEA_SOAP_RECEIPT_URL, '', xml);
 };
+
