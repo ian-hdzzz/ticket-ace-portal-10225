@@ -20,7 +20,7 @@ export const TabBar = () => {
   };
 
   return (
-    <div className="flex items-center gap-1 border-b-2 border-border bg-muted px-3 py-2 overflow-x-auto flex-shrink-0 shadow-sm">
+    <div className="flex items-center gap-1 border-b-2 border-border bg-muted px-3 pt-4 overflow-x-auto flex-shrink-0 shadow-sm">
       {tabs.map((tab) => (
         <div
           key={tab.id}

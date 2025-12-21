@@ -515,7 +515,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 <Button 
                   size="lg"
                   className="gap-2 mt-4"
-                  onClick={() => window.open('https://chatwoot.fitcluv.com', '_blank')}
+                  onClick={() => window.open('https://chatwoot.fitcluv.com/app/accounts/3/conversations/46', '_blank')}
                 >
                   <MessageSquare className="h-5 w-5" />
                   Abrir Conversación en Chatwoot

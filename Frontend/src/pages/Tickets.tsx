@@ -48,6 +48,8 @@ import { mapStatus, mapPriority, mapPriorityToApi, mapChannel, mapAssignmentGrou
 import { getVisibleFields, FIELD_LABELS, getUserTypeDisplayName, type TicketField } from "@/lib/fieldVisibility";
 import { allUserTypes } from "@/lib/userTypes";
 import { supabase } from '../supabase/client.ts'
+import { sendTicketCreatedEmail } from '@/lib/emailService';
+import { toast } from "sonner";
 
 export default function Tickets() {
   const navigate = useNavigate();
@@ -1020,11 +1022,21 @@ export default function Tickets() {
             <Button
               onClick={async () => {
                 if (!newTicket.descripcion_breve.trim() || !newTicket.titular.trim()) {
+                  toast.error("Por favor completa todos los campos requeridos");
                   return;
                 }
 
                 try {
-                  await createTicket({
+                  // Obtener información del usuario logueado
+                  const userStr = localStorage.getItem('user');
+                  const user = userStr ? JSON.parse(userStr) : null;
+                  
+                  // Debug: Ver datos del usuario
+                  console.log('👤 Usuario logueado:', user);
+                  console.log('📧 Email del usuario:', user?.email);
+                  
+                  // Crear el ticket
+                  const createdTicket = await createTicket({
                     descripcion_breve: newTicket.descripcion_breve.trim(),
                     titular: newTicket.titular.trim(),
                     canal: newTicket.canal,
@@ -1042,7 +1054,69 @@ export default function Tickets() {
                     administracion: newTicket.administracion || null,
                     numero_orden_aquacis: newTicket.numero_orden_aquacis || null,
                   });
+                  
+                  toast.success("Ticket creado exitosamente");
+                  
+                  // Enviar correo de notificación si el usuario tiene email
+                  console.log('🔍 Verificando si enviar email...');
+                  console.log('   - Usuario tiene email?', !!user?.email);
+                  
+                  if (user?.email) {
+                    const ticketNumber = createdTicket?.folio || createdTicket?.numero_ticket || `TKT-${Date.now()}`;
+                    
+                    console.log('📬 Preparando envío de email:');
+                    console.log('   - Destinatario:', user.email);
+                    console.log('   - Nombre:', user.full_name || user.email);
+                    console.log('   - Ticket#:', ticketNumber);
+                    
+                    // Mapear valores para el correo
+                    const priorityMap = {
+                      'low': 'Baja',
+                      'medium': 'Media',
+                      'high': 'Alta',
+                      'urgent': 'Urgente'
+                    };
+                    
+                    const statusMap = {
+                      'open': 'Abierto',
+                      'in_progress': 'En Proceso',
+                      'resolved': 'Resuelto',
+                      'closed': 'Cerrado'
+                    };
+                    
+                    const channelMap = {
+                      'telefono': 'Teléfono',
+                      'email': 'Email',
+                      'app': 'Aplicación',
+                      'presencial': 'Presencial',
+                      'web': 'Web'
+                    };
+                    
+                    const emailSent = await sendTicketCreatedEmail({
+                      recipientEmail: user.email,
+                      recipientName: user.full_name || user.email,
+                      ticketNumber: ticketNumber,
+                      ticketDescription: newTicket.descripcion_breve.trim(),
+                      ticketPriority: priorityMap[newTicket.prioridad] || newTicket.prioridad,
+                      ticketStatus: statusMap[newTicket.estado] || newTicket.estado,
+                      ticketChannel: channelMap[newTicket.canal] || newTicket.canal,
+                    });
+                    
+                    console.log('✉️ Resultado del envío:', emailSent ? 'Exitoso' : 'Falló');
+                    
+                    if (emailSent) {
+                      toast.success("Correo de confirmación enviado");
+                    } else {
+                      toast.warning("Ticket creado, pero no se pudo enviar el correo de notificación");
+                    }
+                  } else {
+                    console.log('⚠️ No se envió email: Usuario sin email en localStorage');
+                  }
+                  
+                  // Recargar tickets y cerrar diálogo
                   await queryClient.invalidateQueries({ queryKey: ["tickets"] });
+                  await getTickets(); // Recargar desde Supabase
+                  
                   setIsDialogOpen(false);
                   setNewTicket({
                     descripcion_breve: "",
@@ -1055,6 +1129,7 @@ export default function Tickets() {
                   });
                 } catch (error) {
                   console.error("Failed to create ticket:", error);
+                  toast.error("Error al crear el ticket. Por favor intenta de nuevo.");
                 }
               }}
               disabled={!newTicket.descripcion_breve.trim() || !newTicket.titular.trim()}
