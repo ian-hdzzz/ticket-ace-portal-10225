@@ -9,11 +9,6 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
-      '/api/notifications': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-        secure: false,
-      },
       '/api/cea': {
         target: 'http://localhost:3000',
         changeOrigin: true,
