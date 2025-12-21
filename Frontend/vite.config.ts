@@ -9,8 +9,15 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
-      '/api/cea': {
-        target: 'http://localhost:3000',
+      // Proxy para API general (notificaciones, etc) - IMPORTANTE para que funcione
+      '/api': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy para autenticación
+      '/auth': {
+        target: 'http://localhost:8081',
         changeOrigin: true,
         secure: false,
       },

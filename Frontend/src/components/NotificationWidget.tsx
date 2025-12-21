@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const NotificationWidget: React.FC = () => {
-  const { notifications, unreadCount, markAsRead, deleteNotification, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, deleteNotification, markAllAsRead, connected } = useNotifications();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -111,7 +111,14 @@ export const NotificationWidget: React.FC = () => {
                   <Badge variant="secondary">{unreadCount} nuevas</Badge>
                 )}
               </div>
-              
+              {/* Indicador de conexión SSE */}
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-gray-300'}`} 
+                     title={connected ? 'SSE Conectado - Tiempo Real' : 'SSE Desconectado'} />
+                <span className="text-xs text-gray-500">
+                  {connected ? 'Live' : ''}
+                </span>
+              </div>
             </div>
 
             {/* Notifications List */}

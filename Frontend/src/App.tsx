@@ -12,7 +12,10 @@ import Tickets from "./pages/Tickets";
 import TicketDetails from "./pages/TicketDetails";
 import CreateTicket from "./pages/CreateTicket";
 import { TabProvider } from "./contexts/TabContext";
+// ✅ ACTIVADO: Usar NotificationContextSSE para notificaciones en tiempo real
 import { NotificationProvider } from "./contexts/NotificationContextSSE";
+// Para volver a polling, descomentar la siguiente línea y comentar la anterior:
+// import { NotificationProvider } from "./contexts/NotificationContext";
 import { NotificationWidget } from "./components/NotificationWidget";
 import { TicketsWithTabs } from "./components/TicketsWithTabs";
 import CrearReportes from "./pages/CrearReportes";

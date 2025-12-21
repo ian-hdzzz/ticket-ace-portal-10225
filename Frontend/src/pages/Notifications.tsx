@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContextSSE';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -41,7 +41,7 @@ const Notifications: React.FC = () => {
   );
 
   const queueNotifications = useMemo(() => 
-    notifications.filter(n => n.type === 'TICKET_QUEUE'),
+    notifications.filter(n => n.type === 'TICKET_CREATED'),
     [notifications]
   );
 
@@ -65,8 +65,8 @@ const Notifications: React.FC = () => {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'TICKET_QUEUE':
-        return '⏳'; // En cola
+      case 'TICKET_CREATED':
+        return ''; // En cola
       case 'TICKET_ASSIGNED':
         return '🎯'; // Asignado a mí
       default:
@@ -76,7 +76,7 @@ const Notifications: React.FC = () => {
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      TICKET_QUEUE: 'En Cola',
+      TICKET_CREATED: 'En Cola',
       TICKET_ASSIGNED: 'Asignado a Mí',
     };
     return labels[type] || type;
@@ -84,7 +84,7 @@ const Notifications: React.FC = () => {
 
   const getTypeDescription = (type: string) => {
     const descriptions: Record<string, string> = {
-      TICKET_QUEUE: 'Cliente esperando asesor',
+      TICKET_CREATED: 'Cliente esperando asesor',
       TICKET_ASSIGNED: 'Ticket asignado directamente',
     };
     return descriptions[type] || '';

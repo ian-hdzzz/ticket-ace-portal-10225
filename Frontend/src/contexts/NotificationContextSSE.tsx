@@ -61,19 +61,28 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('🔄 [SSE] Fetching notifications...');
       const response = await fetch('/api/notifications', {
         credentials: 'include',
       });
       
+      console.log('📥 [SSE] Response status:', response.status);
+      
       if (!response.ok) {
+        console.error('❌ [SSE] Error fetching notifications:', response.status, response.statusText);
         throw new Error('Error fetching notifications');
       }
       
       const data = await response.json();
+      console.log('✅ [SSE] Notifications received:', {
+        count: data.notifications?.length || 0,
+        unread: data.unreadCount || 0,
+        data
+      });
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('❌ [SSE] Error fetching notifications:', error);
     } finally {
       setLoading(false);
     }

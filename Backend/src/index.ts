@@ -81,16 +81,16 @@ app.get("/health", (req, res) => {
 });
 
 app.listen(config.port, async () => {
-    console.log(`✅ Server running on: http://localhost:${config.port}`);
-    console.log(`📋 Environment: ${config.nodeEnv}`);
+    console.log(`Server running on: http://localhost:${config.port}`);
+    console.log(`Environment: ${config.nodeEnv}`);
     
     // Test database connection on startup
     console.log('\n🔍 Testing database connection...');
     try {
         await prisma.$connect();
-        console.log('✅ Database connected successfully!');
+        console.log('Database connected successfully!');
     } catch (error: any) {
-        console.error('❌ Database connection FAILED:');
+        console.error('Database connection FAILED:');
         console.error('   Error:', error.message);
         console.error('   This will cause auth and other DB operations to fail!\n');
     }
