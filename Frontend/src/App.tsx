@@ -12,7 +12,7 @@ import Tickets from "./pages/Tickets";
 import TicketDetails from "./pages/TicketDetails";
 import CreateTicket from "./pages/CreateTicket";
 import { TabProvider } from "./contexts/TabContext";
-import { NotificationProvider } from "./contexts/NotificationContext";
+import { NotificationProvider } from "./contexts/NotificationContextSSE";
 import { NotificationWidget } from "./components/NotificationWidget";
 import { TicketsWithTabs } from "./components/TicketsWithTabs";
 import CrearReportes from "./pages/CrearReportes";
