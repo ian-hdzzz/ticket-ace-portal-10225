@@ -9,8 +9,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["cea"]
 }
 
 ////////////////////////
@@ -19,34 +21,36 @@ datasource db {
 
 model User {
   id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fullName            String   @db.VarChar(255)
+  fullName            String   @map("full_name") @db.VarChar(255)
   email               String   @unique @db.VarChar(255)
   password            String   @db.VarChar(255)
   phone               String?  @db.VarChar(20)
   active              Boolean? @default(true)
-  createdAt           DateTime @default(now()) @db.Timestamptz
-  updatedAt           DateTime @updatedAt @db.Timestamptz
-  isTemporaryPassword Boolean? @default(true)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  isTemporaryPassword Boolean? @default(true) @map("is_temporary_password")
 
   userRoles     UserRole[] @relation("UserToUserRole")
   assignedRoles UserRole[] @relation("AssignedBy")
 
   @@map("users")
+  @@schema("cea")
 }
 
 model Role {
   id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name              String   @unique @db.VarChar(255)
   description       String?  @db.Text
-  hierarchicalLevel Int?
+  hierarchicalLevel Int?     @map("hierarchical_level")
   active            Boolean? @default(true)
-  createdAt         DateTime @default(now()) @db.Timestamptz
-  updatedAt         DateTime @updatedAt @db.Timestamptz
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   userRoles        UserRole[]
   rolePrivileges   RolePrivilege[]
 
   @@map("roles")
+  @@schema("cea")
 }
 
 model Privilege {
@@ -54,21 +58,22 @@ model Privilege {
   name        String   @unique @db.VarChar(100)
   description String?  @db.Text
   module      String?  @db.VarChar(50)
-  createdAt   DateTime @default(now()) @db.Timestamptz
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   rolePrivileges RolePrivilege[]
 
   @@index([name], name: "idx_privileges_name")
   @@index([module], name: "idx_privileges_module")
   @@map("privileges")
+  @@schema("cea")
 }
 
 model UserRole {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String   @db.Uuid
-  roleId         String   @db.Uuid
-  assignedBy     String?  @db.Uuid
-  assignmentDate DateTime @default(now()) @db.Timestamptz
+  userId         String   @map("user_id") @db.Uuid
+  roleId         String   @map("role_id") @db.Uuid
+  assignedBy     String?  @map("assigned_by") @db.Uuid
+  assignmentDate DateTime @default(now()) @map("assignment_date") @db.Timestamptz
 
   user     User  @relation("UserToUserRole", fields: [userId], references: [id], onDelete: Cascade)
   role     Role  @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -78,13 +83,14 @@ model UserRole {
   @@index([userId], name: "idx_users_roles_user_id")
   @@index([roleId], name: "idx_users_roles_role_id")
   @@map("users_roles")
+  @@schema("cea")
 }
 
 model RolePrivilege {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  roleId      String   @db.Uuid
-  privilegeId String   @db.Uuid
-  createdAt   DateTime @default(now()) @db.Timestamptz
+  roleId      String   @map("role_id") @db.Uuid
+  privilegeId String   @map("privilege_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
   privilege Privilege @relation(fields: [privilegeId], references: [id], onDelete: Cascade)
@@ -93,6 +99,7 @@ model RolePrivilege {
   @@index([roleId], name: "idx_roles_privileges_role_id")
   @@index([privilegeId], name: "idx_roles_privileges_privilege_id")
   @@map("roles_privileges")
+  @@schema("cea")
 }
 
 /////////////////////////
@@ -121,6 +128,7 @@ model MeterReading {
   @@map("meter_readings")
   @@index([customerId], name: "idx_meter_readings_customer")
   @@index([ticketId], name: "idx_meter_readings_ticket")
+  @@schema("cea")
 }
 
 model CustomerMedia {
@@ -138,6 +146,7 @@ model CustomerMedia {
   @@unique([customerId, mediaId], name: "customer_media_customer_id_media_id_key")
   @@index([customerId], name: "idx_customer_media_customer")
   @@map("customer_media")
+  @@schema("cea")
 }
 
 model MediaAsset {
@@ -162,6 +171,7 @@ model MediaAsset {
   @@index([bucket], name: "idx_media_bucket")
   @@index([createdAt], name: "idx_media_created")
   @@map("media_assets")
+  @@schema("cea")
 }
 
 model Customer {
@@ -189,6 +199,7 @@ model Customer {
   @@index([numeroContrato], name: "idx_customers_contrato")
   @@index([telefono], name: "idx_customers_telefono")
   @@map("customers")
+  @@schema("cea")
 }
 
 model TicketClarification {
@@ -206,6 +217,7 @@ model TicketClarification {
 
   @@unique([ticketId], name: "ticket_clarifications_ticket_id_key")
   @@map("ticket_clarifications")
+  @@schema("cea")
 }
 
 model TicketLeak {
@@ -227,6 +239,7 @@ model TicketLeak {
   @@unique([ticketId], name: "ticket_leaks_ticket_id_key")
   @@map("ticket_leaks")
   // Note: check constraints (magnitud, tipo_fuga) remain in DB
+  @@schema("cea")
 }
 
 model PaymentRecord {
@@ -246,6 +259,7 @@ model PaymentRecord {
   ticket   Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@map("payment_records")
+  @@schema("cea")
 }
 
 model Ticket {
@@ -287,6 +301,7 @@ model Ticket {
   @@unique([folio], name: "tickets_folio_key")
   @@map("tickets")
   @@index([createdAt], name: "idx_tickets_created_at")
+  @@schema("cea")
 }
 
 model ContractChange {
@@ -306,6 +321,7 @@ model ContractChange {
   @@unique([ticketId], name: "contract_changes_ticket_id_key")
   @@map("contract_changes")
   // Note: check constraint for tipo_tramite not enforced by Prisma
+  @@schema("cea")
 }
 
 model SlaConfig {
@@ -318,6 +334,7 @@ model SlaConfig {
 
   @@unique([serviceType, priority], name: "sla_config_service_type_priority_key")
   @@map("sla_config")
+  @@schema("cea")
 }
 
 model TicketTemplate {
@@ -331,6 +348,7 @@ model TicketTemplate {
   createdAt        DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
 
   @@map("ticket_templates")
+  @@schema("cea")
 }
 
 model CannedResponse {
@@ -344,6 +362,7 @@ model CannedResponse {
   createdAt DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
 
   @@map("canned_responses")
+  @@schema("cea")
 }
 
 model TicketConversation {
@@ -361,6 +380,7 @@ model TicketConversation {
 
   @@map("ticket_conversations")
   @@index([ticketId], name: "idx_ticket_conversations_ticket")
+  @@schema("cea")
 }
 
 model TicketMedia {
@@ -379,6 +399,7 @@ model TicketMedia {
   @@index([ticketId], name: "idx_ticket_media_ticket")
   @@index([purpose], name: "idx_ticket_media_purpose")
   @@map("ticket_media")
+  @@schema("cea")
 }
 
 model N8nChatHistorialBot {
@@ -386,6 +407,7 @@ model N8nChatHistorialBot {
   sessionId String  @db.VarChar(255)
   message   Json
   @@map("n8n_chat_historial_bot")
+  @@schema("cea")
 }
 
 //////////////////////
@@ -409,6 +431,7 @@ model VTicketDashboard {
 
   @@ignore
   @@map("v_ticket_dashboard")
+  @@schema("cea")
 }
 
 model VTicketStatistics {
@@ -422,6 +445,7 @@ model VTicketStatistics {
 
   @@ignore
   @@map("v_ticket_statistics")
+  @@schema("cea")
 }
 
 //////////////////////
@@ -433,6 +457,7 @@ enum assignment_status {
   archived
   draft
   expired
+  @@schema("cea")
 }
 
 enum channel_type {
@@ -442,6 +467,7 @@ enum channel_type {
   telefono
   web_chat
   whatsapp
+  @@schema("cea")
 }
 
 enum doc_status {
@@ -449,6 +475,7 @@ enum doc_status {
   archived
   draft
   expired
+  @@schema("cea")
 }
 
 enum estado_calificacion_enum {
@@ -456,6 +483,7 @@ enum estado_calificacion_enum {
   CALIFICANDO
   INICIANDO
   LISTO_PARA_AGENDAR
+  @@schema("cea")
 }
 
 enum media_kind {
@@ -464,6 +492,7 @@ enum media_kind {
   image
   other
   video
+  @@schema("cea")
 }
 
 enum media_purpose {
@@ -473,6 +502,7 @@ enum media_purpose {
   identity
   other
   resolution
+  @@schema("cea")
 }
 
 enum media_source {
@@ -480,6 +510,7 @@ enum media_source {
   customer
   external
   system
+  @@schema("cea")
 }
 
 enum nivel_interes_enum {
@@ -487,6 +518,7 @@ enum nivel_interes_enum {
   BAJO
   EXPLORANDO
   MEDIO
+  @@schema("cea")
 }
 
 enum payment_method {
@@ -495,6 +527,7 @@ enum payment_method {
   oficina_cea
   pago_linea
   tienda_conveniencia
+  @@schema("cea")
 }
 
 enum priority_level {
@@ -502,12 +535,14 @@ enum priority_level {
   baja
   media
   urgente
+  @@schema("cea")
 }
 
 enum product_status {
   active
   deprecated
   draft
+  @@schema("cea")
 }
 
 enum service_type {
@@ -520,11 +555,13 @@ enum service_type {
   reportar_lectura
   reportes_fugas
   revision_recibo
+  @@schema("cea")
 }
 
 enum status_enum {
   complete
   incomplete
+  @@schema("cea")
 }
 
 enum ticket_status {
@@ -536,6 +573,7 @@ enum ticket_status {
   esperando_cliente
   esperando_interno
   resuelto
+  @@schema("cea")
 }
 
 enum ticket_type_code {
@@ -548,6 +586,7 @@ enum ticket_type_code {
   PAG
   REV
   URG
+  @@schema("cea")
 }
 
 enum tipo_cliente_enum {
@@ -556,6 +595,7 @@ enum tipo_cliente_enum {
   DESCONOCIDO
   ESCUELA
   FAMILIA
+  @@schema("cea")
 }
 
 enum tipo_siguiente_paso_enum {
@@ -564,4 +604,5 @@ enum tipo_siguiente_paso_enum {
   ENVIAR_INFO
   NINGUNO
   SEGUIR_CALIFICANDO
+  @@schema("cea")
 }

@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRouter from './routes/auth.routes.js';
 import ceaRouter from './routes/cea.routes.js';
+import { prisma } from './utils/prisma.js';
 
 dotenv.config();
 
@@ -60,7 +61,20 @@ app.use(cookieParser());
 app.use('/auth', authRouter);
 app.use('/api/cea', ceaRouter);
 
-app.listen(config.port, () => {
+app.listen(config.port, async () => {
     console.log(`✅ Server running on: http://localhost:${config.port}`);
     console.log(`📋 Environment: ${config.nodeEnv}`);
+    
+    // Test database connection on startup
+    console.log('\n🔍 Testing database connection...');
+    try {
+        await prisma.$connect();
+        const userCount = await prisma.user.count();
+        console.log('✅ Database connected successfully!');
+        console.log(`📊 Found ${userCount} users in cea.users table\n`);
+    } catch (error: any) {
+        console.error('❌ Database connection FAILED:');
+        console.error('   Error:', error.message);
+        console.error('   This will cause auth and other DB operations to fail!\n');
+    }
 });

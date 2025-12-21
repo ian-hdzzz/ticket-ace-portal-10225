@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
-// import User from "../models/user.model.js";
-import User from "../models/user.model.supabase.js";
+import User from "../models/user.model.js";
 
 export default class AuthUseCases {
     /**
