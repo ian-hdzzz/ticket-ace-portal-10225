@@ -83,12 +83,7 @@ export const NotificationWidget: React.FC = () => {
             size="lg"
             className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 relative"
             variant="default"
-            onClick={() => {
-              // Si no hay notificaciones, ir directamente a la página
-              if (recentNotifications.length === 0) {
-                navigate('/dashboard/notifications');
-              }
-            }}
+
           >
             <Bell className="h-6 w-6" />
             {unreadCount > 0 && (
@@ -122,9 +117,16 @@ export const NotificationWidget: React.FC = () => {
             {/* Notifications List */}
             <ScrollArea className="max-h-[400px]">
               {recentNotifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
+                <div 
+                  className="p-8 text-center text-gray-500 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/dashboard/notifications');
+                  }}
+                >
                   <Bell className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p>No tienes notificaciones</p>
+                  <p className="text-xs text-gray-400 mt-2">Click para ver más detalles</p>
                 </div>
               ) : (
                 <div className="divide-y">
