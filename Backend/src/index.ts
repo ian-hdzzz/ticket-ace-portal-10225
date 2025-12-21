@@ -3,6 +3,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 
 import emailRouter from "./routes/email.js";
+import notificationRouter from "./routes/notifications.js";
 
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -67,6 +68,8 @@ app.use('/auth', authRouter);
 app.use('/api/cea', ceaRouter);
 // Email routes
 app.use("/api/email", emailRouter);
+// Notification routes
+app.use("/api/notifications", notificationRouter);
 
 // Health check endpoint for Cloud Run
 app.get("/health", (req, res) => {

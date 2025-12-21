@@ -12,6 +12,8 @@ import Tickets from "./pages/Tickets";
 import TicketDetails from "./pages/TicketDetails";
 import CreateTicket from "./pages/CreateTicket";
 import { TabProvider } from "./contexts/TabContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import { NotificationWidget } from "./components/NotificationWidget";
 import { TicketsWithTabs } from "./components/TicketsWithTabs";
 import CrearReportes from "./pages/CrearReportes";
 import Contratos from "./pages/Contratos";
@@ -20,6 +22,7 @@ import Lecturas from "./pages/Lecturas";
 import Deuda from "./pages/Deuda";
 import Agents from "./pages/Agents";
 import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import ChatwootWidget from "./components/features/ChatwootWidget";
 import Auth from "./pages/Auth";
@@ -33,28 +36,29 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <TabProvider>
-        <Toaster />
-        <Sonner />
-        <ChatwootWidget />
-        <BrowserRouter>
-        <Routes>
-          
-          <Route path="/" element={<RootRedirect />} />
-          <Route element={<RequireAuth />}>
-            <Route path="/test-permissions" element={<TestPermissions />} />
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              {/* Dashboard - Requiere acceso al dashboard */}
-              <Route 
-                index 
-                element={
-                  <ProtectedRoute 
-                    requiredPermissions={["acceso_dashboard", "view_dashboard"]}
-                    fallbackPath="/dashboard/tickets"
-                  >
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
+        <NotificationProvider>
+          <Toaster />
+          <Sonner />
+
+          <BrowserRouter>
+          <Routes>
+            
+            <Route path="/" element={<RootRedirect />} />
+            <Route element={<RequireAuth />}>
+              <Route path="/test-permissions" element={<TestPermissions />} />
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                {/* Dashboard - Requiere acceso al dashboard */}
+                <Route 
+                  index 
+                  element={
+                    <ProtectedRoute 
+                      requiredPermissions={["acceso_dashboard", "view_dashboard"]}
+                      fallbackPath="/dashboard/tickets"
+                    >
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
               
               {/* Tickets - Requiere permiso de ver tickets */}
               <Route 
@@ -165,6 +169,12 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+
+              {/* Notificaciones */}
+              <Route 
+                path="notifications" 
+                element={<Notifications />} 
+              />
             </Route>
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
@@ -172,6 +182,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </NotificationProvider>
       </TabProvider>
     </TooltipProvider>
   </QueryClientProvider>

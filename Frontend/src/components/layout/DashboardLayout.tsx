@@ -6,6 +6,7 @@ import { MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabase/client";
 import { PageProvider, usePageContext } from "@/contexts/PageContext";
+import { NotificationWidget } from "@/components/NotificationWidget";
 
 function DashboardContent() {
   const { title, description } = usePageContext();
@@ -117,9 +118,13 @@ function DashboardContent() {
             <Outlet />
           </main>
         </div>
+        
+        {/* Widget de notificaciones */}
+        <NotificationWidget />
+        
         {chatwootReady && (
           <Button
-            className="fixed bottom-8 right-8 h-12 w-12 rounded-full"
+            className="fixed bottom-24 right-8 h-12 w-12 rounded-full"
             onClick={handleChatwootToggle}
           >
             <MessageSquare className="h-6 w-6" />

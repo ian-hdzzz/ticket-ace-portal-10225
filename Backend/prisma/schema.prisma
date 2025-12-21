@@ -30,8 +30,9 @@ model User {
   updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
   isTemporaryPassword Boolean? @default(true) @map("is_temporary_password")
 
-  userRoles     UserRole[] @relation("UserToUserRole")
-  assignedRoles UserRole[] @relation("AssignedBy")
+  userRoles     UserRole[]     @relation("UserToUserRole")
+  assignedRoles UserRole[]     @relation("AssignedBy")
+  notifications Notification[]
 
   @@map("users")
   @@schema("cea")
@@ -297,6 +298,7 @@ model Ticket {
   paymentRecords PaymentRecord[]
   contractChanges ContractChange[]
   meterReadings  MeterReading[]
+  notifications  Notification[]
 
   @@unique([folio], name: "tickets_folio_key")
   @@map("tickets")
@@ -604,5 +606,42 @@ enum tipo_siguiente_paso_enum {
   ENVIAR_INFO
   NINGUNO
   SEGUIR_CALIFICANDO
+  @@schema("cea")
+}
+
+////////////////////////
+// Notification Models
+////////////////////////
+
+enum NotificationType {
+  TICKET_CREATED
+  TICKET_ASSIGNED
+  TICKET_STATUS_CHANGED
+  TICKET_PRIORITY_CHANGED
+  TICKET_COMMENT
+  SYSTEM_ALERT
+  
+  @@schema("cea")
+}
+
+model Notification {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
+  type        NotificationType
+  title       String           @db.VarChar(255)
+  message     String           @db.Text
+  ticketId    String?          @map("ticket_id") @db.Uuid
+  read        Boolean          @default(false)
+  readAt      DateTime?        @map("read_at") @db.Timestamptz
+  metadata    Json?            // Información adicional como ticket number, priority, etc.
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  @@index([userId], name: "idx_notifications_user_id")
+  @@index([userId, read], name: "idx_notifications_user_read")
+  @@index([createdAt], name: "idx_notifications_created_at")
+  @@map("notifications")
   @@schema("cea")
 }
