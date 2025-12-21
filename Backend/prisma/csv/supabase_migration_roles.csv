@@ -1,0 +1,12 @@
+id,name,description,hierarchical_level,active,created_at,updated_at
+39d29900-41af-4f04-9691-0feba9887f16,Administrador,Acceso total al sistema,1,true,2025-11-25 03:58:19.25866+00,2025-11-25 03:58:19.25866+00
+f82de238-a3c0-43ff-92cd-9a939e4116d6,Ciudadano,Ciudadano,1,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+6786356d-f00a-4cb6-b007-2cd75420c1e0,Representante de organización,Representante de organización,1,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+ca0b30c6-b73d-4cbb-bc04-490f4280b4b1,Agente de Contacto,Agente de Contacto,5,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+8a11b829-5e68-44ee-8439-ba58307b78e1,Agente de Área Resolutora,Agente de Área Resolutora,4,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+9396c9f6-45cc-494c-9ac3-78cabfe23c89,Coordinador de Área,Coordinador de Área,6,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+2d7ff6fb-f853-4eb9-a367-4d57b8419801,Dueño de Proceso / Servicio,Dueño de Proceso / Servicio,3,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+78a683be-4a7d-4e56-98dc-ffb215acd935,Administrador Funcional,Administrador Funcional,7,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+0d28fab6-5f53-40a2-890a-50d34432f40a,Administrador Técnico,Administrador Técnico,7,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+bd32b626-f4d2-4f4e-a154-bea97429e581,Auditor / Transparencia,Auditor / Transparencia,2,true,2025-12-11 14:26:00.575669+00,2025-12-11 14:26:00.575669+00
+877ea231-3d8c-42e7-83c4-1d042e9d55ca,Ciudadana,Usuario ciudadano con permisos básicos,5,true,2025-12-11 14:47:59.998241+00,2025-12-11 14:47:59.998241+00

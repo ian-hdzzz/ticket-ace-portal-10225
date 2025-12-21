@@ -5,10 +5,604 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["cea"]
+}
+
+////////////////////////
+////// Auth Models /////
+////////////////////////
+
+model User {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fullName            String   @map("full_name") @db.VarChar(255)
+  email               String   @unique @db.VarChar(255)
+  password            String   @db.VarChar(255)
+  phone               String?  @db.VarChar(20)
+  active              Boolean? @default(true)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  isTemporaryPassword Boolean? @default(true) @map("is_temporary_password")
+
+  userRoles     UserRole[] @relation("UserToUserRole")
+  assignedRoles UserRole[] @relation("AssignedBy")
+
+  @@map("users")
+  @@schema("cea")
+}
+
+model Role {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String   @unique @db.VarChar(255)
+  description       String?  @db.Text
+  hierarchicalLevel Int?     @map("hierarchical_level")
+  active            Boolean? @default(true)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  userRoles        UserRole[]
+  rolePrivileges   RolePrivilege[]
+
+  @@map("roles")
+  @@schema("cea")
+}
+
+model Privilege {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  module      String?  @db.VarChar(50)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  rolePrivileges RolePrivilege[]
+
+  @@index([name], name: "idx_privileges_name")
+  @@index([module], name: "idx_privileges_module")
+  @@map("privileges")
+  @@schema("cea")
+}
+
+model UserRole {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  roleId         String   @map("role_id") @db.Uuid
+  assignedBy     String?  @map("assigned_by") @db.Uuid
+  assignmentDate DateTime @default(now()) @map("assignment_date") @db.Timestamptz
+
+  user     User  @relation("UserToUserRole", fields: [userId], references: [id], onDelete: Cascade)
+  role     Role  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assigner User? @relation("AssignedBy", fields: [assignedBy], references: [id])
+
+  @@unique([userId, roleId], name: "users_roles_user_id_role_id_key")
+  @@index([userId], name: "idx_users_roles_user_id")
+  @@index([roleId], name: "idx_users_roles_role_id")
+  @@map("users_roles")
+  @@schema("cea")
+}
+
+model RolePrivilege {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roleId      String   @map("role_id") @db.Uuid
+  privilegeId String   @map("privilege_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  privilege Privilege @relation(fields: [privilegeId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, privilegeId], name: "roles_privileges_role_id_privilege_id_key")
+  @@index([roleId], name: "idx_roles_privileges_role_id")
+  @@index([privilegeId], name: "idx_roles_privileges_privilege_id")
+  @@map("roles_privileges")
+  @@schema("cea")
+}
+
+/////////////////////////
+// Models (tables)
+/////////////////////////
+
+model MeterReading {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId           String?  @db.Uuid
+  customerId         String?  @db.Uuid
+  lecturaAnterior    Decimal? @db.Decimal(10, 2)
+  lecturaActual      Decimal  @db.Decimal(10, 2)
+  consumoM3          Decimal? @db.Decimal(10, 2)    // computed/ stored in PG; keep as nullable
+  fechaLectura       DateTime @db.Date
+  fotoUrl            String?  @db.Text
+  validado           Boolean? @default(false)
+  observaciones      String?  @db.Text
+  createdAt          DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+  mediaId            String?  @db.Uuid
+
+  // Relations (foreign keys)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  ticket   Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  media    MediaAsset? @relation(fields: [mediaId], references: [id])
+
+  @@map("meter_readings")
+  @@index([customerId], name: "idx_meter_readings_customer")
+  @@index([ticketId], name: "idx_meter_readings_ticket")
+  @@schema("cea")
+}
+
+model CustomerMedia {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId  String   @db.Uuid
+  mediaId     String   @db.Uuid
+  purpose     media_purpose? @default(other)
+  description String?  @db.Text
+  metadata    Json?    @default("{}")
+  createdAt   DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  customer Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  media    MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, mediaId], name: "customer_media_customer_id_media_id_key")
+  @@index([customerId], name: "idx_customer_media_customer")
+  @@map("customer_media")
+  @@schema("cea")
+}
+
+model MediaAsset {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind       media_kind
+  bucket     String    @db.Text
+  path       String    @db.Text
+  mimeType   String?   @db.Text
+  sizeBytes  BigInt?   @db.BigInt
+  sha256     String?   @db.Text
+  source     media_source? @default(customer)
+  uploadedBy String?   @db.Uuid
+  metadata   Json?     @default("{}")
+  createdAt  DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  customerMedia CustomerMedia[]
+  ticketMedia   TicketMedia[]
+  meterReadings MeterReading[]
+
+  @@unique([bucket, path], name: "media_assets_bucket_path_key")
+  @@index([kind], name: "idx_media_kind")
+  @@index([bucket], name: "idx_media_bucket")
+  @@index([createdAt], name: "idx_media_created")
+  @@map("media_assets")
+  @@schema("cea")
+}
+
+model Customer {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  numeroContrato     String?   @db.VarChar(20)
+  nombreTitular      String?   @db.VarChar(255)
+  email              String?   @db.VarChar(255)
+  telefono           String?   @db.VarChar(20)
+  whatsapp           String?   @db.Text
+  direccionServicio  String?   @db.Text
+  colonia            String?   @db.VarChar(100)
+  codigoPostal       String?   @db.VarChar(10)
+  municipio          String?   @db.VarChar(100) @default("Querétaro")
+  reciboDigital      Boolean?  @default(false)
+  createdAt          DateTime @default(now()) @db.Timestamptz
+  updatedAt          DateTime @updatedAt @db.Timestamptz
+  firstInteractionChannel String? @db.Text
+
+  tickets        Ticket[]
+  meterReadings  MeterReading[]
+  paymentRecords PaymentRecord[]
+  customerMedia  CustomerMedia[]
+
+  @@unique([numeroContrato], name: "customers_numero_contrato_key")
+  @@index([numeroContrato], name: "idx_customers_contrato")
+  @@index([telefono], name: "idx_customers_telefono")
+  @@map("customers")
+  @@schema("cea")
+}
+
+model TicketClarification {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId        String?  @db.Uuid
+  periodoRecibo   String?  @db.VarChar(20)
+  tipoAclaracion  String?  @db.VarChar(100)
+  montoReclamado  Decimal? @db.Decimal(10,2)
+  montoAjustado   Decimal? @db.Decimal(10,2)
+  folioAnterior   String?  @db.VarChar(30)
+  documentosAnexos String[]
+  createdAt       DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId], name: "ticket_clarifications_ticket_id_key")
+  @@map("ticket_clarifications")
+  @@schema("cea")
+}
+
+model TicketLeak {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId         String?  @db.Uuid
+  tipoFuga         String?  @db.VarChar(50)
+  ubicacionExacta  String   @db.Text
+  entreCalles      String?  @db.Text
+  coordenadas      String?  @db.Text   // PostgreSQL point -> stored as text
+  magnitud         String?  @db.VarChar(50)
+  riesgoInmediato   Boolean? @default(false)
+  brigadaAsignada  String?  @db.VarChar(50)
+  tiempoEstimadoLlegada Int? 
+  fechaReparacion  DateTime? @db.Timestamptz
+  createdAt        DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId], name: "ticket_leaks_ticket_id_key")
+  @@map("ticket_leaks")
+  // Note: check constraints (magnitud, tipo_fuga) remain in DB
+  @@schema("cea")
+}
+
+model PaymentRecord {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId     String?  @db.Uuid
+  customerId   String?  @db.Uuid
+  numeroRecibo String?  @db.VarChar(30)
+  periodo      String?  @db.VarChar(20)
+  monto        Decimal  @db.Decimal(10,2)
+  metodoPago   payment_method?
+  referenciaPago String? @db.VarChar(100)
+  fechaPago    DateTime? @db.Timestamptz
+  confirmado   Boolean?  @default(false)
+  createdAt    DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  ticket   Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("payment_records")
+  @@schema("cea")
+}
+
+model Ticket {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  folio          String    @db.VarChar(30)
+  customerId     String?   @db.Uuid
+  serviceType    service_type
+  ticketType     ticket_type_code
+  status         ticket_status? @default(abierto)
+  priority       priority_level? @default(media)
+  channel        channel_type
+  titulo         String    @db.VarChar(255)
+  descripcion    String?   @db.Text
+  assignedTo     String?   @db.Uuid
+  assignedAt     DateTime? @db.Timestamptz
+  escalatedTo    String?   @db.Uuid
+  escalatedAt    DateTime? @db.Timestamptz
+  resolutionNotes String?  @db.Text
+  resolvedAt     DateTime? @db.Timestamptz
+  closedAt       DateTime? @db.Timestamptz
+  slaDeadline    DateTime? @db.Timestamptz
+  slaBreached    Boolean?   @default(false)
+  tags           String[]
+  metadata       Json?     @default("{}")
+  createdAt      DateTime @default(now()) @db.Timestamptz
+  updatedAt      DateTime @updatedAt @db.Timestamptz
+  clientName     String?   @db.Text
+  contractNumber Int?
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  conversations TicketConversation[]
+  ticketMedia   TicketMedia[]
+  clarifications TicketClarification[]
+  leaks          TicketLeak[]
+  paymentRecords PaymentRecord[]
+  contractChanges ContractChange[]
+  meterReadings  MeterReading[]
+
+  @@unique([folio], name: "tickets_folio_key")
+  @@map("tickets")
+  @@index([createdAt], name: "idx_tickets_created_at")
+  @@schema("cea")
+}
+
+model ContractChange {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId         String?  @db.Uuid
+  tipoTramite      String?  @db.VarChar(50)
+  titularAnterior  String?  @db.VarChar(255)
+  titularNuevo     String?  @db.VarChar(255)
+  documentosRequeridos Json? 
+  documentosRecibidos Json?
+  estadoTramite    String?  @db.VarChar(50)
+  fechaEfectiva    DateTime? @db.Date
+  createdAt        DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId], name: "contract_changes_ticket_id_key")
+  @@map("contract_changes")
+  // Note: check constraint for tipo_tramite not enforced by Prisma
+  @@schema("cea")
+}
+
+model SlaConfig {
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serviceType          service_type
+  priority             priority_level
+  responseTimeMinutes  Int
+  resolutionTimeMinutes Int
+  createdAt            DateTime?     @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  @@unique([serviceType, priority], name: "sla_config_service_type_priority_key")
+  @@map("sla_config")
+  @@schema("cea")
+}
+
+model TicketTemplate {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serviceType      service_type
+  nombre           String   @db.VarChar(255)
+  mensajeInicial   String?  @db.Text
+  camposRequeridos Json?
+  documentosRequeridos String[]
+  active           Boolean? @default(true)
+  createdAt        DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  @@map("ticket_templates")
+  @@schema("cea")
+}
+
+model CannedResponse {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoria String?  @db.VarChar(100)
+  titulo    String?  @db.VarChar(255)
+  mensaje   String   @db.Text
+  shortcuts String[]
+  usoCount  Int?     @default(0)
+  active    Boolean? @default(true)
+  createdAt DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  @@map("canned_responses")
+  @@schema("cea")
+}
+
+model TicketConversation {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId   String?  @db.Uuid
+  senderType String?  @db.VarChar(20)
+  senderId   String?  @db.Uuid
+  senderName String?  @db.VarChar(255)
+  message    String   @db.Text
+  attachments Json?   @default("[]")
+  metadata   Json?    @default("{}")
+  createdAt  DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_conversations")
+  @@index([ticketId], name: "idx_ticket_conversations_ticket")
+  @@schema("cea")
+}
+
+model TicketMedia {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId  String   @db.Uuid
+  mediaId   String   @db.Uuid
+  purpose   media_purpose? @default(evidence)
+  description String? @db.Text
+  metadata  Json?    @default("{}")
+  createdAt DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamptz
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  media  MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId, mediaId], name: "ticket_media_ticket_id_media_id_key")
+  @@index([ticketId], name: "idx_ticket_media_ticket")
+  @@index([purpose], name: "idx_ticket_media_purpose")
+  @@map("ticket_media")
+  @@schema("cea")
+}
+
+model N8nChatHistorialBot {
+  id        Int     @id @default(autoincrement())
+  sessionId String  @db.VarChar(255)
+  message   Json
+  @@map("n8n_chat_historial_bot")
+  @@schema("cea")
+}
+
+//////////////////////
+// Views (ignored)
+//////////////////////
+
+model VTicketDashboard {
+  id           String?  @db.Uuid
+  folio        String?
+  status       ticket_status?
+  priority     priority_level?
+  service_type service_type?
+  titulo       String?
+  nombre_titular String?
+  numero_contrato String?
+  created_at   DateTime?
+  sla_deadline DateTime?
+  sla_breached Boolean?
+  assigned_to  String?
+  message_count Int?
+
+  @@ignore
+  @@map("v_ticket_dashboard")
+  @@schema("cea")
+}
+
+model VTicketStatistics {
+  fecha       DateTime? @db.Date
+  service_type service_type?
+  total_tickets Int?
+  resolved_tickets Int?
+  open_tickets Int?
+  urgent_tickets Int?
+  avg_resolution_minutes Int?
+
+  @@ignore
+  @@map("v_ticket_statistics")
+  @@schema("cea")
+}
+
+//////////////////////
+// Enums (from your DB)
+//////////////////////
+
+enum assignment_status {
+  active
+  archived
+  draft
+  expired
+  @@schema("cea")
+}
+
+enum channel_type {
+  app_movil
+  email
+  presencial
+  telefono
+  web_chat
+  whatsapp
+  @@schema("cea")
+}
+
+enum doc_status {
+  active
+  archived
+  draft
+  expired
+  @@schema("cea")
+}
+
+enum estado_calificacion_enum {
+  CALIFICADO
+  CALIFICANDO
+  INICIANDO
+  LISTO_PARA_AGENDAR
+  @@schema("cea")
+}
+
+enum media_kind {
+  audio
+  document
+  image
+  other
+  video
+  @@schema("cea")
+}
+
+enum media_purpose {
+  billing
+  clarification
+  evidence
+  identity
+  other
+  resolution
+  @@schema("cea")
+}
+
+enum media_source {
+  agent
+  customer
+  external
+  system
+  @@schema("cea")
+}
+
+enum nivel_interes_enum {
+  ALTO
+  BAJO
+  EXPLORANDO
+  MEDIO
+  @@schema("cea")
+}
+
+enum payment_method {
+  cajero_automatico
+  domiciliacion_bancaria
+  oficina_cea
+  pago_linea
+  tienda_conveniencia
+  @@schema("cea")
+}
+
+enum priority_level {
+  alta
+  baja
+  media
+  urgente
+  @@schema("cea")
+}
+
+enum product_status {
+  active
+  deprecated
+  draft
+  @@schema("cea")
+}
+
+enum service_type {
+  aclaraciones
+  actualizar_caso
+  asesor_humano
+  contratacion_cambio
+  pago_recibo
+  recibo_digital
+  reportar_lectura
+  reportes_fugas
+  revision_recibo
+  @@schema("cea")
+}
+
+enum status_enum {
+  complete
+  incomplete
+  @@schema("cea")
+}
+
+enum ticket_status {
+  abierto
+  cancelado
+  cerrado
+  en_proceso
+  escalado
+  esperando_cliente
+  esperando_interno
+  resuelto
+  @@schema("cea")
+}
+
+enum ticket_type_code {
+  ACL
+  ACT
+  CON
+  DIG
+  FUG
+  LEC
+  PAG
+  REV
+  URG
+  @@schema("cea")
+}
+
+enum tipo_cliente_enum {
+  CALIFICANDO
+  CORPORATIVO
+  DESCONOCIDO
+  ESCUELA
+  FAMILIA
+  @@schema("cea")
+}
+
+enum tipo_siguiente_paso_enum {
+  AGENDAR_REUNION
+  AGENDAR_VISITA
+  ENVIAR_INFO
+  NINGUNO
+  SEGUIR_CALIFICANDO
+  @@schema("cea")
 }
