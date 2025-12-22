@@ -37,6 +37,7 @@ interface NotificationContextType {
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
+  reconnect: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -264,12 +265,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Fetch inicial de notificaciones
   useEffect(() => {
-    fetchNotifications();
+    // Check if user is logged in before fetching
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      fetchNotifications();
+    }
   }, [fetchNotifications]);
 
   // Conectar SSE al montar el componente
   useEffect(() => {
-    connectSSE();
+    // Check if user is logged in before connecting SSE
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      connectSSE();
+    }
 
     // Cleanup al desmontar
     return () => {
@@ -285,6 +294,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, [connectSSE]);
 
+  const reconnect = useCallback(() => {
+    console.log('🔄 Reconnecting notifications...');
+    fetchNotifications();
+    connectSSE();
+  }, [fetchNotifications, connectSSE]);
+
   const value = {
     notifications,
     unreadCount,
@@ -294,6 +309,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    reconnect,
   };
 
   return (

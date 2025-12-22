@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { NotificationWidget } from './NotificationWidget';
+import { useNotifications } from '@/contexts/NotificationContextSSE';
 import { agentService, type AgentStatus } from '@/services/agent.service';
 import {
   Select,
@@ -16,6 +17,7 @@ interface AgentWidgetsProps {
 
 export const AgentWidgets: React.FC<AgentWidgetsProps> = ({ userId }) => {
   const [agentStatus, setAgentStatus] = useState<AgentStatus>('offline');
+  const { reconnect } = useNotifications();
 
   useEffect(() => {
     const fetchAgentStatus = async () => {
@@ -25,7 +27,10 @@ export const AgentWidgets: React.FC<AgentWidgetsProps> = ({ userId }) => {
       }
     };
     fetchAgentStatus();
-  }, [userId]);
+    
+    // Trigger notification fetch and SSE connection when agent widgets mount
+    reconnect();
+  }, [userId, reconnect]);
 
   const handleStatusChange = async (newStatus: AgentStatus) => {
     const success = await agentService.updateAgentStatus(userId, newStatus);
