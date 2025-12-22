@@ -6,15 +6,7 @@ import { MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabase/client";
 import { PageProvider, usePageContext } from "@/contexts/PageContext";
-import { NotificationWidget } from "@/components/NotificationWidget";
-import { agentService, type AgentStatus } from "@/services/agent.service";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AgentWidgets } from "@/components/AgentWidgets";
 
 const CUSTOMER_SERVICE_ROLE_ID = 'ca0b30c6-b73d-4cbb-bc04-490f4280b4b1';
 
@@ -25,7 +17,6 @@ function DashboardContent() {
   const fullName = user?.full_name || "";
   const [role, setRole] = useState("");
   const [roleId, setRoleId] = useState("");
-  const [agentStatus, setAgentStatus] = useState<AgentStatus>('offline');
   const [isAgent, setIsAgent] = useState(false);
 
   useEffect(() => {
@@ -59,12 +50,6 @@ function DashboardContent() {
       // 3. Check if user is customer service agent
       if (userRole.role_id === CUSTOMER_SERVICE_ROLE_ID) {
         setIsAgent(true);
-        
-        // 4. Get agent status
-        const agent = await agentService.getAgentByUserId(user.id);
-        if (agent) {
-          setAgentStatus(agent.status);
-        }
       }
     }
     fetchRoleAndAgent();
@@ -109,15 +94,6 @@ function DashboardContent() {
     }
   };
 
-  const handleStatusChange = async (newStatus: AgentStatus) => {
-    if (!user?.id) return;
-    
-    const success = await agentService.updateAgentStatus(user.id, newStatus);
-    if (success) {
-      setAgentStatus(newStatus);
-    }
-  };
-
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
@@ -143,40 +119,15 @@ function DashboardContent() {
               )}
             </div>
             
-            {/* Mensaje de bienvenida, rol y estado */}
+            {/* Mensaje de bienvenida y rol */}
             {fullName && (
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col items-end text-right">
-                  <span className="font-bold text-black leading-tight" style={{ fontSize: '1.3rem' }}>
-                    ¡Bienvenido <span className="text-primary">{fullName}!</span>
-                  </span>
-                  <span className="text-sm mt-0.5" style={{ color: '#00409aff' }}>
-                    Rol: {role || "Sin rol"}
-                  </span>
-                </div>
-                
-                {/* Status dropdown for customer service agents */}
-                {isAgent && (
-                  <Select value={agentStatus} onValueChange={handleStatusChange}>
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-green-500" />
-                          Activo
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="inactive">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-gray-400" />
-                          Inactivo
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
+              <div className="flex flex-col items-end text-right">
+                <span className="font-bold text-black leading-tight" style={{ fontSize: '1.3rem' }}>
+                  ¡Bienvenido <span className="text-primary">{fullName}!</span>
+                </span>
+                <span className="text-sm mt-0.5" style={{ color: '#00409aff' }}>
+                  Rol: {role || "Sin rol"}
+                </span>
               </div>
             )}
           </header>
@@ -185,8 +136,8 @@ function DashboardContent() {
           </main>
         </div>
         
-        {/* Widget de notificaciones - only for customer service agents */}
-        {isAgent && <NotificationWidget />}
+        {/* Agent widgets (status + notifications) - only for customer service agents */}
+        {isAgent && user?.id && <AgentWidgets userId={user.id} />}
         
         {chatwootReady && (
           <Button
