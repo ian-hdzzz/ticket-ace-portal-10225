@@ -11,6 +11,10 @@ export interface LoginResponse {
     email: string;
     full_name: string;
     is_temporary_password: boolean;
+    roles: Array<{
+      id?: string;
+      name: string;
+    }>;
   };
 }
 
@@ -32,6 +36,10 @@ export interface ChangePasswordResponse {
     email: string;
     full_name: string;
     is_temporary_password: boolean;
+    roles: Array<{
+      id?: string;
+      name: string;
+    }>;
   };
 }
 

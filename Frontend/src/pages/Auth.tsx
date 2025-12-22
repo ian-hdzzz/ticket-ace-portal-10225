@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { authService } from '../services/auth.service'
+import { authService } from '../services/auth.service';
+import { agentService } from '../services/agent.service';
+
+const CUSTOMER_SERVICE_ROLE_ID = 'ca0b30c6-b73d-4cbb-bc04-490f4280b4b1';
 
 export default function Auth() {
   // Solo login, no registro
@@ -40,6 +43,16 @@ export default function Auth() {
 
       // Store user in localStorage for route protection
       authService.setCurrentUser(response.user);
+      
+      // If user is customer service agent, set status to active
+      const isCustomerServiceAgent = response.user.roles?.some(
+        (role) => role.id === CUSTOMER_SERVICE_ROLE_ID
+      );
+      
+      if (isCustomerServiceAgent) {
+        await agentService.setAgentActive(response.user.id);
+      }
+      
       navigate("/dashboard");
     } catch (error: any) {
       setErrorMsg(error.message || "Ocurrió un error inesperado. Por favor intenta de nuevo más tarde.");
@@ -78,6 +91,16 @@ export default function Auth() {
       // Save updated user and clean temporary storage
       authService.setCurrentUser(response.user);
       localStorage.removeItem("user_temp");
+      
+      // If user is customer service agent, set status to active
+      const isCustomerServiceAgent = response.user.roles?.some(
+        (role) => role.id === CUSTOMER_SERVICE_ROLE_ID
+      );
+      
+      if (isCustomerServiceAgent) {
+        await agentService.setAgentActive(response.user.id);
+      }
+      
       navigate("/dashboard");
     } catch (error: any) {
       setErrorMsg(error.message || "No se pudo actualizar la contraseña. Intenta de nuevo.");

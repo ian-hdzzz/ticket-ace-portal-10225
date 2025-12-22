@@ -61,6 +61,11 @@ export const notificationSSEController = {
   emitNotification(userIds: string[], notification: any) {
     let sentCount = 0;
 
+    console.log("emitNotification called");
+    console.log("userIds", userIds);
+    console.log("notification", notification);
+    console.log("clients", clients);
+
     clients.forEach(client => {
       if (userIds.includes(client.userId)) {
         try {

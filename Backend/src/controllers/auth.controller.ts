@@ -63,6 +63,10 @@ export default class AuthController {
                     email: user.email,
                     full_name: user.fullName,
                     is_temporary_password: user.isTemporaryPassword,
+                    roles: user.userRoles.map((userRole: any) => ({
+                        id: userRole.role.id,
+                        name: userRole.role.name,
+                    })),
                 },
             });
 
@@ -217,6 +221,9 @@ export default class AuthController {
                     email: updatedUser.email,
                     full_name: updatedUser.fullName,
                     is_temporary_password: false,
+                    roles: req.user.roles.map((roleName: string) => ({
+                        name: roleName,
+                    })),
                 },
             });
         } catch (err) {

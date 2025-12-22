@@ -2,8 +2,6 @@ import dotenv from 'dotenv';
 import { Resend } from 'resend';
 import express from 'express';
 import type { Request, Response } from 'express';
-import { prisma } from '../utils/prisma.js';
-import { emitNotificationToUsers } from '../controllers/notificationSSEController.js';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -559,105 +557,6 @@ CEA Querétaro - Sistema de Notificaciones de Tickets
     if (isDevelopment && user_email !== toEmail) {
       console.log(`   - ⚠️ MODO DEV: En producción se enviará a ${user_email}`);
     }
-
-    // 🔔 CREAR NOTIFICACIÓN IN-APP
-    // Crear notificación para todos los usuarios con rol de agente
-    try {
-      console.log('🔔 Creando notificaciones in-app...');
-      
-      // Obtener todos los usuarios con rol de agente, soporte o administrador
-      const agentRoles = await prisma.Role.findMany({
-        where: {
-          OR: [
-            { name: { contains: 'agente', mode: 'insensitive' } },
-            { name: { contains: 'agent', mode: 'insensitive' } },
-            { name: { contains: 'soporte', mode: 'insensitive' } },
-            { name: { contains: 'support', mode: 'insensitive' } },
-            { name: { contains: 'admin', mode: 'insensitive' } },
-            { name: { contains: 'administrador', mode: 'insensitive' } }
-          ]
-        },
-        include: {
-          userRoles: {
-            include: {
-              user: true
-            }
-          }
-        }
-      });
-
-      // Recopilar IDs de usuarios únicos con rol de agente
-      const agentUserIds = new Set<string>();
-      agentRoles.forEach((role: any) => {
-        role.userRoles.forEach((userRole: any) => {
-          if (userRole.user.active) {
-            agentUserIds.add(userRole.user.id);
-          }
-        });
-      });
-
-      // Crear notificaciones para cada agente
-      if (agentUserIds.size > 0) {
-        const notifications = Array.from(agentUserIds).map(userId => ({
-          userId,
-          type: 'TICKET_CREATED' as any,
-          title: `Requiere Asesor - Ticket #${ticketNumber}`,
-          message: `Se ha creado un nuevo ticket que requiere atención: ${description}`,
-          ticketId: record.id,
-          metadata: {
-            ticketNumber,
-            priority: record.priority,
-            status: record.status,
-            channel: record.channel,
-            customerName: customer_name,
-            createdAt: new Date().toISOString()
-          }
-        }));
-
-        await prisma.notification.createMany({
-          data: notifications
-        });
-
-        console.log(`✅ ${notifications.length} notificaciones creadas para agentes`);
-        
-        // EMITIR EVENTO SSE A TODOS LOS AGENTES CONECTADOS
-        try {
-          const notificationData = {
-            type: 'TICKET_CREATED',
-            title: `Requiere Asesor - Ticket #${ticketNumber}`,
-            message: `Se ha creado un nuevo ticket que requiere atención: ${description}`,
-            ticketId: record.id,
-            metadata: {
-              ticketNumber,
-              priority: record.priority,
-              status: record.status,
-              channel: record.channel,
-              customerName: customer_name,
-              createdAt: new Date().toISOString()
-            }
-          };
-          
-          const sentCount = emitNotificationToUsers(Array.from(agentUserIds), notificationData);
-          console.log(`SSE: Eventos enviados a ${sentCount} clientes conectados`);
-        } catch (sseError) {
-          console.error(' Error emitiendo eventos SSE:', sseError);
-          // No fallar si SSE falla
-        }
-      } else {
-        console.log(' No se encontraron agentes activos para notificar');
-      }
-    } catch (notificationError) {
-      console.error(' Error creando notificaciones:', notificationError);
-      // No fallar el webhook si solo fallan las notificaciones
-    }
-    
-    console.log('');
-    console.log('⚠️  IMPORTANTE: Verifica que el email esté en:');
-    console.log('   1. Bandeja de entrada');
-    console.log('   2. Carpeta de SPAM/Correo no deseado');
-    console.log('   3. Dashboard de Resend: https://resend.com/emails');
-    console.log('   4. Verifica que ianhdez2020@gmail.com esté verificado en Resend');
-    console.log('');
 
     res.json({ 
       success: true, 

@@ -24,6 +24,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import authService from "@/services/auth.service";
+import { agentService } from "@/services/agent.service";
+
+const CUSTOMER_SERVICE_ROLE_ID = 'ca0b30c6-b73d-4cbb-bc04-490f4280b4b1';
 
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -51,6 +54,23 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     try {
+      // Check if user is customer service agent and set status to inactive
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          const isCustomerServiceAgent = user.roles?.some(
+            (role: any) => role.id === CUSTOMER_SERVICE_ROLE_ID
+          );
+          
+          if (isCustomerServiceAgent && user.id) {
+            await agentService.setAgentInactive(user.id);
+          }
+        } catch (parseError) {
+          console.error("Error parsing user data:", parseError);
+        }
+      }
+      
       await authService.logout();
       localStorage.removeItem("user");
       window.location.href = "/";

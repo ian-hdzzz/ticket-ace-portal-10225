@@ -7,6 +7,16 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../supabase/client";
 import { PageProvider, usePageContext } from "@/contexts/PageContext";
 import { NotificationWidget } from "@/components/NotificationWidget";
+import { agentService, type AgentStatus } from "@/services/agent.service";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const CUSTOMER_SERVICE_ROLE_ID = 'ca0b30c6-b73d-4cbb-bc04-490f4280b4b1';
 
 function DashboardContent() {
   const { title, description } = usePageContext();
@@ -14,28 +24,50 @@ function DashboardContent() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const fullName = user?.full_name || "";
   const [role, setRole] = useState("");
+  const [roleId, setRoleId] = useState("");
+  const [agentStatus, setAgentStatus] = useState<AgentStatus>('offline');
+  const [isAgent, setIsAgent] = useState(false);
+
   useEffect(() => {
-    async function fetchRole() {
+    async function fetchRoleAndAgent() {
       if (!user?.id) return;
+      
       // 1. Obtener el role_id de users_roles
-      const { data: userRole, error: userRoleError } = await supabase
+      const { data: userRole } = await supabase
         .from('users_roles')
         .select('role_id')
         .eq('user_id', user.id)
         .single();
+      
       if (!userRole?.role_id) {
         setRole("");
+        setRoleId("");
         return;
       }
+      
+      setRoleId(userRole.role_id);
+      
       // 2. Obtener el nombre del rol desde la tabla roles
-      const { data: roleData, error: roleError } = await supabase
+      const { data: roleData } = await supabase
         .from('roles')
         .select('name')
         .eq('id', userRole.role_id)
         .single();
+      
       setRole(roleData?.name || "");
+      
+      // 3. Check if user is customer service agent
+      if (userRole.role_id === CUSTOMER_SERVICE_ROLE_ID) {
+        setIsAgent(true);
+        
+        // 4. Get agent status
+        const agent = await agentService.getAgentByUserId(user.id);
+        if (agent) {
+          setAgentStatus(agent.status);
+        }
+      }
     }
-    fetchRole();
+    fetchRoleAndAgent();
   }, [user]);
   const [chatwootReady, setChatwootReady] = useState(false);
 
@@ -77,6 +109,15 @@ function DashboardContent() {
     }
   };
 
+  const handleStatusChange = async (newStatus: AgentStatus) => {
+    if (!user?.id) return;
+    
+    const success = await agentService.updateAgentStatus(user.id, newStatus);
+    if (success) {
+      setAgentStatus(newStatus);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
@@ -102,15 +143,40 @@ function DashboardContent() {
               )}
             </div>
             
-            {/* Mensaje de bienvenida y rol */}
+            {/* Mensaje de bienvenida, rol y estado */}
             {fullName && (
-              <div className="flex flex-col items-end text-right">
-                <span className="font-bold text-black leading-tight" style={{ fontSize: '1.3rem' }}>
-                  ¡Bienvenido <span className="text-primary">{fullName}!</span>
-                </span>
-                <span className="text-sm mt-0.5" style={{ color: '#00409aff' }}>
-                  Rol: {role || "Sin rol"}
-                </span>
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col items-end text-right">
+                  <span className="font-bold text-black leading-tight" style={{ fontSize: '1.3rem' }}>
+                    ¡Bienvenido <span className="text-primary">{fullName}!</span>
+                  </span>
+                  <span className="text-sm mt-0.5" style={{ color: '#00409aff' }}>
+                    Rol: {role || "Sin rol"}
+                  </span>
+                </div>
+                
+                {/* Status dropdown for customer service agents */}
+                {isAgent && (
+                  <Select value={agentStatus} onValueChange={handleStatusChange}>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                          Activo
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="inactive">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-gray-400" />
+                          Inactivo
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
           </header>
@@ -119,8 +185,8 @@ function DashboardContent() {
           </main>
         </div>
         
-        {/* Widget de notificaciones */}
-        <NotificationWidget />
+        {/* Widget de notificaciones - only for customer service agents */}
+        {isAgent && <NotificationWidget />}
         
         {chatwootReady && (
           <Button

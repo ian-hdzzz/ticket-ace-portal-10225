@@ -33,6 +33,7 @@ model User {
   userRoles     UserRole[]     @relation("UserToUserRole")
   assignedRoles UserRole[]     @relation("AssignedBy")
   notifications Notification[]
+  agent         Agent?
 
   @@map("users")
   @@schema("cea")
@@ -100,6 +101,25 @@ model RolePrivilege {
   @@index([roleId], name: "idx_roles_privileges_role_id")
   @@index([privilegeId], name: "idx_roles_privileges_privilege_id")
   @@map("roles_privileges")
+  @@schema("cea")
+}
+
+model Agent {
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatwootUserId    Int          @unique @map("chatwoot_user_id")
+  name              String       @db.VarChar(255)
+  email             String?      @db.VarChar(255)
+  status            agent_status? @default(offline)
+  statusChangedAt   DateTime?    @map("status_changed_at") @db.Timestamp
+  currentLoad       Int?         @default(0) @map("current_load")
+  maxLoad           Int?         @default(10) @map("max_load")
+  lastAssignedAt    DateTime?    @map("last_assigned_at") @db.Timestamp
+  createdAt         DateTime?    @default(now()) @map("created_at") @db.Timestamp
+  userId            String       @unique @map("user_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("agents")
   @@schema("cea")
 }
 
@@ -453,6 +473,13 @@ model VTicketStatistics {
 //////////////////////
 // Enums (from your DB)
 //////////////////////
+
+enum agent_status {
+  active
+  inactive
+  offline
+  @@schema("cea")
+}
 
 enum assignment_status {
   active
