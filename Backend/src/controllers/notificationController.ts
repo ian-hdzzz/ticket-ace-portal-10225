@@ -32,6 +32,7 @@ export const notificationController = {
           },
         },
       });
+      // console.log("notifications", notifications);
 
       // Obtener el conteo de no leídas
       const unreadCount = await prisma.notification.count({

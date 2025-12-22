@@ -22,7 +22,7 @@ export default class AuthController {
             if (!user || !user.password) {
                 return res.status(401).json({ success: false, message: "Usuario no encontrado" });
             }
-            console.log("user found", user);
+            // console.log("user found", user);
 
             // verify password hash
             // const passwordsMatch = await AuthUseCases.verifyPassword(password, user.password);

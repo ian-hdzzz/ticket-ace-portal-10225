@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import { notificationController } from '../controllers/notificationController.js';
 import { notificationSSEController } from '../controllers/notificationSSEController.js';
-import { authenticateToken } from '../middleware/auth.middleware.js';
+import { authenticateToken, authenticateSSE } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-// Todas las rutas requieren autenticación
-router.use(authenticateToken);
+// SSE Stream endpoint (debe ir primero y usa auth especial para EventSource)
+router.get('/stream', authenticateSSE, notificationSSEController.streamNotifications);
 
-// SSE Stream endpoint (debe ir primero para no interferir con otras rutas)
-router.get('/stream', notificationSSEController.streamNotifications);
+// Todas las demás rutas requieren autenticación normal
+router.use(authenticateToken);
 
 // Obtener notificaciones del usuario
 router.get('/', notificationController.getUserNotifications);

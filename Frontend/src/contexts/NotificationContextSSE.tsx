@@ -168,8 +168,28 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     console.log('🔌 Conectando a SSE...');
 
-    // Crear nueva conexión SSE
-    const eventSource = new EventSource('/api/notifications/stream', {
+    // Obtener token de la cookie
+    const getAccessToken = () => {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'accessToken') {
+          return value;
+        }
+      }
+      return null;
+    };
+
+    const token = getAccessToken();
+    
+    if (!token) {
+      console.error('❌ No se encontró token de acceso para SSE');
+      setConnected(false);
+      return;
+    }
+
+    // Crear nueva conexión SSE con token en query param
+    const eventSource = new EventSource(`/api/notifications/stream?token=${token}`, {
       withCredentials: true,
     });
 

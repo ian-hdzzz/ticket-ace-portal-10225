@@ -29,6 +29,22 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Track if we're currently refreshing to avoid multiple refresh calls
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: any) => void; reject: (reason?: any) => void }> = [];
+
+const processQueue = (error: any = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  
+  failedQueue = [];
+};
+
 // Response interceptor - handle errors globally
 apiClient.interceptors.response.use(
   (response) => {
@@ -38,7 +54,9 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     // Log error in development
     if (import.meta.env.DEV) {
       console.error('[API Response Error]', error.response?.data || error.message);
@@ -49,9 +67,48 @@ apiClient.interceptors.response.use(
       // Server responded with error status
       const { status, data } = error.response;
 
-      if (status === 401) {
-        // Unauthorized - could trigger logout or token refresh here
-        console.warn('[API] Unauthorized access');
+      if (status === 401 && !originalRequest._retry) {
+        // Unauthorized - attempt token refresh
+        if (isRefreshing) {
+          // If already refreshing, queue this request
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then(() => {
+            return apiClient(originalRequest);
+          }).catch(err => {
+            return Promise.reject(err);
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          console.log('[API] Access token expired, refreshing...');
+          await apiClient.post('/auth/refresh');
+          console.log('[API] Token refreshed successfully');
+          
+          processQueue(null);
+          isRefreshing = false;
+          
+          // Retry the original request
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          console.error('[API] Token refresh failed, logging out...');
+          processQueue(refreshError);
+          isRefreshing = false;
+          
+          // Clear user data and redirect to login
+          localStorage.removeItem('user');
+          localStorage.removeItem('user_temp');
+          
+          // Only redirect if not already on login page
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+          
+          return Promise.reject(refreshError);
+        }
       }
 
       if (status === 500) {

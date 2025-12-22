@@ -5,7 +5,7 @@ import type { TokenPayload } from "../types/jwtPayload.type.js";
 export default class JWTService {
     private static readonly ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET || "your-access-secret-change-in-production";
     private static readonly REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || "your-refresh-secret-change-in-production";
-    private static readonly ACCESS_TOKEN_EXPIRY = "15m"; // 15 minutes
+    private static readonly ACCESS_TOKEN_EXPIRY = "60m"; // 15 minutes
     private static readonly REFRESH_TOKEN_EXPIRY = "7d"; // 7 days
 
     /**
