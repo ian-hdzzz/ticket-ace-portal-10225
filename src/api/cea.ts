@@ -439,6 +439,60 @@ export const getConsumosParaGraficas = async (explotacion: string, contrato: str
   return response;
 };
 
+// CEA GetFactura
+export const getFactura = async (explotacion: string, numeroFactura: string, idioma: string = 'es') => {
+  const xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:occ="http://occamWS.ejb.negocio.occam.agbar.com" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+   <soapenv:Header>
+      <wsse:Security mustUnderstand="1">
+        <wsse:UsernameToken wsu:Id="UsernameToken-${xmlEscape(CEA_API_USERNAME)}">
+          <wsse:Username>${xmlEscape(CEA_API_USERNAME)}</wsse:Username>
+          <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${xmlEscape(CEA_API_PASSWORD)}</wsse:Password>
+        </wsse:UsernameToken>
+      </wsse:Security>
+   </soapenv:Header>
+   <soapenv:Body>
+      <occ:getFactura>
+         <explotacion>${xmlEscape(explotacion)}</explotacion>
+         <numeroFactura>${xmlEscape(numeroFactura)}</numeroFactura>
+         <idioma>${xmlEscape(idioma)}</idioma>
+      </occ:getFactura>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+  console.log('[getFactura] Request params:', { explotacion, numeroFactura, idioma });
+  console.log('[getFactura] SOAP Request XML:', xml);
+
+  const response = await sendSoapRequest(CEA_SOAP_READINGS_URL, '', xml);
+
+  console.log('[getFactura] SOAP Response:', response);
+
+  return response;
+};
+
+// Convenience helper: return parsed JSON or raw XML when getFacturaReturn is null
+export const getFacturaJson = async (explotacion: string, numeroFactura: string, idioma: string = 'es') => {
+  const xmlDoc = await getFactura(explotacion, numeroFactura, idioma);
+
+  const returnElement = xmlDoc.getElementsByTagName('getFacturaReturn')[0] || xmlDoc.getElementsByTagName('getFacturaResponse')[0];
+
+  if (returnElement && (returnElement.children.length > 0 || (returnElement.textContent && returnElement.textContent.trim() !== ''))) {
+    const parsed = xmlToJson(returnElement as Element);
+    console.log('[getFacturaJson] Parsed getFacturaReturn:', parsed);
+    return parsed;
+  }
+
+  // If getFacturaReturn is null or empty, return helpful diagnostic info including raw XML
+  try {
+    const raw = new XMLSerializer().serializeToString(xmlDoc);
+    console.warn('[getFacturaJson] getFacturaReturn is null/empty, returning raw XML for inspection.');
+    return { error: 'getFacturaReturn is null or empty', rawXml: raw };
+  } catch (e) {
+    // Fallback: return the converted whole document
+    console.warn('[getFacturaJson] Serialization failed, returning xmlToJson of full document.');
+    return xmlToJson(xmlDoc);
+  }
+};
+
 // CEASolicitudRecibo (Reusing getContrato structure as per user request, but maybe it's different? The user request listed 'getContrato' under 'CEASolicitudRecibo' endpoint too, but also 'cambiarEmailNotificacionPersona' etc. I will add those.)
 
 export const cambiarEmailNotificacionPersona = async (nif: string, nombre: string, apellido1: string, apellido2: string, contrato: string, emailAntiguo: string, emailNuevo: string, codigoOficina: string, usuario: string) => {
