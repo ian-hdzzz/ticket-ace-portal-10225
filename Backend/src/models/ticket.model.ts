@@ -23,7 +23,7 @@ class TicketModel {
           }
         }
       },
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: 'desc' }
     });
   }
 
@@ -47,7 +47,7 @@ class TicketModel {
           }
         }
       },
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: 'desc' }
     });
   }
 
@@ -69,7 +69,7 @@ class TicketModel {
           }
         }
       },
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: 'desc' }
     });
   }
 

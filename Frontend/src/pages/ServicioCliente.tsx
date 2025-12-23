@@ -124,89 +124,9 @@ export default function ServicioCliente() {
     );
   };
 
-  const renderQueueTicketCard = (queueItem: any) => {
-    const ticket = queueItem.ticket;
-    if (!ticket) return null;
-    
-    const customerName = ticket.customer?.nombreTitular || ticket.clientName || 'Sin nombre';
-    
-    return (
-      <Card key={queueItem.id} className="p-4 hover:shadow-md transition-shadow">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-2">
-            {/* Header */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-lg">{ticket.folio}</h3>
-              <Badge className={getPriorityColor(queueItem.priority)}>
-                Prioridad: {queueItem.priority}
-              </Badge>
-              <Badge variant="outline">
-                En cola
-              </Badge>
-            </div>
-            
-            {/* Title */}
-            <p className="text-gray-700 font-medium">{ticket.titulo}</p>
-            
-            {/* Customer Info */}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <User className="h-4 w-4" />
-              <span>{customerName}</span>
-            </div>
-            
-            {/* Time */}
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Clock className="h-4 w-4" />
-              <span>
-                En cola desde {formatDistanceToNow(new Date(queueItem.queued_at), { 
-                  addSuffix: true, 
-                  locale: es 
-                })}
-              </span>
-            </div>
-          </div>
-          
-          {/* Actions */}
-          <div className="flex flex-col gap-2">
-            <Button
-              onClick={() => assignTicketToMe(ticket.id)}
-              size="sm"
-              variant="default"
-            >
-              Tomar
-            </Button>
-            <Button
-              onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
-              size="sm"
-              variant="outline"
-            >
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Ver
-            </Button>
-          </div>
-        </div>
-      </Card>
-    );
-  };
-
   const filterTickets = (tickets: any[]) => {
     if (!searchQuery) return tickets;
     return tickets.filter((ticket) => {
-      const searchStr = searchQuery.toLowerCase();
-      return (
-        ticket.folio?.toLowerCase().includes(searchStr) ||
-        ticket.titulo?.toLowerCase().includes(searchStr) ||
-        ticket.customer?.nombreTitular?.toLowerCase().includes(searchStr) ||
-        ticket.clientName?.toLowerCase().includes(searchStr)
-      );
-    });
-  };
-
-  const filterQueueItems = (items: any[]) => {
-    if (!searchQuery) return items;
-    return items.filter((item) => {
-      const ticket = item.ticket;
-      if (!ticket) return false;
       const searchStr = searchQuery.toLowerCase();
       return (
         ticket.folio?.toLowerCase().includes(searchStr) ||
@@ -281,7 +201,7 @@ export default function ServicioCliente() {
               <p className="text-gray-500">No hay tickets en cola</p>
             </Card>
           ) : (
-            filterQueueItems(queueTickets).map(item => renderQueueTicketCard(item))
+            filterTickets(queueTickets).map(ticket => renderTicketCard(ticket, true))
           )}
         </TabsContent>
 
