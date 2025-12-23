@@ -104,7 +104,7 @@ export const ServicioClienteProvider: React.FC<{ children: React.ReactNode }> = 
 
   const assignTicketToMe = useCallback(async (ticketId: string) => {
     try {
-      const response = await apiClient.post(`/servicio-cliente/${ticketId}/assign`);
+      const response = await apiClient.post(`/api/servicio-cliente/${ticketId}/assign`);
       
       if (response.data.success) {
         toast.success('Ticket asignado exitosamente');

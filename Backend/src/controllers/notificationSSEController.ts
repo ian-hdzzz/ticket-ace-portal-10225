@@ -61,12 +61,13 @@ export const notificationSSEController = {
   emitNotification(userIds: string[], notification: any) {
     let sentCount = 0;
 
-    console.log("emitNotification called");
-    console.log("userIds", userIds);
-    console.log("notification", notification);
-    console.log("clients", clients);
+    console.log("📤 emitNotification called");
+    console.log("   Target userIds:", userIds);
+    console.log("   Total connected clients:", clients.size);
+    console.log("   Connected userIds:", Array.from(clients).map(c => c.userId));
 
     clients.forEach(client => {
+      console.log(`   Checking client ${client.userId} against target ${userIds}`);
       if (userIds.includes(client.userId)) {
         try {
           const data = JSON.stringify({
@@ -74,6 +75,7 @@ export const notificationSSEController = {
             data: notification
           });
           
+          console.log(`   ✅ Sending to client ${client.userId}`);
           client.response.write(`data: ${data}\n\n`);
           sentCount++;
         } catch (error) {
@@ -81,6 +83,8 @@ export const notificationSSEController = {
           // Remover cliente si hay error
           clients.delete(client);
         }
+      } else {
+        console.log(`   ⏭️  Skipping client ${client.userId} (not in target list)`);
       }
     });
 

@@ -162,6 +162,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Función para conectar SSE
   const connectSSE = useCallback(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:164',message:'connectSSE called',data:{hasExistingConnection:!!eventSourceRef.current},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    
     // Limpiar conexión anterior si existe
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -171,9 +175,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     // Obtener token de la cookie
     const getAccessToken = () => {
+      // #region agent log
+      const allCookies = document.cookie;
+      fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:173',message:'Parsing cookies',data:{allCookies:allCookies,cookieLength:allCookies.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,C'})}).catch(()=>{});
+      // #endregion
+      
       const cookies = document.cookie.split(';');
       for (let cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:179',message:'Cookie parsed',data:{name:name,hasValue:!!value,valueLength:value?.length||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         if (name === 'accessToken') {
           return value;
         }
@@ -183,19 +195,41 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const token = getAccessToken();
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:191',message:'Token retrieved',data:{hasToken:!!token,tokenLength:token?.length||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C'})}).catch(()=>{});
+    // #endregion
+    
     if (!token) {
-      console.error('❌ No se encontró token de acceso para SSE');
+      console.warn('⚠️  No se encontró token de acceso para SSE, reintentando en 1 segundo...');
       setConnected(false);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:198',message:'Starting retry timeout',data:{retryDelayMs:1000},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      // Retry after 1 second to allow token refresh to complete
+      setTimeout(() => {
+        // #region agent log
+        const allCookiesRetry = document.cookie;
+        fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:204',message:'Retry timeout fired',data:{allCookies:allCookiesRetry},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        const retryToken = getAccessToken();
+        if (retryToken) {
+          console.log('✅ Token encontrado en reintento, conectando SSE...');
+          connectSSE();
+        } else {
+          console.error('❌ Token aún no disponible después de reintento');
+        }
+      }, 1000);
       return;
     }
 
     // Crear nueva conexión SSE con token en query param
+    console.log('🔗 Creando EventSource con token...');
     const eventSource = new EventSource(`/api/notifications/stream?token=${token}`, {
       withCredentials: true,
     });
 
     eventSource.onopen = () => {
-      console.log('✅ SSE conectado');
+      console.log('✅ SSE conectado exitosamente');
       setConnected(true);
       // Limpiar timeout de reconexión si existe
       if (reconnectTimeoutRef.current) {
@@ -265,6 +299,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Fetch inicial de notificaciones
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:267',message:'fetchNotifications useEffect triggered',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     // Check if user is logged in before fetching
     const userStr = localStorage.getItem('user');
     if (userStr) {
@@ -274,6 +311,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Conectar SSE al montar el componente
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:279',message:'connectSSE useEffect triggered',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     // Check if user is logged in before connecting SSE
     const userStr = localStorage.getItem('user');
     if (userStr) {

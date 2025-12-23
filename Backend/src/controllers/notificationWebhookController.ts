@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { emitNotificationToUsers } from './notificationSSEController.js';
+import agentModel from '../models/agent.model.js';
 
 /**
  * Controller for handling notification webhooks from Supabase
@@ -28,9 +29,16 @@ export const notificationWebhookController = {
       let targetUserIds: string[] = [];
 
       if (ticket?.assigned_to) {
-        // Assigned to specific agent
-        targetUserIds = [ticket.assigned_to];
-        console.log(`📤 Notificación para agente específico: ${ticket.assigned_to}`);
+        // ticket.assigned_to is the agent.id, we need to convert it to user.id
+        console.log(`🔍 Buscando userId para agentId: ${ticket.assigned_to}`);
+        const agent = await agentModel.findById(ticket.assigned_to);
+        
+        if (agent?.userId) {
+          targetUserIds = [agent.userId];
+          console.log(`📤 Notificación para agente específico (agentId: ${ticket.assigned_to}, userId: ${agent.userId})`);
+        } else {
+          console.warn(`⚠️  No se encontró userId para agentId: ${ticket.assigned_to}`);
+        }
       } else {
         // Broadcast to all connected agents (user_id from notification is the agent)
         // In this case, the notification.user_id should be the agent who should receive it

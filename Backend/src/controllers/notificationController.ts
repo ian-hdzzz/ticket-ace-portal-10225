@@ -5,6 +5,11 @@ export const notificationController = {
   // Obtener todas las notificaciones del usuario
   async getUserNotifications(req: Request, res: Response) {
     try {
+      // #region agent log
+      const fs = await import('fs');
+      fs.appendFileSync('c:\\Users\\andre\\Documents\\CEA\\.cursor\\debug.log', JSON.stringify({location:'notificationController.ts:6',message:'getUserNotifications called',data:{hasUser:!!req.user,userId:req.user?.userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})+'\n');
+      // #endregion
+      
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -15,6 +20,10 @@ export const notificationController = {
       if (req.query.unreadOnly === 'true') {
         where.read = false;
       }
+
+      // #region agent log
+      fs.appendFileSync('c:\\Users\\andre\\Documents\\CEA\\.cursor\\debug.log', JSON.stringify({location:'notificationController.ts:19',message:'Before prisma query',data:{userId:userId,where:where},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})+'\n');
+      // #endregion
 
       const notifications = await prisma.notification.findMany({
         where,
@@ -32,7 +41,10 @@ export const notificationController = {
           },
         },
       });
-      // console.log("notifications", notifications);
+      
+      // #region agent log
+      fs.appendFileSync('c:\\Users\\andre\\Documents\\CEA\\.cursor\\debug.log', JSON.stringify({location:'notificationController.ts:35',message:'After prisma query',data:{notificationCount:notifications.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})+'\n');
+      // #endregion
 
       // Obtener el conteo de no leídas
       const unreadCount = await prisma.notification.count({
@@ -44,6 +56,10 @@ export const notificationController = {
         unreadCount,
       });
     } catch (error) {
+      // #region agent log
+      const fs = await import('fs');
+      fs.appendFileSync('c:\\Users\\andre\\Documents\\CEA\\.cursor\\debug.log', JSON.stringify({location:'notificationController.ts:46',message:'Error in getUserNotifications',data:{error:error instanceof Error ? error.message : String(error),stack:error instanceof Error ? error.stack : undefined},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})+'\n');
+      // #endregion
       console.error('Error obteniendo notificaciones:', error);
       return res.status(500).json({ error: 'Error obteniendo notificaciones' });
     }
