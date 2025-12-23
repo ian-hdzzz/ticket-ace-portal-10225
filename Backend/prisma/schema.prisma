@@ -12,7 +12,7 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-  schemas   = ["cea"]
+  schemas   = ["cea", "public"]
 }
 
 ////////////////////////
@@ -117,7 +117,8 @@ model Agent {
   createdAt         DateTime?    @default(now()) @map("created_at") @db.Timestamp
   userId            String       @unique @map("user_id") @db.Uuid
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticketQueue TicketQueue[]
 
   @@map("agents")
   @@schema("cea")
@@ -197,19 +198,19 @@ model MediaAsset {
 
 model Customer {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  numeroContrato     String?   @db.VarChar(20)
-  nombreTitular      String?   @db.VarChar(255)
+  numeroContrato     String?   @map("numero_contrato") @db.VarChar(20)
+  nombreTitular      String?   @map("nombre_titular") @db.VarChar(255)
   email              String?   @db.VarChar(255)
   telefono           String?   @db.VarChar(20)
   whatsapp           String?   @db.Text
-  direccionServicio  String?   @db.Text
+  direccionServicio  String?   @map("direccion_servicio") @db.Text
   colonia            String?   @db.VarChar(100)
-  codigoPostal       String?   @db.VarChar(10)
+  codigoPostal       String?   @map("codigo_postal") @db.VarChar(10)
   municipio          String?   @db.VarChar(100) @default("Querétaro")
-  reciboDigital      Boolean?  @default(false)
-  createdAt          DateTime @default(now()) @db.Timestamptz
-  updatedAt          DateTime @updatedAt @db.Timestamptz
-  firstInteractionChannel String? @db.Text
+  reciboDigital      Boolean?  @map("recibo_digital") @default(false)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  firstInteractionChannel String? @map("first_interaction_channel") @db.Text
 
   tickets        Ticket[]
   meterReadings  MeterReading[]
@@ -286,29 +287,29 @@ model PaymentRecord {
 model Ticket {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   folio          String    @db.VarChar(30)
-  customerId     String?   @db.Uuid
-  serviceType    service_type
-  ticketType     ticket_type_code
+  customerId     String?   @map("customer_id") @db.Uuid
+  serviceType    service_type @map("service_type")
+  ticketType     ticket_type_code @map("ticket_type")
   status         ticket_status? @default(abierto)
   priority       priority_level? @default(media)
   channel        channel_type
   titulo         String    @db.VarChar(255)
   descripcion    String?   @db.Text
-  assignedTo     String?   @db.Uuid
-  assignedAt     DateTime? @db.Timestamptz
-  escalatedTo    String?   @db.Uuid
-  escalatedAt    DateTime? @db.Timestamptz
-  resolutionNotes String?  @db.Text
-  resolvedAt     DateTime? @db.Timestamptz
-  closedAt       DateTime? @db.Timestamptz
-  slaDeadline    DateTime? @db.Timestamptz
-  slaBreached    Boolean?   @default(false)
+  assignedTo     String?   @map("assigned_to") @db.Uuid
+  assignedAt     DateTime? @map("assigned_at") @db.Timestamptz
+  escalatedTo    String?   @map("escalated_to") @db.Uuid
+  escalatedAt    DateTime? @map("escalated_at") @db.Timestamptz
+  resolutionNotes String?  @map("resolution_notes") @db.Text
+  resolvedAt     DateTime? @map("resolved_at") @db.Timestamptz
+  closedAt       DateTime? @map("closed_at") @db.Timestamptz
+  slaDeadline    DateTime? @map("sla_deadline") @db.Timestamptz
+  slaBreached    Boolean?  @map("sla_breached") @default(false)
   tags           String[]
   metadata       Json?     @default("{}")
-  createdAt      DateTime @default(now()) @db.Timestamptz
-  updatedAt      DateTime @updatedAt @db.Timestamptz
-  clientName     String?   @db.Text
-  contractNumber Int?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  clientName     String?   @map("client_name") @db.Text
+  contractNumber Int?      @map("contract_number")
 
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
   conversations TicketConversation[]
@@ -319,6 +320,7 @@ model Ticket {
   contractChanges ContractChange[]
   meterReadings  MeterReading[]
   notifications  Notification[]
+  ticketQueue    TicketQueue?
 
   @@unique([folio], name: "tickets_folio_key")
   @@map("tickets")
@@ -343,6 +345,22 @@ model ContractChange {
   @@unique([ticketId], name: "contract_changes_ticket_id_key")
   @@map("contract_changes")
   // Note: check constraint for tipo_tramite not enforced by Prisma
+  @@schema("cea")
+}
+
+model TicketQueue {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId        String?  @unique @map("ticket_id") @db.Uuid
+  conversationId  Int      @map("conversation_id")
+  priority        String?  @default("normal") @db.VarChar(20)
+  queuedAt        DateTime? @default(now()) @map("queued_at") @db.Timestamp
+  assignedTo      String?  @map("assigned_to") @db.Uuid
+  status          String?  @default("waiting") @db.VarChar(20)
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id])
+  agent  Agent?  @relation(fields: [assignedTo], references: [id])
+
+  @@map("ticket_queue")
   @@schema("cea")
 }
 
@@ -602,7 +620,7 @@ enum ticket_status {
   esperando_cliente
   esperando_interno
   resuelto
-  @@schema("cea")
+  @@schema("public")
 }
 
 enum ticket_type_code {

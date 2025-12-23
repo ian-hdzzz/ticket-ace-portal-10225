@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import emailRouter from "./routes/email.js";
 import notificationRouter from "./routes/notifications.js";
+import servicioClienteRouter from "./routes/servicioCliente.routes.js";
 
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -70,6 +71,8 @@ app.use('/api/cea', ceaRouter);
 app.use("/api/email", emailRouter);
 // Notification routes
 app.use("/api/notifications", notificationRouter);
+// Servicio a Cliente routes
+app.use("/api/servicio-cliente", servicioClienteRouter);
 
 // Health check endpoint for Cloud Run
 app.get("/health", (req, res) => {

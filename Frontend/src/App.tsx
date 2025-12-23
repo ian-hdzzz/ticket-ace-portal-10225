@@ -17,6 +17,7 @@ import { NotificationProvider } from "./contexts/NotificationContextSSE";
 // Para volver a polling, descomentar la siguiente línea y comentar la anterior:
 // import { NotificationProvider } from "./contexts/NotificationContext";
 import { NotificationWidget } from "./components/NotificationWidget";
+import { ServicioClienteProvider } from "./contexts/ServicioClienteContext";
 import { TicketsWithTabs } from "./components/TicketsWithTabs";
 import CrearReportes from "./pages/CrearReportes";
 import Contratos from "./pages/Contratos";
@@ -26,6 +27,7 @@ import Deuda from "./pages/Deuda";
 import Agents from "./pages/Agents";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import ServicioCliente from "./pages/ServicioCliente";
 import NotFound from "./pages/NotFound";
 import ChatwootWidget from "./components/features/ChatwootWidget";
 import Auth from "./pages/Auth";
@@ -40,8 +42,9 @@ const App = () => (
     <TooltipProvider>
       <TabProvider>
         <NotificationProvider>
-          <Toaster />
-          <Sonner />
+          <ServicioClienteProvider>
+            <Toaster />
+            <Sonner />
 
           <BrowserRouter>
           <Routes>
@@ -178,6 +181,12 @@ const App = () => (
                 path="notifications" 
                 element={<Notifications />} 
               />
+
+              {/* Servicio a Cliente */}
+              <Route 
+                path="servicio-cliente" 
+                element={<ServicioCliente />} 
+              />
             </Route>
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
@@ -185,6 +194,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </ServicioClienteProvider>
       </NotificationProvider>
       </TabProvider>
     </TooltipProvider>
