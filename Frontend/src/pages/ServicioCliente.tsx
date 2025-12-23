@@ -49,7 +49,7 @@ export default function ServicioCliente() {
     }
   };
 
-  const renderTicketCard = (ticket: any, showTomar = false, showTags = false) => {
+  const renderTicketCard = (ticket: any, showTomar = false) => {
     const customerName = ticket.customer?.nombreTitular || ticket.clientName || 'Sin nombre';
     
     return (
@@ -70,8 +70,8 @@ export default function ServicioCliente() {
             {/* Title */}
             <p className="text-gray-700 font-medium">{ticket.titulo}</p>
             
-            {/* Tags (if showTags is true) */}
-            {showTags && ticket.tags && ticket.tags.length > 0 && (
+            {/* Tags */}
+            {ticket.tags && ticket.tags.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 {ticket.tags.map((tag: string, index: number) => (
                   <Badge key={index} variant="secondary" className="text-xs">
@@ -216,7 +216,7 @@ export default function ServicioCliente() {
               <p className="text-gray-500">No hay tickets abiertos</p>
             </Card>
           ) : (
-            filterTickets(allTickets).map(ticket => renderTicketCard(ticket, false, true))
+            filterTickets(allTickets).map(ticket => renderTicketCard(ticket, false))
           )}
         </TabsContent>
       </Tabs>
