@@ -76,7 +76,7 @@ export default function ApiTest() {
 
                 <div className="space-y-2">
                     <h2 className="text-xl font-semibold">SOAP API</h2>
-                    <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="grid grid-cols-3 gap-2 mb-2">
                         <input
                             placeholder="Contrato"
                             className="border p-1 rounded"
@@ -86,6 +86,11 @@ export default function ApiTest() {
                             placeholder="Explotacion (e.g. 01)"
                             className="border p-1 rounded"
                             id="explotacionInput"
+                        />
+                        <input
+                            placeholder="Número de Factura (ej: 00122025A100258488)"
+                            className="border p-1 rounded"
+                            id="numeroFacturaInput"
                         />
                     </div>
                     <button
@@ -160,6 +165,17 @@ export default function ApiTest() {
                         disabled={loading}
                     >
                         Get Tarifa Agua
+                    </button>
+                    <button
+                        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
+                        onClick={() => {
+                            const explotacion = (document.getElementById('explotacionInput') as HTMLInputElement).value || '12';
+                            const numeroFactura = (document.getElementById('numeroFacturaInput') as HTMLInputElement).value || '00122025A100230967';
+                            handleCall(() => (ceaApi as any).getFactura(explotacion, numeroFactura), 'getFactura');
+                        }}
+                        disabled={loading}
+                    >
+                        Get Factura
                     </button>
                     <button
                         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
