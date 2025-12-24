@@ -41,14 +41,6 @@ export const AgentWidgets: React.FC<AgentWidgetsProps> = ({ userId }) => {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
-      {/* SSE Connection Status - Debug indicator */}
-      {!connected && (
-        <div className="bg-yellow-50 rounded-full shadow-lg px-3 py-2 border border-yellow-200 flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-          <span className="text-xs text-yellow-700">SSE desconectado</span>
-        </div>
-      )}
-      
       {/* Status Dropdown */}
       <div className="bg-white rounded-full shadow-lg px-4 py-2 border border-gray-200">
         <Select value={agentStatus} onValueChange={handleStatusChange}>
