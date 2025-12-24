@@ -1,263 +1,245 @@
-# Ticket Ace Portal
+# 🎯 Ticket Ace Portal - Docker & GCP Cloud Run
 
-A modern, customizable React UI application for ticket management and agent administration. Built with a clean, modular architecture that can be easily connected to any backend API.
+Este proyecto está configurado para desplegarse en **Google Cloud Platform (GCP) Cloud Run** usando Docker.
 
-## Features
-
-- 🎨 **Modern UI** - Built with Shadcn-ui and Tailwind CSS
-- 📊 **Dashboard** - Overview of tickets, agents, and metrics
-- 🎫 **Ticket Management** - Create, view, update, and track tickets
-- 👥 **Agent Management** - Manage AI agents and their configurations
-- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
-- ⚡ **Fast & Performant** - Built with Vite and React
-- 🔄 **Real-time Ready** - Uses React Query for efficient data fetching
-
-## Tech Stack
-
-- **Frontend**: Vite + React + TypeScript
-- **UI Framework**: Shadcn-ui + Tailwind CSS
-- **State Management**: React Query (TanStack Query)
-- **Routing**: React Router DOM
-- **Build Tool**: Vite
-
-## Project Structure
+## 📁 Estructura del Proyecto
 
 ```
-├── src/
-│   ├── api/                    # API integration layer
-│   │   ├── tickets.ts          # Ticket operations
-│   │   └── agents.ts           # Agent operations
-│   ├── components/
-│   │   ├── ui/                 # Shadcn UI base components
-│   │   ├── features/           # Feature-specific components
-│   │   └── layout/             # Layout components
-│   ├── hooks/                  # Custom React hooks
-│   ├── lib/                    # Utilities
-│   │   └── utils.ts            # Helper functions
-│   ├── pages/                  # Page components
-│   └── types/                  # TypeScript type definitions
-└── docs/                       # Documentation
+ticket-ace-portal-10225/
+├── Backend/                 # API backend (Node.js + TypeScript + Prisma)
+│   ├── Dockerfile          # Configuración Docker para backend
+│   └── ...
+├── Frontend/               # Aplicación frontend (React + Vite + TypeScript)
+│   ├── dockerfile          # Configuración Docker para frontend
+│   └── ...
+├── scripts/                # Scripts de ayuda para despliegue
+│   ├── build-local.sh     # Construir imágenes localmente
+│   ├── deploy-gcp.sh      # Desplegar en GCP Cloud Run
+│   ├── setup-secrets.sh   # Configurar secrets en GCP
+│   └── logs.sh            # Ver logs de Cloud Run
+├── docker-compose.yml      # Desarrollo local con Docker
+├── cloudbuild.yaml         # CI/CD automático en GCP
+├── .env.example           # Variables de entorno de ejemplo
+├── .gcloudignore          # Archivos ignorados en GCP
+└── DEPLOYMENT.md          # Guía detallada de despliegue
 ```
 
-For detailed documentation, see the [docs/](./docs/) folder or start with the [Documentation Index](./docs/README.md):
-- [Architecture Diagrams](./docs/ARCHITECTURE.md) - System architecture, data flow, and component hierarchy
-- [Folder Structure](./docs/FOLDER_STRUCTURE.md) - Detailed project organization
-- [CI/CD Pipeline](./docs/CI_CD.md) - Continuous Integration and Deployment setup
+## 🚀 Inicio Rápido
 
-## Quick Start
-
-### Prerequisites
-
-- Node.js 20+ and npm
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd ticket-ace-portal-10225
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start development server** (No `.env` file needed for demo mode!)
-   ```bash
-   npm run dev
-   ```
-
-4. **Open your browser**
-   Navigate to `http://localhost:8080` (or the port shown in the terminal)
-
-**Note:** The application runs in **demo mode** by default with mock data. No configuration is required! See [Application Modes](#application-modes) section for production setup.
-
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build for production
-- `npm run build:dev` - Build in development mode
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run typecheck` - Check TypeScript types
-- `npm run preview` - Preview production build
-- `npm run ci` - Run full CI pipeline locally (lint + typecheck + build)
-
-### Project Structure
-
-- **`src/api/`** - API integration functions (currently using mock data)
-- **`src/components/ui/`** - Reusable UI components from Shadcn-ui
-- **`src/components/features/`** - Feature-specific components (TicketCard, StatCard)
-- **`src/components/layout/`** - Layout components (DashboardLayout, AppSidebar)
-- **`src/pages/`** - Page components (Dashboard, Tickets, Agents, Settings)
-- **`src/types/`** - TypeScript type definitions
-
-### Adding New Features
-
-1. **New Page**: Add route in `src/App.tsx`, create component in `src/pages/`
-2. **New Component**: Add to `src/components/features/` or `src/components/layout/`
-3. **New API Endpoint**: Add function in `src/api/` and replace mock data with real API calls
-4. **New Type**: Add to `src/types/entities.ts`
-
-## Application Modes
-
-The application supports two modes: **Demo** and **Production**.
-
-### Demo Mode (Default)
-
-Demo mode uses hardcoded mock data and requires **no configuration or `.env` file**. Perfect for development and demonstrations.
-
-**To use Demo Mode:**
-1. **No setup required!** Just run `npm run dev`
-2. The application automatically defaults to demo mode
-3. All data is stored in-memory and resets on page refresh
-4. Works out of the box without any environment variables
-
-### Production Mode
-
-Production mode connects to a Supabase backend for persistent data storage.
-
-**To use Production Mode:**
-1. Set `VITE_APP_MODE=production` in your `.env` file
-2. Configure Supabase credentials:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_project_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-3. Set up your Supabase database schema (see [Supabase Setup Guide](./docs/SUPABASE_SETUP.md))
-
-**See [Supabase Setup Guide](./docs/SUPABASE_SETUP.md) for detailed instructions.**
-
-## Customization
-
-This UI is designed to be highly customizable:
-
-- **UI Components**: Modify components in `src/components/` or add new Shadcn-ui components
-- **Styling**: Tailwind CSS configuration in `tailwind.config.ts`
-- **Theme**: Customize colors and theme in `src/index.css` (CSS variables)
-- **Layout**: Customize page layouts in `src/components/layout/DashboardLayout.tsx`
-
-## Production Deployment
-
-### Build
+### Opción 1: Desarrollo Local con Docker Compose
 
 ```bash
-npm run build
+# 1. Clonar el repositorio y navegar al directorio
+cd ticket-ace-portal-10225
+
+# 2. Crear archivo .env con tus variables
+cp .env.example .env
+# Edita .env con tus valores
+
+# 3. Iniciar servicios con Docker Compose
+docker-compose up -d
+
+# 4. Acceder a las aplicaciones
+# Frontend: http://localhost:8080
+# Backend:  http://localhost:3000
 ```
 
-This creates a `dist/` folder with production-ready static files.
+### Opción 2: Prueba Local Individual
 
-### Deploy
+```bash
+# Construir imágenes localmente
+./scripts/build-local.sh
 
-Deploy the `dist/` folder to any static hosting service:
+# Ejecutar backend
+docker run -p 8080:8080 --env-file .env ticket-ace-backend:local
 
-- **Vercel**: `vercel --prod`
-- **Netlify**: `netlify deploy --prod --dir=dist`
-- **AWS S3**: Upload `dist/` contents to S3 bucket
-- **Any static host**: Upload `dist/` folder contents
-
-See [CI/CD Pipeline Documentation](./docs/CI_CD.md) for automated deployment options.
-
-## Environment Variables
-
-Create a `.env` file in the project root (see `env.example`):
-
-```env
-# Application Mode: "demo" or "production"
-VITE_APP_MODE=demo
-
-# Supabase Configuration (Required for production mode)
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Ejecutar frontend (en otra terminal)
+docker run -p 8081:8080 ticket-ace-frontend:local
 ```
 
-**Note:** In demo mode, Supabase credentials are not required. The application will use mock data instead.
+### Opción 3: Desplegar en GCP Cloud Run
 
-## Troubleshooting
+```bash
+# 1. Instalar Google Cloud CLI (si no lo tienes)
+# macOS:
+brew install --cask google-cloud-sdk
 
-### Build Errors
+# 2. Autenticarte con GCP
+gcloud auth login
 
-- Run `npm install` to ensure dependencies are installed
-- Clear `node_modules` and reinstall: `rm -rf node_modules package-lock.json && npm install`
-- Check TypeScript errors: `npm run typecheck`
+# 3. Configurar secrets
+./scripts/setup-secrets.sh YOUR_PROJECT_ID
 
-### Linting Errors
+# 4. Desplegar
+./scripts/deploy-gcp.sh YOUR_PROJECT_ID us-central1
 
-- Auto-fix issues: `npm run lint:fix`
-- Check ESLint configuration in `eslint.config.js`
+# 5. Ver logs (opcional)
+./scripts/logs.sh backend YOUR_PROJECT_ID us-central1
+```
 
-### Development Server Issues
+## 📚 Documentación Completa
 
-- Ensure port 8080 is available (or change in `vite.config.ts`)
-- Check for conflicting processes: `lsof -i :8080`
+Para una guía detallada de despliegue, consulta **[DEPLOYMENT.md](./DEPLOYMENT.md)**
 
-### CORS & Dev Proxy
+La guía incluye:
+- ✅ Configuración inicial de GCP
+- ✅ Configuración de secrets y variables de entorno
+- ✅ Despliegue manual paso a paso
+- ✅ CI/CD automático con Cloud Build
+- ✅ Solución de problemas
+- ✅ Monitoreo y logs
+- ✅ Estimación de costos
 
-- If you're calling CEA (aquacis) SOAP endpoints from the browser during development you will hit cross-origin restrictions unless you route requests through the dev proxy or a backend proxy.
-- Use the local Vite proxy by setting the SOAP env variables to the proxy paths (default set in `env.example`):
-   ```env
-   VITE_CEA_SOAP_CONTRACT_URL=/aquacis-cea/services/InterfazGenericaContratacionWS
-   VITE_CEA_SOAP_DEBT_URL=/aquacis-cea/services/InterfazGenericaGestionDeudaWS
-   ```
-- The dev proxy is configured in `vite.config.ts`. If you change proxy settings, restart the dev server to apply changes:
-   ```powershell
-   npm run dev
-   ```
-- If the remote CEA server redirects from HTTP to HTTPS, configure the proxy target as HTTPS in `vite.config.ts` to avoid the proxy returning a 3xx redirect to the browser and causing a CORS failure.
+## 🔧 Scripts Disponibles
 
-#### DNS / `ENOTFOUND` errors when resolving remote hosts
+| Script | Descripción |
+|--------|-------------|
+| `scripts/build-local.sh` | Construye las imágenes Docker localmente |
+| `scripts/deploy-gcp.sh PROJECT_ID [REGION]` | Despliega en Cloud Run |
+| `scripts/setup-secrets.sh PROJECT_ID` | Configura secrets en GCP Secret Manager |
+| `scripts/logs.sh [backend\|frontend] PROJECT_ID [REGION]` | Muestra logs en tiempo real |
 
-- If you see `getaddrinfo ENOTFOUND` from Vite for a host like `ceaqueretaro-cf-int.aquacis.com`, try the following:
-   1. Confirm the hostname is correct for your environment and you have network access (VPN, internal DNS) if required.
-   2. If the host should be reachable but isn't, add a temporary hosts file entry (Windows: `%SystemRoot%\\system32\\drivers\\etc\\hosts`) mapping `ceaqueretaro-cf-int.aquacis.com` to the appropriate IP, then restart the dev server.
-   3. If the environment uses a different host (e.g., `aquacis-cf-int.ceaqueretaro.gob.mx`), update `vite.config.ts` to point the `/aquacis-com` proxy to the working host instead.
-   4. As a fallback, implement a server-side proxy on `server.js` that can reach internal hosts but the browser cannot. Example (simplified) and recommended: the included `server.js` contains a proxy route we can use.
+## 🌐 Arquitectura de Despliegue
 
-      ```js
-       // server.js (Express)
-       import axios from 'axios';
-      app.post('/api/cea/:proxyName/*', async (req, res) => {
-          try {
-             const upstreamPath = req.params[0];
-            const response = await axios.post('https://ceaqueretaro-cf-int.aquacis.com/Comercial/' + upstreamPath, req.body, {
-                headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
-             });
-             res.status(response.status).send(response.data);
-          } catch (err) {
-             res.status(500).send(err?.response?.data || err.message);
-          }
-         });
-       ```
+```
+┌─────────────────────────────────────────────────┐
+│            Google Cloud Platform                │
+│                                                  │
+│  ┌──────────────────┐  ┌──────────────────┐   │
+│  │   Cloud Run      │  │   Cloud Run      │   │
+│  │   (Frontend)     │  │   (Backend)      │   │
+│  │   Nginx + SPA    │  │   Node.js API    │   │
+│  │   Port: 8080     │  │   Port: 8080     │   │
+│  └────────┬─────────┘  └────────┬─────────┘   │
+│           │                     │              │
+│           │                     │              │
+│  ┌────────┴─────────────────────┴─────────┐   │
+│  │      Secret Manager                    │   │
+│  │  (DATABASE_URL, JWT_SECRET, etc.)      │   │
+│  └────────────────────────────────────────┘   │
+│                                                 │
+│  ┌────────────────────────────────────────┐   │
+│  │    Container Registry (GCR)            │   │
+│  │    - ticket-ace-frontend:latest        │   │
+│  │    - ticket-ace-backend:latest         │   │
+│  └────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────┘
+           │
+           │ SQL Connection
+           ▼
+┌─────────────────────┐
+│   PostgreSQL DB     │
+│  (Cloud SQL o ext.) │
+└─────────────────────┘
+```
 
-##### Using the included Express proxy
+## 🔐 Variables de Entorno
 
-- Start the server in a separate terminal:
-   ```powershell
-   npm run webhook
-   ```
-- Point your frontend stamps to use the dev proxy path in your `.env` or `env.example` (example):
-   ```env
-   VITE_CEA_SOAP_READINGS_URL=/api/cea/aquacis-com/services/InterfazOficinaVirtualClientesWS
-   VITE_CEA_SOAP_RECEIPT_URL=/api/cea/aquacis-cea/services/InterfazOficinaVirtualClientesWS
-   ```
-- Restart both the `npm run webhook` and `npm run dev` servers and re-try API calls.
+### Backend
+- `DATABASE_URL` - URL de conexión a PostgreSQL
+- `JWT_SECRET` - Secret para tokens JWT
+- `SESSION_SECRET` - Secret para sesiones
+- `PORT` - Puerto (8080 para Cloud Run)
+- `NODE_ENV` - Ambiente (production)
 
-### Parsing SOAP Responses in the UI
+### Frontend (Build Time)
+- `VITE_SUPABASE_URL` - URL de Supabase
+- `VITE_SUPABASE_ANON_KEY` - Key anónima de Supabase
+- `VITE_CEA_*` - Configuración de APIs CEA
 
-- The app returns SOAP envelope responses and, in development, the `ApiTest` page converts XML responses to a readable JSON-like structure for convenience. The parser handles `xsi:nil="true"` values and maps them to `null` in the parsed object so empty fields are explicit.
-- If you're creating UI components to consume SOAP responses, use the `xmlToJson` helper in `src/api/cea.ts` — it handles nested objects, repeated arrays, and `xsi:nil` attributes.
+## 💰 Costos Estimados
 
-## Resources
+Con Cloud Run pagas solo por lo que usas:
+- **Nivel gratuito**: 2 millones de requests/mes
+- **Costo estimado**: $5-20/mes para tráfico bajo-medio
+- **Escala a 0**: No pagas cuando no hay tráfico
 
-- [React Documentation](https://react.dev/)
-- [Vite Documentation](https://vitejs.dev/)
-- [Shadcn-ui Components](https://ui.shadcn.com/)
-- [React Query Docs](https://tanstack.com/query/latest)
-- [Tailwind CSS Docs](https://tailwindcss.com/)
+## 🛠️ Requisitos
 
-## License
+### Para Desarrollo Local
+- Docker Desktop
+- Node.js 20+ (opcional, si no usas Docker)
+- PostgreSQL (o usar Cloud SQL)
 
-See LICENSE file for details.
+### Para Despliegue en GCP
+- Cuenta de Google Cloud Platform
+- Google Cloud CLI (`gcloud`)
+- Proyecto de GCP con facturación habilitada
+
+## 📊 Monitoreo
+
+```bash
+# Ver logs en tiempo real
+./scripts/logs.sh backend YOUR_PROJECT_ID
+
+# Ver métricas en GCP Console
+https://console.cloud.google.com/run?project=YOUR_PROJECT_ID
+
+# Ver costos
+https://console.cloud.google.com/billing
+```
+
+## 🔄 Flujo de CI/CD
+
+1. **Push a GitHub** → Trigger automático en Cloud Build
+2. **Cloud Build** → Construye imágenes Docker
+3. **Container Registry** → Almacena imágenes
+4. **Cloud Run** → Despliega nuevas versiones
+5. **Traffic Split** → 100% a nueva versión automáticamente
+
+## 🆘 Solución de Problemas
+
+### "Permission Denied" al ejecutar scripts
+```bash
+chmod +x scripts/*.sh
+```
+
+### Error de autenticación en GCP
+```bash
+gcloud auth login
+gcloud auth application-default login
+```
+
+### Error de build de Docker
+```bash
+# Limpiar cache de Docker
+docker system prune -a
+
+# Reconstruir sin cache
+docker build --no-cache -t test .
+```
+
+### Ver logs detallados
+```bash
+./scripts/logs.sh backend YOUR_PROJECT_ID
+```
+
+## 📝 Notas Importantes
+
+1. **Cloud Run requiere puerto 8080** - Ambos servicios están configurados para usar este puerto
+2. **Secrets en Secret Manager** - Las variables sensibles se almacenan en GCP Secret Manager
+3. **Build multi-stage** - Los Dockerfiles usan builds multi-stage para optimizar el tamaño de las imágenes
+4. **Health checks** - El backend incluye un endpoint `/health` para verificación de salud
+
+## 🤝 Contribuir
+
+1. Haz fork del proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto es privado y confidencial.
+
+## 🔗 Enlaces Útiles
+
+- [Documentación de Cloud Run](https://cloud.google.com/run/docs)
+- [Documentación de Docker](https://docs.docker.com/)
+- [Guía de Prisma](https://www.prisma.io/docs/)
+- [Documentación de Vite](https://vitejs.dev/)
+
+---
+
+**¿Necesitas ayuda?** Consulta [DEPLOYMENT.md](./DEPLOYMENT.md) o contacta al equipo de desarrollo.

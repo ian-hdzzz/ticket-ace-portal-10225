@@ -1,0 +1,13 @@
+id,full_name,email,password,phone,active,created_at,updated_at,is_temporary_password
+8d0d1c32-fc36-45e1-b9a2-43a816385e56,Yessenia Ruíz,yruiz@ceaqueretaro.gob.mx,ko1ecDXr&8K0bcL1,,true,2025-12-11 15:18:51.370834+00,2025-12-11 15:18:51.370834+00,true
+4584b69b-d4c0-4503-8b9a-35d1dcfc5a0c,Rafael Guajardo,rguajardo@ceaqueretaro.gob.mx,Be6RnsFoiBqm7AXN,,true,2025-12-11 15:19:23.015261+00,2025-12-11 15:19:23.015261+00,true
+52bb9ca6-5114-4a39-827e-46fb2e3f72ec,Edwin Martínez,emartinezh@ceaqueretaro.gob.mx,IWF!#p@mWD*tTF^j,,true,2025-12-11 15:19:47.534686+00,2025-12-11 15:19:47.534686+00,true
+f696d578-0f9d-4393-b612-35eb905bb1b7,Leonardo Rangel Garcia,lrangel@ceaqueretaro.gob.mx,TicvMfjoFjptRIn%,,true,2025-12-11 15:20:00.023496+00,2025-12-11 15:20:00.023496+00,true
+eb3bb4bd-711c-436f-8a8a-e26a2758aa93,Carlos Martínez,cmartineza@ceaqueretaro.gob.mx,2uJb@^M3CUka4GSl,,true,2025-12-11 15:20:53.446611+00,2025-12-11 15:20:53.446611+00,true
+dca83779-8222-471f-90ad-7b14e104d4e2,Francisco Fernández,jfernandez@ceaqueretaro.gob.mx,nPc@Fu0c4n5QZHXo,,true,2025-12-11 15:21:12.467925+00,2025-12-11 15:21:12.467925+00,true
+7e126ad9-f0f8-45c0-91a5-e44583e3796e,Sergio Almaguer,chekoalmaguer@gmail.com,$2a$10$rXnBAN/DGsK9IrGsG6BUcOcKTwZx16jvub5NEKEM6u3DkceekV2ta,null,true,2025-11-27 04:33:40.796875+00,2025-11-27 04:33:40.796875+00,true
+f728316e-3b1f-47c6-bd46-11151bcbf4f9,DProceso,dproceso@cea.com,admin123,,true,2025-12-12 03:53:29.435403+00,2025-12-12 03:53:29.435403+00,false
+dd316d49-489f-4e7f-84c1-6b7e0922df14,Agente Contacto,agenteContacto@cea.com,admin123,,true,2025-12-12 03:57:49.929285+00,2025-12-12 03:57:49.929285+00,false
+d6b19f83-5a92-412e-9dce-e787593ca1da,Ian Hernández,ianhdez2020@gmail.com,Kso8O50uDAlouVct,7711202916,true,2025-12-07 01:06:44.154615+00,2025-12-07 01:06:44.154615+00,true
+2c74e60b-13ce-4467-99d2-ae212da09dec,Andre Agle,andrezala03@gmail.com,$$D4ViW*o6aKCKRY,2156662373,true,2025-12-08 20:40:03.268206+00,2025-12-08 20:40:03.268206+00,true
+00387650-bdf2-415f-b49c-0805f87aaf3c,Rafa,admin@cea.com,admin123,,true,2025-11-27 06:11:43.594637+00,2025-11-27 06:11:43.594637+00,false

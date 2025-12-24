@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+Do NOT generate markdown files, documentation, or long explanations by default.
+
+Only generate:
+- code changes
+- short inline explanations (max 3–5 lines)
+
+Create markdown files or long explanations ONLY if I explicitly ask for them.
