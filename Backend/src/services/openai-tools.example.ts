@@ -212,12 +212,16 @@ export async function sendMessageWithTools(
   let completion = await client.chat.completions.create({
     model: config.model,
     messages: messages,
-    temperature: config.temperature,
-    max_tokens: config.maxTokens,
+    temperature: config.temperature ?? 0.7,
+    max_tokens: config.maxTokens ?? 2000,
     tools: agentTools, // Add tools here
   });
 
   let response = completion.choices[0];
+
+  if (!response) {
+    throw new Error('No response from OpenAI');
+  }
 
   // Handle tool calls
   while (response.finish_reason === 'tool_calls' && response.message.tool_calls) {
@@ -226,35 +230,41 @@ export async function sendMessageWithTools(
 
     // Execute each tool call
     for (const toolCall of response.message.tool_calls) {
-      const functionName = toolCall.function.name;
-      const functionArgs = JSON.parse(toolCall.function.arguments);
+      if (toolCall.type === 'function') {
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
 
-      // Execute the tool
-      const toolResult = await executeToolCall(functionName, functionArgs);
+        // Execute the tool
+        const toolResult = await executeToolCall(functionName, functionArgs);
 
-      // Add tool result to messages
-      messages.push({
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: JSON.stringify(toolResult),
-      });
+        // Add tool result to messages
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(toolResult),
+        });
+      }
     }
 
     // Call API again with tool results
     completion = await client.chat.completions.create({
       model: config.model,
       messages: messages,
-      temperature: config.temperature,
-      max_tokens: config.maxTokens,
+      temperature: config.temperature ?? 0.7,
+      max_tokens: config.maxTokens ?? 2000,
       tools: agentTools,
     });
 
     response = completion.choices[0];
+    
+    if (!response) {
+      throw new Error('No response from OpenAI');
+    }
   }
 
   return {
     content: response.message.content || 'No response',
-    toolCalls: response.message.tool_calls,
+    toolCalls: response.message.tool_calls || undefined,
     metadata: {
       model: completion.model,
       usage: completion.usage,

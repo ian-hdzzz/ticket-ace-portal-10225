@@ -49,7 +49,10 @@ export const xmlToJson = (node: Document | Element): any => {
       if (elems.length > 1) {
         obj[name] = elems.map((child) => parseChild(child));
       } else {
-        obj[name] = parseChild(elems[0]);
+        const elem = elems[0];
+        if (elem) {
+          obj[name] = parseChild(elem);
+        }
       }
     }
 

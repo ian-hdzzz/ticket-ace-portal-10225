@@ -28,8 +28,8 @@ class OpenAIAgentService {
     });
 
     this.defaultConfig = {
-      workflowId: process.env.OPENAI_WORKFLOW_ID,
-      assistantId: process.env.OPENAI_ASSISTANT_ID,
+      workflowId: process.env.OPENAI_WORKFLOW_ID || undefined,
+      assistantId: process.env.OPENAI_ASSISTANT_ID || undefined,
       model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
       temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
       maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '2000'),
@@ -106,8 +106,8 @@ class OpenAIAgentService {
       const completion = await this.client.chat.completions.create({
         model: finalConfig.model!,
         messages: messages,
-        temperature: finalConfig.temperature,
-        max_tokens: finalConfig.maxTokens,
+        temperature: finalConfig.temperature ?? 0.7,
+        max_tokens: finalConfig.maxTokens ?? 2000,
       });
 
       const assistantMessage = completion.choices[0]?.message?.content || 'Lo siento, no pude generar una respuesta.';
@@ -175,7 +175,7 @@ class OpenAIAgentService {
 
       // Run the assistant
       const run = await this.client.beta.threads.runs.create(thread.id, {
-        assistant_id: this.defaultConfig.assistantId,
+        assistant_id: this.defaultConfig.assistantId!,
       });
 
       // Wait for completion (polling)
@@ -194,8 +194,19 @@ class OpenAIAgentService {
       const messages = await this.client.beta.threads.messages.list(thread.id);
       const lastMessage = messages.data[0];
       
+      if (!lastMessage) {
+        throw new Error('No message received from assistant');
+      }
+      
       const content = lastMessage.content[0];
-      const assistantMessage = content.type === 'text' ? content.text.value : 'No response';
+      
+      if (!content) {
+        throw new Error('No content in message');
+      }
+      
+      const assistantMessage = content.type === 'text' && 'text' in content 
+        ? content.text.value 
+        : 'No response';
 
       session.lastActivity = new Date();
 

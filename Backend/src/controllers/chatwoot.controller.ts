@@ -208,7 +208,16 @@ export const chatwootController = {
    */
   async getSession(req: Request, res: Response) {
     try {
-      const conversationId = parseInt(req.params.conversationId);
+      const conversationIdParam = req.params.conversationId;
+      
+      if (!conversationIdParam) {
+        return res.status(400).json({
+          success: false,
+          error: 'Conversation ID is required'
+        });
+      }
+      
+      const conversationId = parseInt(conversationIdParam);
       
       if (isNaN(conversationId)) {
         return res.status(400).json({
@@ -251,7 +260,16 @@ export const chatwootController = {
    */
   async clearSession(req: Request, res: Response) {
     try {
-      const conversationId = parseInt(req.params.conversationId);
+      const conversationIdParam = req.params.conversationId;
+      
+      if (!conversationIdParam) {
+        return res.status(400).json({
+          success: false,
+          error: 'Conversation ID is required'
+        });
+      }
+      
+      const conversationId = parseInt(conversationIdParam);
       
       if (isNaN(conversationId)) {
         return res.status(400).json({

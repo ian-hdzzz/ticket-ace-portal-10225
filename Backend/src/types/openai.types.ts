@@ -67,10 +67,10 @@ export interface OpenAIAgentResponse {
 }
 
 export interface AgentConfig {
-  workflowId?: string;
-  assistantId?: string;
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
+  workflowId?: string | undefined;
+  assistantId?: string | undefined;
+  model?: string | undefined;
+  temperature?: number | undefined;
+  maxTokens?: number | undefined;
 }
 
