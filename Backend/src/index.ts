@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import emailRouter from "./routes/email.js";
 import notificationRouter from "./routes/notifications.js";
 import servicioClienteRouter from "./routes/servicioCliente.routes.js";
+import chatwootRouter from "./routes/chatwoot.routes.js";
 
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -73,6 +74,8 @@ app.use("/api/email", emailRouter);
 app.use("/api/notifications", notificationRouter);
 // Servicio a Cliente routes
 app.use("/api/servicio-cliente", servicioClienteRouter);
+// Chatwoot & OpenAI Agent routes
+app.use("/api/chatwoot", chatwootRouter);
 
 // Health check endpoint for Cloud Run
 app.get("/health", (req, res) => {

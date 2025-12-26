@@ -1,0 +1,184 @@
+### OpenAI Agent Integration - API Testing
+### Use with VS Code REST Client extension or similar tools
+
+@baseUrl = http://localhost:3000
+@conversationId = 999
+
+### ============================================
+### Test Endpoints
+### ============================================
+
+### 1. Test sending a message to the AI
+POST {{baseUrl}}/api/chatwoot/test
+Content-Type: application/json
+
+{
+  "conversationId": {{conversationId}},
+  "message": "Hola, necesito ayuda con mi recibo de agua. ¿Cómo puedo pagarlo?",
+  "userId": "test-user-123"
+}
+
+### 2. Test with a follow-up message (tests conversation history)
+POST {{baseUrl}}/api/chatwoot/test
+Content-Type: application/json
+
+{
+  "conversationId": {{conversationId}},
+  "message": "¿Cuál es el horario de atención al cliente?",
+  "userId": "test-user-123"
+}
+
+### 3. Get session information
+GET {{baseUrl}}/api/chatwoot/session/{{conversationId}}
+
+### 4. Clear session
+DELETE {{baseUrl}}/api/chatwoot/session/{{conversationId}}
+
+### 5. Verify session is cleared
+GET {{baseUrl}}/api/chatwoot/session/{{conversationId}}
+
+### ============================================
+### Webhook Endpoint (Simulated Chatwoot)
+### ============================================
+
+### Simulate Chatwoot message_created webhook
+POST {{baseUrl}}/api/chatwoot/webhook
+Content-Type: application/json
+
+{
+  "event": "message_created",
+  "account": {
+    "id": 3,
+    "name": "CEA"
+  },
+  "conversation": {
+    "id": 456,
+    "account_id": 3,
+    "inbox_id": 1,
+    "status": "open",
+    "messages": [],
+    "contact": {
+      "id": 789,
+      "name": "Juan Pérez",
+      "email": "juan@example.com"
+    }
+  },
+  "message": {
+    "id": 12345,
+    "content": "Hola, tengo una fuga de agua en mi domicilio",
+    "message_type": 0,
+    "created_at": "2025-12-26T12:00:00Z",
+    "conversation_id": 456
+  },
+  "sender": {
+    "id": 789,
+    "name": "Juan Pérez",
+    "type": "contact"
+  }
+}
+
+### Simulate conversation_status_changed webhook
+POST {{baseUrl}}/api/chatwoot/webhook
+Content-Type: application/json
+
+{
+  "event": "conversation_status_changed",
+  "account": {
+    "id": 3,
+    "name": "CEA"
+  },
+  "conversation": {
+    "id": 456,
+    "status": "resolved"
+  }
+}
+
+### ============================================
+### Health Check
+### ============================================
+
+### Check if server is running
+GET {{baseUrl}}/health
+
+### ============================================
+### Example Conversations
+### ============================================
+
+### Example 1: Billing question
+POST {{baseUrl}}/api/chatwoot/test
+Content-Type: application/json
+
+{
+  "conversationId": 1001,
+  "message": "¿Cómo puedo consultar mi saldo pendiente?",
+  "userId": "customer-001"
+}
+
+### Example 2: Service request
+POST {{baseUrl}}/api/chatwoot/test
+Content-Type: application/json
+
+{
+  "conversationId": 1002,
+  "message": "Necesito reportar una fuga de agua en mi calle",
+  "userId": "customer-002"
+}
+
+### Example 3: Technical support
+POST {{baseUrl}}/api/chatwoot/test
+Content-Type: application/json
+
+{
+  "conversationId": 1003,
+  "message": "Mi medidor de agua no está funcionando correctamente",
+  "userId": "customer-003"
+}
+
+### Example 4: General inquiry
+POST {{baseUrl}}/api/chatwoot/test
+Content-Type: application/json
+
+{
+  "conversationId": 1004,
+  "message": "¿Cuáles son las formas de pago disponibles?",
+  "userId": "customer-004"
+}
+
+### Example 5: Complaint
+POST {{baseUrl}}/api/chatwoot/test
+Content-Type: application/json
+
+{
+  "conversationId": 1005,
+  "message": "Llevo 3 días sin servicio de agua y nadie me ha atendido",
+  "userId": "customer-005"
+}
+
+### ============================================
+### Batch Testing
+### ============================================
+
+### Get all test sessions
+GET {{baseUrl}}/api/chatwoot/session/1001
+###
+GET {{baseUrl}}/api/chatwoot/session/1002
+###
+GET {{baseUrl}}/api/chatwoot/session/1003
+###
+GET {{baseUrl}}/api/chatwoot/session/1004
+###
+GET {{baseUrl}}/api/chatwoot/session/1005
+
+### Clear all test sessions
+DELETE {{baseUrl}}/api/chatwoot/session/1001
+###
+DELETE {{baseUrl}}/api/chatwoot/session/1002
+###
+DELETE {{baseUrl}}/api/chatwoot/session/1003
+###
+DELETE {{baseUrl}}/api/chatwoot/session/1004
+###
+DELETE {{baseUrl}}/api/chatwoot/session/1005
+###
+DELETE {{baseUrl}}/api/chatwoot/session/{{conversationId}}
+
