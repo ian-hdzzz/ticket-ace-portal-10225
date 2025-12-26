@@ -619,6 +619,7 @@ enum ticket_status {
   escalado
   esperando_cliente
   esperando_interno
+  pendiente_asignacion
   resuelto
   @@schema("public")
 }
