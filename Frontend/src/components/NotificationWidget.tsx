@@ -79,7 +79,7 @@ export const NotificationWidget: React.FC = () => {
       case 'TICKET_CREATED':
         return '';
       case 'TICKET_ASSIGNED':
-        return '👤';
+        return '';
       case 'TICKET_STATUS_CHANGED':
         return '🔄';
       case 'TICKET_PRIORITY_CHANGED':

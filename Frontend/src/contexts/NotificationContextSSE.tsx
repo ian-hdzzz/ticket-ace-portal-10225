@@ -58,36 +58,127 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastNotificationIdRef = useRef<string | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFetchTimeRef = useRef<number>(0);
+  const shownNotificationsRef = useRef<Set<string>>(new Set());
 
-  const fetchNotifications = useCallback(async () => {
+  // 🔥 TEMPORARY: Enable polling for demo (set to true to use polling instead of SSE)
+  const USE_POLLING = true;
+  const POLLING_INTERVAL = 15000; // 15 seconds
+
+  // Load previously shown notification IDs from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('shownNotifications');
+    if (stored) {
+      try {
+        const ids = JSON.parse(stored);
+        shownNotificationsRef.current = new Set(ids);
+        console.log('📋 [NOTIFICATIONS] Loaded shown notifications:', ids.length);
+      } catch (e) {
+        console.error('Failed to parse shown notifications', e);
+      }
+    }
+  }, []);
+
+  const fetchNotifications = useCallback(async (isPolling = false) => {
     try {
-      setLoading(true);
-      console.log('🔄 [SSE] Fetching notifications...');
+      // Prevent rapid successive calls - enforce minimum time between fetches
+      const now = Date.now();
+      if (isPolling && (now - lastFetchTimeRef.current) < POLLING_INTERVAL - 1000) {
+        console.log('⏭️ [POLLING] Skipping fetch - too soon since last fetch');
+        return;
+      }
+      lastFetchTimeRef.current = now;
+
+      if (!isPolling) {
+        setLoading(true);
+      }
+      console.log(`🔄 [${USE_POLLING ? 'POLLING' : 'SSE'}] Fetching notifications at ${new Date().toLocaleTimeString()}...`);
       const response = await fetch('/api/notifications', {
         credentials: 'include',
       });
       
-      console.log('📥 [SSE] Response status:', response.status);
+      console.log(`📥 [${USE_POLLING ? 'POLLING' : 'SSE'}] Response status:`, response.status);
       
       if (!response.ok) {
-        console.error('❌ [SSE] Error fetching notifications:', response.status, response.statusText);
+        console.error(`❌ [${USE_POLLING ? 'POLLING' : 'SSE'}] Error fetching notifications:`, response.status, response.statusText);
         throw new Error('Error fetching notifications');
       }
       
       const data = await response.json();
-      console.log('✅ [SSE] Notifications received:', {
-        count: data.notifications?.length || 0,
-        unread: data.unreadCount || 0,
-        data
+      const newNotificationsList = data.notifications || [];
+      const newUnreadCount = data.unreadCount || 0;
+
+      console.log(`✅ [${USE_POLLING ? 'POLLING' : 'SSE'}] Notifications received:`, {
+        count: newNotificationsList.length,
+        unread: newUnreadCount,
+        isPolling,
       });
-      setNotifications(data.notifications || []);
-      setUnreadCount(data.unreadCount || 0);
+
+      // When polling, check for new notifications and show toast
+      if (isPolling && USE_POLLING) {
+        const currentIds = new Set(notifications.map(n => n.id));
+        const newNotifications = newNotificationsList.filter((n: Notification) => {
+          // Check if not in current list AND not already shown before
+          return !currentIds.has(n.id) && !shownNotificationsRef.current.has(n.id);
+        });
+        
+        if (newNotifications.length > 0) {
+          console.log('🆕 [POLLING] New notifications detected:', newNotifications.length);
+          
+          // Mark as shown and persist to localStorage
+          newNotifications.forEach((notif: Notification) => {
+            shownNotificationsRef.current.add(notif.id);
+            
+            toast(notif.title, {
+              description: notif.message,
+              duration: 5000,
+              action: notif.ticketId ? {
+                label: 'Ver Ticket',
+                onClick: () => {
+                  window.location.href = `/dashboard/tickets/${notif.ticketId}`;
+                },
+              } : undefined,
+            });
+          });
+
+          // Persist to localStorage
+          localStorage.setItem(
+            'shownNotifications', 
+            JSON.stringify(Array.from(shownNotificationsRef.current))
+          );
+          console.log('💾 [NOTIFICATIONS] Saved shown notifications to localStorage');
+        }
+      }
+
+      // Only update state if data actually changed
+      setNotifications(prev => {
+        const prevIds = prev.map(n => n.id).sort().join(',');
+        const newIds = newNotificationsList.map((n: Notification) => n.id).sort().join(',');
+        if (prevIds === newIds) {
+          console.log('📌 [STATE] Notifications unchanged, skipping update');
+          return prev;
+        }
+        console.log('🔄 [STATE] Updating notifications');
+        return newNotificationsList;
+      });
+
+      setUnreadCount(prev => {
+        if (prev === newUnreadCount) {
+          console.log('📌 [STATE] Unread count unchanged, skipping update');
+          return prev;
+        }
+        console.log('🔄 [STATE] Updating unread count');
+        return newUnreadCount;
+      });
     } catch (error) {
-      console.error('❌ [SSE] Error fetching notifications:', error);
+      console.error(`❌ [${USE_POLLING ? 'POLLING' : 'SSE'}] Error fetching notifications:`, error);
     } finally {
-      setLoading(false);
+      if (!isPolling) {
+        setLoading(false);
+      }
     }
-  }, []);
+  }, [USE_POLLING, POLLING_INTERVAL, notifications]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {
@@ -153,6 +244,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (deletedNotif && !deletedNotif.read) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
+
+      // Also remove from shown notifications to free up storage
+      if (shownNotificationsRef.current.has(id)) {
+        shownNotificationsRef.current.delete(id);
+        localStorage.setItem(
+          'shownNotifications', 
+          JSON.stringify(Array.from(shownNotificationsRef.current))
+        );
+      }
+
       toast.success('Notificación eliminada');
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -305,12 +406,48 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Check if user is logged in before fetching
     const userStr = localStorage.getItem('user');
     if (userStr) {
-      fetchNotifications();
+      fetchNotifications(false);
     }
   }, [fetchNotifications]);
 
-  // Conectar SSE al montar el componente
+  // 🔥 TEMPORARY: Polling setup for demo
   useEffect(() => {
+    if (!USE_POLLING) return;
+
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return;
+
+    console.log(`🔄 [POLLING] Starting polling every ${POLLING_INTERVAL / 1000} seconds`);
+    setConnected(true); // Show as "connected" when polling is active
+
+    // Clear any existing interval first
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    // Start polling
+    pollingIntervalRef.current = setInterval(() => {
+      console.log(`⏰ [POLLING] Interval triggered at ${new Date().toLocaleTimeString()}`);
+      fetchNotifications(true);
+    }, POLLING_INTERVAL);
+
+    // Cleanup
+    return () => {
+      if (pollingIntervalRef.current) {
+        console.log('⏹️ [POLLING] Stopping polling');
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [USE_POLLING, POLLING_INTERVAL]);
+
+  // Conectar SSE al montar el componente (only if not using polling)
+  useEffect(() => {
+    if (USE_POLLING) {
+      console.log('⏭️ Skipping SSE setup - Using polling mode');
+      return;
+    }
+
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/1d4c6058-b7eb-4349-b632-86ddda782c0f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NotificationContextSSE.tsx:279',message:'connectSSE useEffect triggered',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
     // #endregion
@@ -332,13 +469,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         reconnectTimeoutRef.current = null;
       }
     };
-  }, [connectSSE]);
+  }, [connectSSE, USE_POLLING]);
 
   const reconnect = useCallback(() => {
-    console.log('🔄 Reconnecting notifications...');
-    fetchNotifications();
-    connectSSE();
-  }, [fetchNotifications, connectSSE]);
+    console.log(`🔄 Reconnecting notifications (${USE_POLLING ? 'POLLING' : 'SSE'})...`);
+    fetchNotifications(false);
+    if (!USE_POLLING) {
+      connectSSE();
+    }
+  }, [fetchNotifications, connectSSE, USE_POLLING]);
 
   const value = {
     notifications,
