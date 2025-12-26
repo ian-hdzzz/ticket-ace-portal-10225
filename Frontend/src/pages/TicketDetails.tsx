@@ -488,30 +488,55 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                <div className="rounded-full bg-primary/10 p-4">
-                  <MessageSquare className="h-12 w-12 text-primary" />
+              {!ticket.conversation_id ? (
+                // Mostrar mensaje cuando no hay conversación asignada
+                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                  <div className="rounded-full bg-muted p-4">
+                    <MessageSquare className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold">No hay conversación asignada</h3>
+                    <p className="text-sm text-muted-foreground max-w-md">
+                      Este ticket aún no tiene una conversación de Chatwoot asociada.
+                      La conversación se creará automáticamente cuando el cliente contacte por algún canal.
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center space-y-2">
-                  <h3 className="text-lg font-semibold">Continuar Conversación</h3>
-                  <p className="text-sm text-muted-foreground max-w-md">
-                    Toda la comunicación con el cliente se gestiona a través de Chatwoot. 
-                    Haz clic en el botón para abrir la conversación y continuar atendiendo este ticket.
+              ) : (
+                // Mostrar iframe con la conversación de Chatwoot
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Conversación en tiempo real con el cliente
+                    </p>
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => window.open(`https://chatwoot.fitcluv.com/app/accounts/3/conversations/${ticket.conversation_id}`, '_blank')}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      Abrir en nueva pestaña
+                    </Button>
+                  </div>
+                  <div className="relative">
+                    <iframe
+                      src={`https://chatwoot.fitcluv.com/app/accounts/3/conversations/${ticket.conversation_id}`}
+                      width="100%"
+                      height="600px"
+                      style={{ border: 'none', borderRadius: '8px' }}
+                      className="shadow-md bg-background"
+                      title="Conversación de Chatwoot"
+                      onError={() => {
+                        toast.error("No se pudo cargar la conversación. Intenta abrirla en una nueva pestaña.");
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    💡 Tip: Usa el botón "Abrir en nueva pestaña" si necesitas más espacio
                   </p>
                 </div>
-                <Button 
-                  size="lg"
-                  className="gap-2 mt-4"
-                  onClick={() => ticket.conversation_id && window.open(`https://chatwoot.fitcluv.com/app/accounts/3/conversations/${ticket.conversation_id}`, '_blank')}
-                  disabled={!ticket.conversation_id}
-                >
-                  <MessageSquare className="h-5 w-5" />
-                  Abrir Conversación en Chatwoot
-                </Button>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Se abrirá en una nueva pestaña</span>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
