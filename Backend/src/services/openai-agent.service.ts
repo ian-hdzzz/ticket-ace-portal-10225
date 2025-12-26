@@ -179,11 +179,15 @@ class OpenAIAgentService {
       });
 
       // Wait for completion (polling)
-      let runStatus = await this.client.beta.threads.runs.retrieve(thread.id, run.id);
+      let runStatus = await this.client.beta.threads.runs.retrieve(run.id, {
+        thread_id: thread.id
+      });
       
       while (runStatus.status === 'queued' || runStatus.status === 'in_progress') {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        runStatus = await this.client.beta.threads.runs.retrieve(thread.id, run.id);
+        runStatus = await this.client.beta.threads.runs.retrieve(run.id, {
+          thread_id: thread.id
+        });
       }
 
       if (runStatus.status !== 'completed') {
