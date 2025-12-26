@@ -170,6 +170,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
         channel: result.data.channel,
         customer_id: result.data.customer_id,
         contract_number: result.data.contract_number || null, // Número de contrato
+        conversation_id: result.data.conversation_id || null,
         assigned_at: result.data.assigned_at,
         escalated_to: result.data.escalated_to,
         escalated_at: result.data.escalated_at,
@@ -501,7 +502,8 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 <Button 
                   size="lg"
                   className="gap-2 mt-4"
-                  onClick={() => window.open('https://chatwoot.fitcluv.com/app/accounts/3/conversations/46', '_blank')}
+                  onClick={() => ticket.conversation_id && window.open(`https://chatwoot.fitcluv.com/app/accounts/3/conversations/${ticket.conversation_id}`, '_blank')}
+                  disabled={!ticket.conversation_id}
                 >
                   <MessageSquare className="h-5 w-5" />
                   Abrir Conversación en Chatwoot
