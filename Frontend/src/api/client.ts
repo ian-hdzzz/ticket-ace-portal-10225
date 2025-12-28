@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base API URL - your backend server
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 
 // Create axios instance with default config
 export const apiClient = axios.create({
@@ -41,7 +41,7 @@ const processQueue = (error: any = null) => {
       prom.resolve();
     }
   });
-  
+
   failedQueue = [];
 };
 
@@ -87,26 +87,26 @@ apiClient.interceptors.response.use(
           console.log('[API] Access token expired, refreshing...');
           await apiClient.post('/auth/refresh');
           console.log('[API] Token refreshed successfully');
-          
+
           processQueue(null);
           isRefreshing = false;
-          
+
           // Retry the original request
           return apiClient(originalRequest);
         } catch (refreshError) {
           console.error('[API] Token refresh failed, logging out...');
           processQueue(refreshError);
           isRefreshing = false;
-          
+
           // Clear user data and redirect to login
           localStorage.removeItem('user');
           localStorage.removeItem('user_temp');
-          
+
           // Only redirect if not already on login page
           if (window.location.pathname !== '/login') {
             window.location.href = '/login';
           }
-          
+
           return Promise.reject(refreshError);
         }
       }
