@@ -48,7 +48,7 @@ steps:
           --build-arg VITE_CEA_API_USERNAME=$(cat /workspace/VITE_CEA_API_USERNAME.txt) \
           --build-arg VITE_CEA_API_PASSWORD=$(cat /workspace/VITE_CEA_API_PASSWORD.txt) \
           --build-arg VITE_API_URL=$(cat /workspace/VITE_API_URL.txt) \
-          -t gcr.io/$PROJECT_ID/ticket-ace-frontend:$COMMIT_SHA \
+          -t gcr.io/$PROJECT_ID/ticket-ace-frontend:${_COMMIT_SHA} \
           -t gcr.io/$PROJECT_ID/ticket-ace-frontend:latest \
           -f Frontend/dockerfile \
           ./Frontend
@@ -62,7 +62,7 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/ticket-ace-backend:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/ticket-ace-backend:${_COMMIT_SHA}'
       - '-t'
       - 'gcr.io/$PROJECT_ID/ticket-ace-backend:latest'
       - '-f'
@@ -75,12 +75,12 @@ steps:
   # ============================================
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-frontend'
-    args: ['push', 'gcr.io/$PROJECT_ID/ticket-ace-frontend:$COMMIT_SHA']
+    args: ['push', 'gcr.io/$PROJECT_ID/ticket-ace-frontend:${_COMMIT_SHA}']
     waitFor: ['build-frontend']
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-backend'
-    args: ['push', 'gcr.io/$PROJECT_ID/ticket-ace-backend:$COMMIT_SHA']
+    args: ['push', 'gcr.io/$PROJECT_ID/ticket-ace-backend:${_COMMIT_SHA}']
     waitFor: ['build-backend']
 
   # ============================================
@@ -94,7 +94,7 @@ steps:
       - 'deploy'
       - 'ticket-ace-backend'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/ticket-ace-backend:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/ticket-ace-backend:${_COMMIT_SHA}'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -127,7 +127,7 @@ steps:
       - 'deploy'
       - 'ticket-ace-frontend'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/ticket-ace-frontend:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/ticket-ace-frontend:${_COMMIT_SHA}'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -147,9 +147,9 @@ steps:
 
 # Store images in Google Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/ticket-ace-frontend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/ticket-ace-frontend:${_COMMIT_SHA}'
   - 'gcr.io/$PROJECT_ID/ticket-ace-frontend:latest'
-  - 'gcr.io/$PROJECT_ID/ticket-ace-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/ticket-ace-backend:${_COMMIT_SHA}'
   - 'gcr.io/$PROJECT_ID/ticket-ace-backend:latest'
 
 options:
@@ -157,3 +157,8 @@ options:
   logging: CLOUD_LOGGING_ONLY
   
 timeout: '1800s'
+
+# Default substitutions for manual builds
+# When triggered from a repo, ${_COMMIT_SHA} is auto-populated
+substitutions:
+  _COMMIT_SHA: 'latest'
