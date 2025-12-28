@@ -9,13 +9,117 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
-      // Proxy para API general (notificaciones, etc) - IMPORTANTE para que funcione
+      // ============================================
+      // CHATWOOT REVERSE PROXY (for local development)
+      // ============================================
+      // These MUST come before /api and /auth to avoid conflicts
+      // Chatwoot assets
+      '/vite/assets': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/packs': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Chatwoot app routes
+      '/app': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        cookieDomainRewrite: {
+          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+        },
+      },
+      // Chatwoot auth (for sign_in, etc) - uses different path patterns than local /auth
+      '/auth/sign_in': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+        cookieDomainRewrite: {
+          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+        },
+      },
+      '/auth/sign_out': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/auth/password': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/auth/validate_token': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+        cookieDomainRewrite: {
+          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+        },
+      },
+      // Chatwoot API v1/v2/v3
+      '/api/v1': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        cookieDomainRewrite: {
+          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+        },
+      },
+      '/api/v2': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/api/v3': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Chatwoot cable (websockets)
+      '/cable': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+      // Chatwoot additional routes
+      '/rails': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/super_admin': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Optional /chatwoot prefix entry point
+      '/chatwoot': {
+        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/chatwoot/, ''),
+        ws: true,
+        cookieDomainRewrite: {
+          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+        },
+      },
+      // ============================================
+      // LOCAL APP PROXIES
+      // ============================================
+      // Local backend API (for your app's endpoints)
       '/api': {
         target: 'http://localhost:8081',
         changeOrigin: true,
         secure: false,
       },
-      // Proxy para autenticación
+      // Local backend auth (for your app's auth)
       '/auth': {
         target: 'http://localhost:8081',
         changeOrigin: true,
@@ -27,27 +131,10 @@ export default defineConfig(({ mode }) => ({
         secure: false,
       },
       '/aquacis-cea': {
-        // Use HTTPS target to avoid server redirect from HTTP -> HTTPS which leads
-        // the dev proxy to return a 3xx redirect to the browser and trigger CORS.
-        // We set `secure: false` because the cert on the remote staging server
-        // may not be trusted in local dev env.
         target: 'https://aquacis-cf-int.ceaqueretaro.gob.mx/Comercial',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/aquacis-cea/, ''),
-        // Ensure that if the upstream sends redirects with absolute Location headers,
-        // we rewrite them back to the dev/proxy URL so the browser follows the proxy
-        // instead of attempting to call the remote host directly.
-        onProxyRes(proxyRes, req, res) {
-          const location = proxyRes.headers && proxyRes.headers.location;
-          if (location && typeof location === 'string') {
-            // Rewrite the upstream URL to the local proxy path
-            proxyRes.headers.location = location.replace(
-              'https://aquacis-cf-int.ceaqueretaro.gob.mx/Comercial',
-              'http://localhost:8080/aquacis-cea'
-            );
-          }
-        }
       },
     }
   },

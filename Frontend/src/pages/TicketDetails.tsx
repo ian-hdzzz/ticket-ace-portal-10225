@@ -118,7 +118,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
   const id = ticketIdProp || idFromParams;
   const navigate = useNavigate();
   const { removeTab, setActiveTab } = useTabContext();
-  
+
   // Establecer título de la página (se actualizará cuando cargue el ticket)
   const [pageTitle, setPageTitle] = useState("Detalles del Ticket");
   usePageTitle(pageTitle, "Información completa del ticket");
@@ -509,11 +509,11 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                     <p className="text-sm text-muted-foreground">
                       Conversación en tiempo real con el cliente
                     </p>
-                    <Button 
+                    <Button
                       size="sm"
                       variant="outline"
                       className="gap-2"
-                      onClick={() => window.open(`https://chatwoot.fitcluv.com/app/accounts/3/conversations/${ticket.conversation_id}`, '_blank')}
+                      onClick={() => window.open('/chatwoot/app/', '_blank')}
                     >
                       <MessageSquare className="h-4 w-4" />
                       Abrir en nueva pestaña
@@ -521,7 +521,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                   </div>
                   <div className="relative">
                     <iframe
-                      src={`https://chatwoot.fitcluv.com/app/accounts/3/conversations/${ticket.conversation_id}`}
+                      src="/chatwoot/app/"
                       width="100%"
                       height="600px"
                       style={{ border: 'none', borderRadius: '8px' }}
@@ -559,9 +559,9 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               </Button>
 
 
-              
 
-            
+
+
 
               {/* 4. Tomar Ticket */}
               <Button
@@ -693,7 +693,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 </DialogContent>
               </Dialog>
               <Separator className="my-2" />
-              
+
 
               {/* 6. Marcar como Resuelto / Cerrar Ticket */}
               {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
