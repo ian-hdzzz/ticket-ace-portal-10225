@@ -7,10 +7,10 @@ export const notificationController = {
     try {
       // #region agent log
       const fs = await import('fs');
-      fs.appendFileSync('c:\\Users\\andre\\Documents\\CEA\\.cursor\\debug.log', JSON.stringify({location:'notificationController.ts:6',message:'getUserNotifications called',data:{hasUser:!!req.user,userId:req.user?.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})+'\n');
+      fs.appendFileSync('c:\\Users\\andre\\Documents\\CEA\\.cursor\\debug.log', JSON.stringify({location:'notificationController.ts:6',message:'getUserNotifications called',data:{hasUser:!!req.user,userId:req.user?.userId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})+'\n');
       // #endregion
       
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -68,7 +68,7 @@ export const notificationController = {
   // Marcar notificación como leída
   async markAsRead(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const { id } = req.params;
 
       if (!userId) {
@@ -102,7 +102,7 @@ export const notificationController = {
   // Marcar todas como leídas
   async markAllAsRead(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -126,7 +126,7 @@ export const notificationController = {
   // Eliminar notificación
   async deleteNotification(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const { id } = req.params;
 
       if (!userId) {
@@ -183,7 +183,7 @@ export const notificationController = {
   // Obtener conteo de no leídas
   async getUnreadCount(req: Request, res: Response) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Usuario no autenticado' });

@@ -187,7 +187,7 @@ export default class AuthController {
 
             // Update password (plain text for now, will hash later)
             const updatedUser = await AuthUseCases.updatePassword(
-                req.user.id,
+                req.user.userId,
                 newPassword
             );
 

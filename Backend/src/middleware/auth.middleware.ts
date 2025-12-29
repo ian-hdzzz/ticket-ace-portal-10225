@@ -6,7 +6,7 @@ declare global {
     namespace Express {
         interface Request {
             user?: {
-                id: string;
+                userId: string;
                 email: string;
                 is_temporary_password: boolean;
                 full_name: string;
@@ -38,9 +38,9 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         // Parse user data from header
         const userData = JSON.parse(userDataHeader);
 
-        // Attach user info to request (same structure as localStorage)
+        // Attach user info to request - map id to userId to match existing type
         req.user = {
-            id: userData.id,
+            userId: userData.id,  // Map id from localStorage to userId for req.user
             email: userData.email,
             is_temporary_password: userData.is_temporary_password,
             full_name: userData.full_name,
@@ -69,7 +69,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
         if (userDataHeader) {
             const userData = JSON.parse(userDataHeader);
             req.user = {
-                id: userData.id,
+                userId: userData.id,  // Map id to userId
                 email: userData.email,
                 is_temporary_password: userData.is_temporary_password,
                 full_name: userData.full_name,
@@ -89,45 +89,45 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
  * SSE authentication middleware
  * Accepts token from query param OR cookie (for EventSource compatibility)
  */
-export const authenticateSSE = (req: Request, res: Response, next: NextFunction): void => {
-    try {
-        // Try query param first (for EventSource), then cookie
-        const accessToken = (req.query.token as string) || req.cookies.accessToken;
+// export const authenticateSSE = (req: Request, res: Response, next: NextFunction): void => {
+//     try {
+//         // Try query param first (for EventSource), then cookie
+//         const accessToken = (req.query.token as string) || req.cookies.accessToken;
 
-        if (!accessToken) {
-            res.status(401).json({
-                success: false,
-                message: "Token de acceso no proporcionado",
-            });
-            return;
-        }
+//         if (!accessToken) {
+//             res.status(401).json({
+//                 success: false,
+//                 message: "Token de acceso no proporcionado",
+//             });
+//             return;
+//         }
 
-        // Verify the access token
-        const payload = JWTService.verifyAccessToken(accessToken);
+//         // Verify the access token
+//         const payload = JWTService.verifyAccessToken(accessToken);
 
-        if (!payload) {
-            res.status(401).json({
-                success: false,
-                message: "Token de acceso inválido o expirado",
-            });
-            return;
-        }
+//         if (!payload) {
+//             res.status(401).json({
+//                 success: false,
+//                 message: "Token de acceso inválido o expirado",
+//             });
+//             return;
+//         }
 
-        // Attach user info to request
-        req.user = {
-            userId: payload.userId,
-            email: payload.email,
-            is_temporary_password: payload.is_temporary_password,
-            full_name: payload.full_name,
-            roles: payload.roles,
-            privileges: payload.privileges,
-        };
+//         // Attach user info to request
+//         req.user = {
+//             userId: payload.id,
+//             email: payload.email,
+//             is_temporary_password: payload.is_temporary_password,
+//             full_name: payload.full_name,
+//             roles: payload.roles,
+//             privileges: payload.privileges,
+//         };
 
-        next();
-    } catch (error) {
-        res.status(401).json({
-            success: false,
-            message: "Error al verificar token de acceso",
-        });
-    }
-};
+//         next();
+//     } catch (error) {
+//         res.status(401).json({
+//             success: false,
+//             message: "Error al verificar token de acceso",
+//         });
+//     }
+// };

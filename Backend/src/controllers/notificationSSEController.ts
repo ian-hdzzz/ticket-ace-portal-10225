@@ -17,7 +17,7 @@ export const notificationSSEController = {
    * GET /api/notifications/stream
    */
   async streamNotifications(req: Request, res: Response) {
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
 
     if (!userId) {
       return res.status(401).json({ error: 'Usuario no autenticado' });

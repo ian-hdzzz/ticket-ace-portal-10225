@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { notificationController } from '../controllers/notificationController.js';
 import { notificationSSEController } from '../controllers/notificationSSEController.js';
 import { notificationWebhookController } from '../controllers/notificationWebhookController.js';
-import { authenticateToken, authenticateSSE } from '../middleware/auth.middleware.js';
+import { authenticateToken } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -10,7 +10,7 @@ const router = Router();
 router.post('/webhook', notificationWebhookController.handleNotificationWebhook);
 
 // SSE Stream endpoint (debe ir primero y usa auth especial para EventSource)
-router.get('/stream', authenticateSSE, notificationSSEController.streamNotifications);
+router.get('/stream', notificationSSEController.streamNotifications);
 
 // Todas las demás rutas requieren autenticación normal
 router.use(authenticateToken);
