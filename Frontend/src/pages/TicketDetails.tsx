@@ -118,7 +118,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
   const id = ticketIdProp || idFromParams;
   const navigate = useNavigate();
   const { removeTab, setActiveTab } = useTabContext();
-
+  
   // Establecer título de la página (se actualizará cuando cargue el ticket)
   const [pageTitle, setPageTitle] = useState("Detalles del Ticket");
   usePageTitle(pageTitle, "Información completa del ticket");
@@ -171,6 +171,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
         customer_id: result.data.customer_id,
         contract_number: result.data.contract_number || null, // Número de contrato
         conversation_id: result.data.conversation_id || null,
+        id_customer_chatwoot: result.data.id_customer_chatwoot || null,
         assigned_at: result.data.assigned_at,
         escalated_to: result.data.escalated_to,
         escalated_at: result.data.escalated_at,
@@ -486,6 +487,12 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 <MessageSquare className="h-5 w-5" />
                 Atención al Cliente
               </CardTitle>
+              <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Conversación en tiempo real con el cliente
+                    </p>
+                    
+              </div>
             </CardHeader>
             <CardContent>
               {!ticket.conversation_id ? (
@@ -505,23 +512,9 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               ) : (
                 // Mostrar iframe con la conversación de Chatwoot
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      Conversación en tiempo real con el cliente
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => window.open('/chatwoot/app/', '_blank')}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      Abrir en nueva pestaña
-                    </Button>
-                  </div>
                   <div className="relative">
                     <iframe
-                      src="/chatwoot/app/"
+                      src={`https://chatwoot-cea-992651321435.us-central1.run.app/app/accounts/${ticket.id_customer_chatwoot}/conversations/${ticket.conversation_id}`}
                       width="100%"
                       height="600px"
                       style={{ border: 'none', borderRadius: '8px' }}
@@ -532,9 +525,6 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                       }}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    💡 Tip: Usa el botón "Abrir en nueva pestaña" si necesitas más espacio
-                  </p>
                 </div>
               )}
             </CardContent>
@@ -559,9 +549,9 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               </Button>
 
 
+              
 
-
-
+            
 
               {/* 4. Tomar Ticket */}
               <Button
@@ -693,7 +683,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 </DialogContent>
               </Dialog>
               <Separator className="my-2" />
-
+              
 
               {/* 6. Marcar como Resuelto / Cerrar Ticket */}
               {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
