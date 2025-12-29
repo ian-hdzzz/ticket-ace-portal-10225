@@ -1,2 +1,3 @@
 # deploy-secrets.sh
 # cloudbuild.yaml
+.cursor/

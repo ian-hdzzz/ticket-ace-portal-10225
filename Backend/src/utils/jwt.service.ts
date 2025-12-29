@@ -52,20 +52,23 @@ export default class JWTService {
      * Set tokens as HTTP-only cookies in response
      */
     static setTokenCookies(res: Response, accessToken: string, refreshToken: string): void {
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+            path: "/",
+        };
+
         // Set access token cookie
         res.cookie("accessToken", accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // Only HTTPS in production
-            sameSite: "none",
-            maxAge: 15 * 60 * 1000, // 15 minutes in milliseconds
+            ...cookieOptions,
+            maxAge: 60 * 60 * 1000, // 60 minutes
         });
 
         // Set refresh token cookie
         res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "none",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+            ...cookieOptions,
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
     }
 
@@ -73,8 +76,15 @@ export default class JWTService {
      * Clear authentication cookies
      */
     static clearTokenCookies(res: Response): void {
-        res.clearCookie("accessToken");
-        res.clearCookie("refreshToken");
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+            path: "/",
+        };
+        
+        res.clearCookie("accessToken", cookieOptions);
+        res.clearCookie("refreshToken", cookieOptions);
     }
 }
 

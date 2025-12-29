@@ -28,7 +28,6 @@ app.use(morgan("dev"));
 
 // CORS configuration - allow frontend to make requests with credentials
 const allowedOrigins = [
-  process.env.FRONTEND_URL || "*",
   "http://localhost:8080",
   "http://localhost:5173", 
   "http://127.0.0.1:8080",
@@ -37,6 +36,11 @@ const allowedOrigins = [
   "http://127.0.0.1:4173",
   "https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app"
 ];
+
+// Add FRONTEND_URL from env if set (never use "*" with credentials)
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
 
 app.use(cors({
   origin(origin, callback) {

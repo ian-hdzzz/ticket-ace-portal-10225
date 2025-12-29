@@ -131,8 +131,9 @@ export default class AuthController {
             res.cookie("accessToken", newAccessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "strict",
-                maxAge: 15 * 60 * 1000, // 15 minutes
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+                path: "/",
+                maxAge: 60 * 60 * 1000, // 60 minutes
             });
 
             return res.status(200).json({
