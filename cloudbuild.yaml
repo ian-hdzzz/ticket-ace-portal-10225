@@ -23,7 +23,7 @@ steps:
         gcloud secrets versions access latest --secret=VITE_CEA_SOAP_RECEIPT_URL > /workspace/VITE_CEA_SOAP_RECEIPT_URL.txt
         gcloud secrets versions access latest --secret=VITE_CEA_API_USERNAME > /workspace/VITE_CEA_API_USERNAME.txt
         gcloud secrets versions access latest --secret=VITE_CEA_API_PASSWORD > /workspace/VITE_CEA_API_PASSWORD.txt
-        echo "https://ticket-ace-backend-w2yvjfitdq-uc.a.run.app" > /workspace/VITE_API_URL.txt
+        echo "" > /workspace/VITE_API_URL.txt
         echo "Secrets fetched successfully"
 
   # ============================================
