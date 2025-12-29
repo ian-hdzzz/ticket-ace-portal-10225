@@ -137,7 +137,8 @@ function DashboardContent() {
         </div>
         
         {/* Agent widgets (status + notifications) - only for customer service agents */}
-        {isAgent && user?.id && <AgentWidgets userId={user.id} />}
+        {/* {isAgent && user?.id && <AgentWidgets userId={user.id} />} */}
+        <AgentWidgets userId={user.id} />
         
         {chatwootReady && (
           <Button
