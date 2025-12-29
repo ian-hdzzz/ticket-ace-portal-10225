@@ -13,7 +13,7 @@ router.post('/webhook', notificationWebhookController.handleNotificationWebhook)
 router.get('/stream', authenticateSSE, notificationSSEController.streamNotifications);
 
 // Todas las demás rutas requieren autenticación normal
-// router.use(authenticateToken);
+router.use(authenticateToken);
 
 // Obtener notificaciones del usuario
 router.get('/', notificationController.getUserNotifications);
