@@ -28,7 +28,7 @@ app.use(morgan("dev"));
 
 // CORS configuration - allow frontend to make requests with credentials
 const allowedOrigins = [
-  process.env.FRONTEND_URL || "http://localhost:8080",
+  process.env.FRONTEND_URL || "*",
   "http://localhost:8080",
   "http://localhost:5173", 
   "http://127.0.0.1:8080",
@@ -39,18 +39,18 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.warn(`⚠️ CORS blocked origin: ${origin}`);
-      callback(null, true); // Allow for development - change to false in production
+  origin(origin, callback) {
+    if (!origin) return callback(null, origin);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, origin); // MUST echo origin
     }
+
+    console.warn("❌ CORS blocked:", origin);
+    return callback(new Error("Not allowed by CORS"));
   },
-  credentials: true, // Allow cookies to be sent
+
+  credentials: true, 
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   exposedHeaders: ["Set-Cookie"],
