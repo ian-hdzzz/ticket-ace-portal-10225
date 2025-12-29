@@ -26,10 +26,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         const accessToken = req.cookies.accessToken;
 
         if (!accessToken) {
-            console.log("❌ Token de acceso no proporcionado");
-            console.log("   Cookies received:", Object.keys(req.cookies));
-            console.log("   Origin:", req.headers.origin);
-            console.log("   Cookie header:", req.headers.cookie);
+            console.log("Token de acceso no proporcionado");
             res.status(401).json({
                 success: false,
                 message: "Token de acceso no proporcionado",
