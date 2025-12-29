@@ -8,7 +8,7 @@ export const servicioClienteController = {
    */
   async getMyTickets(req: Request, res: Response) {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -37,7 +37,7 @@ export const servicioClienteController = {
    */
   async getQueueTickets(req: Request, res: Response) {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -61,7 +61,7 @@ export const servicioClienteController = {
    */
   async getAllOpenTickets(req: Request, res: Response) {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -86,7 +86,7 @@ export const servicioClienteController = {
   async assignTicketToAgent(req: Request, res: Response) {
     try {
       const { ticketId } = req.params;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Usuario no autenticado' });

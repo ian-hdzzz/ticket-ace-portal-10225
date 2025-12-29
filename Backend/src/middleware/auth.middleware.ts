@@ -6,7 +6,7 @@ declare global {
     namespace Express {
         interface Request {
             user?: {
-                userId: string;
+                id: string;
                 email: string;
                 is_temporary_password: boolean;
                 full_name: string;
@@ -38,14 +38,14 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         // Parse user data from header
         const userData = JSON.parse(userDataHeader);
 
-        // Attach user info to request
+        // Attach user info to request (same structure as localStorage)
         req.user = {
-            userId: userData.id,
+            id: userData.id,
             email: userData.email,
             is_temporary_password: userData.is_temporary_password,
             full_name: userData.full_name,
             roles: userData.roles?.map((r: any) => r.name) || [],
-            privileges: [], // Will be empty for now
+            privileges: [],
         };
 
         next();
@@ -69,7 +69,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
         if (userDataHeader) {
             const userData = JSON.parse(userDataHeader);
             req.user = {
-                userId: userData.id,
+                id: userData.id,
                 email: userData.email,
                 is_temporary_password: userData.is_temporary_password,
                 full_name: userData.full_name,
