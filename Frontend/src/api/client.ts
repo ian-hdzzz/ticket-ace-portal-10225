@@ -17,19 +17,33 @@ export const apiClient = axios.create({
 // Request interceptor - add userId query param and logging
 apiClient.interceptors.request.use(
   (config) => {
+    console.log('[API Interceptor] Starting request interceptor');
+    console.log('[API Interceptor] Original URL:', config.url);
+    
     // Add userId as query parameter from localStorage
     const userStr = localStorage.getItem('user');
+    console.log('[API Interceptor] User from localStorage:', userStr ? 'exists' : 'not found');
+    
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
+        console.log('[API Interceptor] Parsed user:', user);
+        console.log('[API Interceptor] User ID:', user.id);
+        
         if (user.id) {
           // Append userId to URL as query parameter
           const separator = config.url?.includes('?') ? '&' : '?';
-          config.url = `${config.url}${separator}userId=${user.id}`;
+          const newUrl = `${config.url}${separator}userId=${user.id}`;
+          console.log('[API Interceptor] Modified URL:', newUrl);
+          config.url = newUrl;
+        } else {
+          console.warn('[API Interceptor] User object has no id property');
         }
       } catch (e) {
-        console.error('[API] Failed to parse user from localStorage', e);
+        console.error('[API Interceptor] Failed to parse user from localStorage', e);
       }
+    } else {
+      console.warn('[API Interceptor] No user in localStorage, skipping userId param');
     }
     
     // Log request in development

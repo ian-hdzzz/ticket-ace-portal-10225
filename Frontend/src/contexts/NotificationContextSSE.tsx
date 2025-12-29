@@ -93,8 +93,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (!isPolling) {
         setLoading(true);
       }
+      
+      // Get userId from localStorage
+      const userStr = localStorage.getItem('user');
+      const userId = userStr ? JSON.parse(userStr).id : null;
+      const url = userId ? `/api/notifications?userId=${userId}` : '/api/notifications';
+      
       console.log(`🔄 [${USE_POLLING ? 'POLLING' : 'SSE'}] Fetching notifications at ${new Date().toLocaleTimeString()}...`);
-      const response = await fetch('/api/notifications', {
+      console.log(`🔑 [FETCH] URL with userId:`, url);
+      const response = await fetch(url, {
         credentials: 'include',
       });
       
@@ -182,7 +189,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const markAsRead = useCallback(async (id: string) => {
     try {
-      const response = await fetch(`/api/notifications/${id}/read`, {
+      // Get userId from localStorage
+      const userStr = localStorage.getItem('user');
+      const userId = userStr ? JSON.parse(userStr).id : null;
+      const url = userId ? `/api/notifications/${id}/read?userId=${userId}` : `/api/notifications/${id}/read`;
+      
+      const response = await fetch(url, {
         method: 'PATCH',
         credentials: 'include',
       });
@@ -206,7 +218,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const markAllAsRead = useCallback(async () => {
     try {
-      const response = await fetch('/api/notifications/read-all', {
+      // Get userId from localStorage
+      const userStr = localStorage.getItem('user');
+      const userId = userStr ? JSON.parse(userStr).id : null;
+      const url = userId ? `/api/notifications/read-all?userId=${userId}` : '/api/notifications/read-all';
+      
+      const response = await fetch(url, {
         method: 'PATCH',
         credentials: 'include',
       });
@@ -229,7 +246,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const deleteNotification = useCallback(async (id: string) => {
     try {
-      const response = await fetch(`/api/notifications/${id}`, {
+      // Get userId from localStorage
+      const userStr = localStorage.getItem('user');
+      const userId = userStr ? JSON.parse(userStr).id : null;
+      const url = userId ? `/api/notifications/${id}?userId=${userId}` : `/api/notifications/${id}`;
+      
+      const response = await fetch(url, {
         method: 'DELETE',
         credentials: 'include',
       });
