@@ -14,13 +14,22 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor - add user header and logging
+// Request interceptor - add userId query param and logging
 apiClient.interceptors.request.use(
   (config) => {
-    // Send user info from localStorage in header
+    // Add userId as query parameter from localStorage
     const userStr = localStorage.getItem('user');
     if (userStr) {
-      config.headers['X-User-Data'] = userStr;
+      try {
+        const user = JSON.parse(userStr);
+        if (user.id) {
+          // Append userId to URL as query parameter
+          const separator = config.url?.includes('?') ? '&' : '?';
+          config.url = `${config.url}${separator}userId=${user.id}`;
+        }
+      } catch (e) {
+        console.error('[API] Failed to parse user from localStorage', e);
+      }
     }
     
     // Log request in development
@@ -74,7 +83,17 @@ apiClient.interceptors.response.use(
       const { status, data } = error.response;
 
       if (status === 401 && !originalRequest._retry) {
-        // Unauthorized - attempt token refresh
+        // Don't redirect on login/logout/refresh endpoints
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                               originalRequest.url?.includes('/auth/logout') ||
+                               originalRequest.url?.includes('/auth/refresh');
+        
+        if (isAuthEndpoint) {
+          // Let auth errors bubble up naturally
+          return Promise.reject(error);
+        }
+
+        // Unauthorized - clear session and redirect to login
         if (isRefreshing) {
           // If already refreshing, queue this request
           return new Promise((resolve, reject) => {

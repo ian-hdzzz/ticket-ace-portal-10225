@@ -22,14 +22,19 @@ export default function Auth() {
     try {
       // Call backend API for authentication
       const response = await authService.login(email, password);
+      console.log("🔍 Login response:", response);
       
       if (!response.success) {
         setErrorMsg(response.message || "Correo o contraseña incorrectos.");
         return;
       }
 
+      console.log("✅ Login successful, user:", response.user);
+
       // Check if user has temporary password
       if (response.user.is_temporary_password) {
+        console.log("⚠️ Temporary password detected");
+
         // Show change password form
         setShowChangePassword(true);
         // Store user temporarily for password change
@@ -42,7 +47,9 @@ export default function Auth() {
       }
 
       // Store user in localStorage for route protection
+      console.log("💾 Storing user in localStorage:", response.user);
       authService.setCurrentUser(response.user);
+      console.log("✅ User stored, localStorage.user:", localStorage.getItem('user'));
       
       // If user is customer service agent, set status to active
       const isCustomerServiceAgent = response.user.roles?.some(
