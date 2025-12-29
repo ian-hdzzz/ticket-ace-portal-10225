@@ -23,46 +23,37 @@ declare global {
  */
 export const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
     try {
-        const accessToken = req.cookies.accessToken;
-
-        if (!accessToken) {
-            console.log("❌ Token de acceso no proporcionado");
-            console.log("   Cookies received:", Object.keys(req.cookies));
-            console.log("   Origin:", req.headers.origin);
-            console.log("   Cookie header:", req.headers.cookie);
+        // Read user data from X-User-Data header (sent by frontend from localStorage)
+        const userDataHeader = req.headers['x-user-data'] as string;
+        
+        if (!userDataHeader) {
+            console.log("❌ User data not provided in header");
             res.status(401).json({
                 success: false,
-                message: "Token de acceso no proporcionado",
+                message: "Usuario no autenticado",
             });
             return;
         }
 
-        // Verify the access token
-        const payload = JWTService.verifyAccessToken(accessToken);
-
-        if (!payload) {
-            res.status(401).json({
-                success: false,
-                message: "Token de acceso inválido o expirado",
-            });
-            return;
-        }
+        // Parse user data from header
+        const userData = JSON.parse(userDataHeader);
 
         // Attach user info to request
         req.user = {
-            userId: payload.userId,
-            email: payload.email,
-            is_temporary_password: payload.is_temporary_password,
-            full_name: payload.full_name,
-            roles: payload.roles,
-            privileges: payload.privileges,
+            userId: userData.id,
+            email: userData.email,
+            is_temporary_password: userData.is_temporary_password,
+            full_name: userData.full_name,
+            roles: userData.roles?.map((r: any) => r.name) || [],
+            privileges: [], // Will be empty for now
         };
 
         next();
     } catch (error) {
-        res.status(500).json({
+        console.error("Error parsing user data:", error);
+        res.status(401).json({
             success: false,
-            message: "Error al verificar token de acceso",
+            message: "Error al autenticar usuario",
         });
     }
 };
@@ -73,20 +64,18 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
  */
 export const optionalAuth = (req: Request, res: Response, next: NextFunction): void => {
     try {
-        const accessToken = req.cookies.accessToken;
-
-        if (accessToken) {
-            const payload = JWTService.verifyAccessToken(accessToken);
-            if (payload) {
-                req.user = {
-                    userId: payload.userId,
-                    email: payload.email,
-                    is_temporary_password: payload.is_temporary_password,
-                    full_name: payload.full_name,
-                    roles: payload.roles,
-                    privileges: payload.privileges,
-                };
-            }
+        const userDataHeader = req.headers['x-user-data'] as string;
+        
+        if (userDataHeader) {
+            const userData = JSON.parse(userDataHeader);
+            req.user = {
+                userId: userData.id,
+                email: userData.email,
+                is_temporary_password: userData.is_temporary_password,
+                full_name: userData.full_name,
+                roles: userData.roles?.map((r: any) => r.name) || [],
+                privileges: [],
+            };
         }
 
         next();

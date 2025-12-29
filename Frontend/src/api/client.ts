@@ -14,9 +14,15 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor - can add auth tokens or logging here
+// Request interceptor - add user header and logging
 apiClient.interceptors.request.use(
   (config) => {
+    // Send user info from localStorage in header
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      config.headers['X-User-Data'] = userStr;
+    }
+    
     // Log request in development
     if (import.meta.env.DEV) {
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
@@ -84,15 +90,17 @@ apiClient.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          console.log('[API] Access token expired, refreshing...');
-          await apiClient.post('/auth/refresh');
-          console.log('[API] Token refreshed successfully');
-
+          console.log('[API] 401 received, logging out...');
           processQueue(null);
           isRefreshing = false;
 
-          // Retry the original request
-          return apiClient(originalRequest);
+          // Clear user data and redirect to login
+          localStorage.removeItem('user');
+          localStorage.removeItem('user_temp');
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+          return Promise.reject(error);
         } catch (refreshError) {
           console.error('[API] Token refresh failed, logging out...');
           processQueue(refreshError);
