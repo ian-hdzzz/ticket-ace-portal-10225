@@ -257,7 +257,7 @@ router.post('/send-temp-password', async (req: Request, res: Response) => {
               <table role="presentation" style="width: 100%; margin-bottom: 20px;">
                 <tr>
                   <td style="text-align: center;">
-                    <a href="https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app" 
+                    <a href=${process.env.VITE_FRONTEND_URL || 'https://chatwoot-cea-app.xyz'}
                        style="display: inline-block; padding: 16px 40px; background: #2463EB; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                       Iniciar Sesión
                     </a>
@@ -695,13 +695,13 @@ router.post('/webhook/ticket-created', async (req: Request, res: Response) => {
                 <tr>
                   <td style="text-align: center;">
                     <!-- Botón Ver Ticket -->
-                    <a href="https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app/" 
+                    <a href=${process.env.VITE_FRONTEND_URL || 'https://chatwoot-cea-app.xyz'} 
                        style="display: inline-block; padding: 14px 32px; background: #2463EB; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 0 5px 10px 5px;">
                       Atender Ticket
                     </a>
                     
                     <!-- Botón Ver Conversación -->
-                    <a href="https://chatwoot.fitcluv.com/app/accounts/3/conversations/46" 
+                    <a href=${process.env.VITE_CHATWOOT_URL || 'https://chatwoot.enyala.dev'}
                        style="display: inline-block; padding: 14px 32px; background: #0CADE7; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 0 5px 10px 5px;">
                       Abrir Chat
                     </a>
@@ -757,8 +757,8 @@ ${description}
 Por favor accede al sistema para atender este ticket.
 
 Enlaces rápidos:
- Ver Ticket: https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app/
- Chat: https://chatwoot.fitcluv.com
+ Ver Ticket: ${process.env.VITE_FRONTEND_URL || 'https://chatwoot-cea-app.xyz'}
+ Chat: ${process.env.VITE_CHATWOOT_URL || 'https://chatwoot.enyala.dev'}
 
 ---
 CEA Querétaro - Sistema de Notificaciones de Tickets
