@@ -514,7 +514,8 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 <div className="space-y-3">
                   <div className="relative">
                     <iframe
-                      src={`/app/accounts/1/conversations/${ticket.conversation_id}`}
+                      // src={`/app/accounts/1/conversations/${ticket.conversation_id}`}
+                      src={`https://chatwoot.enayala.dev/app/accounts/1/conversations/${ticket.conversation_id}`}
                       width="100%"
                       height="600px"
                       style={{ border: 'none', borderRadius: '8px' }}
