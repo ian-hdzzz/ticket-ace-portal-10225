@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import express from 'express';
 import type { Request, Response } from 'express';
 
@@ -8,17 +8,25 @@ dotenv.config();
 
 const router = express.Router();
 
-// Validar que la API key esté configurada
-const apiKey = process.env.RESEND_API_KEY;
-if (!apiKey) {
-  console.error('❌ RESEND_API_KEY no está configurada en .env');
-  throw new Error('RESEND_API_KEY is required');
+// Validar que las credenciales de Gmail estén configuradas
+const gmailUser = process.env.GMAIL_USER;
+const gmailPassword = process.env.GMAIL_PASSWORD;
+
+if (!gmailUser || !gmailPassword) {
+  console.error('❌ GMAIL_USER o GMAIL_PASSWORD no están configuradas en .env');
+  throw new Error('Gmail credentials are required');
 }
 
-console.log('✅ RESEND_API_KEY encontrada');
+console.log('✅ Gmail credentials encontradas');
 
-// Inicializar Resend con la API key del .env
-const resend = new Resend(apiKey);
+// Crear transporter de Nodemailer con Gmail
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: gmailUser,
+    pass: gmailPassword,
+  },
+});
 
 interface SendEmailRequest {
   to: string;
@@ -55,20 +63,22 @@ router.post('/send', async (req: Request, res: Response) => {
     console.log(`📧 Enviando correo a: ${to}`);
     console.log(`📝 Asunto: ${subject}`);
 
-    // Enviar correo usando Resend
-    const data = await resend.emails.send({
-      from: 'CEA Querétaro <onboarding@resend.dev>', // Usar el dominio de prueba de Resend
-      to: [to],
-      subject,
-      html,
+    // Enviar correo usando Nodemailer
+    const mailOptions = {
+      from: `"CEA Querétaro" <${gmailUser}>`,
+      to: to,
+      subject: subject,
+      html: html,
       text: text || html.replace(/<[^>]*>/g, ''), // Convertir HTML a texto plano
-    });
+    };
 
-    console.log('✅ Correo enviado exitosamente:', data);
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log('✅ Correo enviado exitosamente:', info);
 
     res.json({ 
       success: true, 
-      data,
+      data: info,
       message: 'Correo enviado exitosamente'
     });
   } catch (error: any) {
@@ -90,26 +100,245 @@ router.get('/test', async (req: Request, res: Response) => {
   try {
     const testEmail = req.query.email as string || 'test@example.com';
     
-    const data = await resend.emails.send({
-      from: 'CEA Querétaro <onboarding@resend.dev>',
-      to: [testEmail],
+    const mailOptions = {
+      from: `"CEA Querétaro" <${gmailUser}>`,
+      to: testEmail,
       subject: 'Test Email - CEA Querétaro',
       html: `
         <h1>🎉 ¡Email de Prueba!</h1>
         <p>Si estás viendo esto, el servicio de correos está funcionando correctamente.</p>
         <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-MX')}</p>
       `,
-    });
+    };
+
+    const info = await transporter.sendMail(mailOptions);
 
     res.json({ 
       success: true, 
       message: 'Email de prueba enviado',
-      data 
+      data: info 
     });
   } catch (error: any) {
     res.status(500).json({ 
       success: false, 
       error: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/email/send-temp-password
+ * Envía un correo con la contraseña temporal para un usuario nuevo
+ */
+router.post('/send-temp-password', async (req: Request, res: Response) => {
+  try {
+    const { email, name, tempPassword }: { email: string; name: string; tempPassword: string } = req.body;
+
+    // Validación básica
+    if (!email || !name || !tempPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Faltan campos requeridos: email, name, tempPassword' 
+      });
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email inválido' 
+      });
+    }
+
+    console.log(`📧 Enviando contraseña temporal a: ${email}`);
+    console.log(`👤 Usuario: ${name}`);
+
+    // Plantilla HTML para el correo de contraseña temporal
+    const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenido - CEA Querétaro</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 40px 0;">
+        <table role="presentation" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #2463EB 0%, #0CADE7 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #fff; font-size: 28px; font-weight: 700;">
+                ¡Bienvenido al Sistema!
+              </h1>
+              <p style="margin: 10px 0 0; color: #fff; font-size: 16px; opacity: 0.9;">
+                CEA Querétaro - Portal de Tickets
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              
+              <p style="margin: 0 0 30px; color: #111827; font-size: 16px; line-height: 1.5;">
+                Hola <strong>${name}</strong>,
+              </p>
+              
+              <p style="margin: 0 0 30px; color: #111827; font-size: 16px; line-height: 1.5;">
+                Se ha creado tu cuenta en el sistema de tickets de CEA Querétaro. A continuación encontrarás tus credenciales de acceso:
+              </p>
+
+              <!-- Credenciales Card -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #54b7ecff; border-radius: 8px; overflow: hidden; margin-bottom: 30px; border-left: 4px solid #F59E0B;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table role="presentation" style="width: 100%;">
+                      <tr>
+                        <td style="color: #000000ff; font-size: 16px; font-weight: 600; padding-bottom: 15px;">
+                          Credenciales de Acceso
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color: #ffffffff; font-size: 14px; padding: 5px 0;">
+                          Email:
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color: #111827; font-size: 16px; font-weight: 500; padding: 5px 0; font-family: monospace; background: #fff; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                          ${email}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color: #ffffffff; font-size: 14px; padding: 15px 0 5px 0;">
+                          Contraseña Temporal:
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color: #111827; font-size: 16px; font-weight: 600; font-family: monospace; background: #fff; padding: 15px; border-radius: 4px; border: 2px solid #F59E0B; letter-spacing: 1px;">
+                          ${tempPassword}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Instrucciones de Seguridad -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #FEE2E2; border-radius: 8px; overflow: hidden; margin-bottom: 30px; border-left: 4px solid #DC2626;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table role="presentation" style="width: 100%;">
+                      <tr>
+                        <td style="color: #000000ff; font-size: 16px; font-weight: 600; padding-bottom: 10px;">
+                          ⚠️ Importante - Seguridad
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color: #111827; font-size: 14px; line-height: 1.6;">
+                          <ul style="margin: 0; padding-left: 20px;">
+                            <li>Esta es una <strong>contraseña temporal</strong></li>
+                            <li>Debes cambiarla al iniciar sesión por primera vez</li>
+                            <li>No compartas estas credenciales con nadie</li>
+                            <li>Si tienes problemas para acceder, contacta al administrador</li>
+                          </ul>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" style="width: 100%; margin-bottom: 20px;">
+                <tr>
+                  <td style="text-align: center;">
+                    <a href="https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app" 
+                       style="display: inline-block; padding: 16px 40px; background: #2463EB; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                      Iniciar Sesión
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 20px 0 0; color: #6b7280; font-size: 14px; line-height: 1.5; font-style: italic; text-align: center;">
+                Si tienes alguna duda o problema, contacta al administrador del sistema.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #111827; padding: 30px; text-align: center; border-top: 1px solid #0CADE7;">
+              <p style="margin: 0 0 10px; color: #fff; font-size: 14px;">
+                CEA Querétaro - Sistema de Tickets
+              </p>
+              <p style="margin: 0; color: #0CADE7; font-size: 12px;">
+                Este correo contiene información confidencial. No lo reenvíes.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+
+    // Texto plano como fallback
+    const text = `
+¡Bienvenido al Sistema de Tickets - CEA Querétaro!
+
+Hola ${name},
+
+Se ha creado tu cuenta en el sistema. Aquí están tus credenciales:
+
+Email: ${email}
+Contraseña Temporal: ${tempPassword}
+
+IMPORTANTE:
+- Esta es una contraseña temporal
+- Debes cambiarla al iniciar sesión por primera vez
+- No compartas estas credenciales con nadie
+
+Enlace de acceso: https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app/login
+
+---
+CEA Querétaro - Sistema de Tickets
+    `;
+
+    // Enviar correo usando Nodemailer
+    const mailOptions = {
+      from: `"CEA Querétaro" <${gmailUser}>`,
+      to: email,
+      subject: ' Credenciales de Acceso - Sistema CEA Querétaro',
+      html,
+      text,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log('✅ Correo con contraseña enviado exitosamente:', info);
+
+    res.json({ 
+      success: true, 
+      data: info,
+      message: 'Credenciales enviadas por correo exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error al enviar correo con contraseña:', error);
+    
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Error al enviar credenciales por correo',
+      details: error
     });
   }
 });
@@ -466,7 +695,7 @@ router.post('/webhook/ticket-created', async (req: Request, res: Response) => {
                 <tr>
                   <td style="text-align: center;">
                     <!-- Botón Ver Ticket -->
-                    <a href="https://ticket-ace-portal-10225.onrender.com/" 
+                    <a href="https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app/" 
                        style="display: inline-block; padding: 14px 32px; background: #2463EB; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 0 5px 10px 5px;">
                       Atender Ticket
                     </a>
@@ -528,31 +757,32 @@ ${description}
 Por favor accede al sistema para atender este ticket.
 
 Enlaces rápidos:
- Ver Ticket: https://ticket-ace-portal-10225.onrender.com/
+ Ver Ticket: https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app/
  Chat: https://chatwoot.fitcluv.com
 
 ---
 CEA Querétaro - Sistema de Notificaciones de Tickets
     `;
 
-    // Enviar el correo
     console.log('📤 Intentando enviar email...');
-    console.log(`   - From: CEA Querétaro <onboarding@resend.dev>`);
+    console.log(`   - From: CEA Querétaro <${gmailUser}>`);
     console.log(`   - To: ${toEmail}`);
     console.log(`   - Subject: 🚨 Nuevo Ticket Asignado #${ticketNumber} - Prioridad: ${priority}`);
     
-    const emailData = await resend.emails.send({
-      from: 'CEA Querétaro <onboarding@resend.dev>',
-      to: [toEmail],
+    const mailOptions = {
+      from: `"CEA Querétaro" <${gmailUser}>`,
+      to: toEmail,
       subject: ` Requiere Asesor - Ticket #${ticketNumber} - Prioridad: ${priority}`,
       html,
       text,
-    });
+    };
+
+    const emailData = await transporter.sendMail(mailOptions);
 
     console.log('✅ Correo enviado exitosamente');
-    console.log(`   - Email ID: ${emailData.data?.id}`);
+    console.log(`   - Message ID: ${emailData.messageId}`);
     console.log(`   - Enviado a: ${toEmail}`);
-    console.log(`   - Respuesta completa de Resend:`, JSON.stringify(emailData, null, 2));
+    console.log(`   - Respuesta completa de Nodemailer:`, JSON.stringify(emailData, null, 2));
     
     if (isDevelopment && user_email !== toEmail) {
       console.log(`   - ⚠️ MODO DEV: En producción se enviará a ${user_email}`);
@@ -566,7 +796,8 @@ CEA Querétaro - Sistema de Notificaciones de Tickets
         sentTo: toEmail,
         originalEmail: user_email,
         mode: emailMode,
-        ticketNumber: ticketNumber
+        ticketNumber: ticketNumber,
+        messageId: emailData.messageId
       }
     });
 

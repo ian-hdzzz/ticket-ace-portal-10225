@@ -440,7 +440,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
   console.log('Renderizando ticket:', ticket);
 
   return (
-    <div className="space-y-6 p-6 h-full overflow-auto">
+    <div className="space-y-6 p-4 h-full overflow-auto">
       <div className="flex items-center gap-4 pl-5">
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{ticket.title}</h1>
@@ -469,7 +469,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="space-y-6 md:col-span-2">
-          <Card>
+          <Card className="max-w-[780px]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -481,7 +481,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="max-w-[780px]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
@@ -512,14 +512,13 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               ) : (
                 // Mostrar iframe con la conversación de Chatwoot
                 <div className="space-y-3">
-                  <div className="relative">
+                  <div className="relative w-full max-w-[780px]">
                     <iframe
                       src={`/app/accounts/1/conversations/${ticket.conversation_id}`}
-                      // src={`https://chatwoot.enayala.dev/app/accounts/1/conversations/${ticket.conversation_id}`}
                       width="100%"
                       height="600px"
                       style={{ border: 'none', borderRadius: '8px' }}
-                      className="shadow-md bg-background"
+                      className="shadow-md bg-background w-full"
                       title="Conversación de Chatwoot"
                       onError={() => {
                         toast.error("No se pudo cargar la conversación. Intenta abrirla en una nueva pestaña.");
@@ -533,8 +532,8 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
         </div>
 
 
-        <div className="space-y-6">
-          <Card>
+        <div className="space-y-8">
+          <Card className="w-[380px]">
             <CardHeader>
               <CardTitle>Acciones</CardTitle>
             </CardHeader>
