@@ -118,7 +118,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
   const id = ticketIdProp || idFromParams;
   const navigate = useNavigate();
   const { removeTab, setActiveTab } = useTabContext();
-  
+
   // Establecer título de la página (se actualizará cuando cargue el ticket)
   const [pageTitle, setPageTitle] = useState("Detalles del Ticket");
   usePageTitle(pageTitle, "Información completa del ticket");
@@ -488,10 +488,10 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 Atención al Cliente
               </CardTitle>
               <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      Conversación en tiempo real con el cliente
-                    </p>
-                    
+                <p className="text-sm text-muted-foreground">
+                  Conversación en tiempo real con el cliente
+                </p>
+
               </div>
             </CardHeader>
             <CardContent>
@@ -514,7 +514,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 <div className="space-y-3">
                   <div className="relative">
                     <iframe
-                      src={`/chatwoot/app/accounts/${ticket.id_customer_chatwoot}/conversations/${ticket.conversation_id}`}
+                      src={`/app/accounts/1/conversations/${ticket.conversation_id}`}
                       width="100%"
                       height="600px"
                       style={{ border: 'none', borderRadius: '8px' }}
@@ -549,9 +549,9 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               </Button>
 
 
-              
 
-            
+
+
 
               {/* 4. Tomar Ticket */}
               <Button
@@ -683,7 +683,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 </DialogContent>
               </Dialog>
               <Separator className="my-2" />
-              
+
 
               {/* 6. Marcar como Resuelto / Cerrar Ticket */}
               {ticket.status !== "resuelto" && ticket.status !== "cerrado" && (
