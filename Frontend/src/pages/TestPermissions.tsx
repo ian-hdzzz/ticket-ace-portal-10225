@@ -7,7 +7,7 @@ export default function TestPermissions() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">🔐 Test de Permisos</h1>
+      <h1 className="text-3xl font-bold mb-6">Test de Permisos</h1>
       
       <div className="bg-blue-50 p-4 rounded mb-6">
         <h2 className="text-xl font-semibold mb-2">👤 Tus Roles:</h2>

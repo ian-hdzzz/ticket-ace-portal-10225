@@ -31,7 +31,7 @@ const transporter = nodemailer.createTransport({
 interface SendEmailRequest {
   to: string;
   subject: string;
-  html
+  html: string;
   text?: string;
 }
 
@@ -194,17 +194,17 @@ router.post('/send-temp-password', async (req: Request, res: Response) => {
               </p>
 
               <!-- Credenciales Card -->
-              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #FEF3C7; border-radius: 8px; overflow: hidden; margin-bottom: 30px; border-left: 4px solid #F59E0B;">
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #54b7ecff; border-radius: 8px; overflow: hidden; margin-bottom: 30px; border-left: 4px solid #F59E0B;">
                 <tr>
                   <td style="padding: 20px;">
                     <table role="presentation" style="width: 100%;">
                       <tr>
-                        <td style="color: #92400E; font-size: 16px; font-weight: 600; padding-bottom: 15px;">
-                          🔐 Credenciales de Acceso
+                        <td style="color: #000000ff; font-size: 16px; font-weight: 600; padding-bottom: 15px;">
+                          Credenciales de Acceso
                         </td>
                       </tr>
                       <tr>
-                        <td style="color: #6b7280; font-size: 14px; padding: 5px 0;">
+                        <td style="color: #ffffffff; font-size: 14px; padding: 5px 0;">
                           Email:
                         </td>
                       </tr>
@@ -214,7 +214,7 @@ router.post('/send-temp-password', async (req: Request, res: Response) => {
                         </td>
                       </tr>
                       <tr>
-                        <td style="color: #6b7280; font-size: 14px; padding: 15px 0 5px 0;">
+                        <td style="color: #ffffffff; font-size: 14px; padding: 15px 0 5px 0;">
                           Contraseña Temporal:
                         </td>
                       </tr>
@@ -234,7 +234,7 @@ router.post('/send-temp-password', async (req: Request, res: Response) => {
                   <td style="padding: 20px;">
                     <table role="presentation" style="width: 100%;">
                       <tr>
-                        <td style="color: #991B1B; font-size: 16px; font-weight: 600; padding-bottom: 10px;">
+                        <td style="color: #000000ff; font-size: 16px; font-weight: 600; padding-bottom: 10px;">
                           ⚠️ Importante - Seguridad
                         </td>
                       </tr>
@@ -318,7 +318,7 @@ CEA Querétaro - Sistema de Tickets
     const mailOptions = {
       from: `"CEA Querétaro" <${gmailUser}>`,
       to: email,
-      subject: '🔐 Credenciales de Acceso - Sistema CEA Querétaro',
+      subject: ' Credenciales de Acceso - Sistema CEA Querétaro',
       html,
       text,
     };
