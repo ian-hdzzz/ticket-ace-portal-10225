@@ -515,7 +515,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                   <div className="relative">
                     <iframe
                       src={`/app/accounts/1/conversations/${ticket.conversation_id}`}
-                      width="100%"
+                      width="85%"
                       height="600px"
                       style={{ border: 'none', borderRadius: '8px' }}
                       className="shadow-md bg-background"
