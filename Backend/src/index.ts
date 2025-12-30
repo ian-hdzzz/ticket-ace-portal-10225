@@ -34,7 +34,8 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "http://localhost:4173",
   "http://127.0.0.1:4173",
-  "https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app"
+  "https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app",
+  "https://chatwoot-cea-app.xyz"
 ];
 
 // Add FRONTEND_URL from env if set (never use "*" with credentials)
