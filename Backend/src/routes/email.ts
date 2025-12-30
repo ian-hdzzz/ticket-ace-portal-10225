@@ -257,7 +257,7 @@ router.post('/send-temp-password', async (req: Request, res: Response) => {
               <table role="presentation" style="width: 100%; margin-bottom: 20px;">
                 <tr>
                   <td style="text-align: center;">
-                    <a href="https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app/login" 
+                    <a href="https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app" 
                        style="display: inline-block; padding: 16px 40px; background: #2463EB; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                       Iniciar Sesión
                     </a>
