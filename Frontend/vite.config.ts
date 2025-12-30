@@ -15,99 +15,99 @@ export default defineConfig(({ mode }) => ({
       // These MUST come before /api and /auth to avoid conflicts
       // Chatwoot assets
       '/vite/assets': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
       },
       '/packs': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
       },
       // Chatwoot app routes
       '/app': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
         ws: true,
         cookieDomainRewrite: {
-          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+          'chatwoot.enayala.dev': 'localhost',
         },
       },
       // Chatwoot auth (for sign_in, etc) - uses different path patterns than local /auth
       '/auth/sign_in': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
         cookieDomainRewrite: {
-          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+          'chatwoot.enayala.dev': 'localhost',
         },
       },
       '/auth/sign_out': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
       },
       '/auth/password': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
       },
       '/auth/validate_token': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
         cookieDomainRewrite: {
-          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+          'chatwoot.enayala.dev': 'localhost',
         },
       },
       // Chatwoot API v1/v2/v3
       '/api/v1': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
         ws: true,
         cookieDomainRewrite: {
-          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+          'chatwoot.enayala.dev': 'localhost',
         },
       },
       '/api/v2': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
       },
       '/api/v3': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
       },
       // Chatwoot cable (websockets)
       '/cable': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
         ws: true,
       },
       // Chatwoot additional routes
       '/rails': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
       },
       '/super_admin': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
       },
       // Optional /chatwoot prefix entry point
       '/chatwoot': {
-        target: 'https://chatwoot-cea-w2yvjfitdq-uc.a.run.app',
+        target: 'https://chatwoot.enayala.dev',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/chatwoot/, ''),
         ws: true,
         cookieDomainRewrite: {
-          'chatwoot-cea-w2yvjfitdq-uc.a.run.app': 'localhost',
+          'chatwoot.enayala.dev': 'localhost',
         },
       },
       // ============================================
