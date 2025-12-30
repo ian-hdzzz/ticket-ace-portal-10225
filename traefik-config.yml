@@ -112,7 +112,56 @@ http:
       tls:
         certResolver: letsencrypt
 
-    # Backend API router - HIGHEST priority to avoid conflicts with Chatwoot /auth/
+    # Chatwoot Auth Routes (HIGHEST priority - specific Chatwoot auth paths)
+    chatwoot-auth-signin:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/auth/sign_in`)"
+      service: chatwoot-proxy
+      priority: 200
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - chatwoot-headers
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-auth-signout:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/auth/sign_out`)"
+      service: chatwoot-proxy
+      priority: 200
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - chatwoot-headers
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-auth-password:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/auth/password`)"
+      service: chatwoot-proxy
+      priority: 200
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - chatwoot-headers
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-auth-validate:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/auth/validate_token`)"
+      service: chatwoot-proxy
+      priority: 200
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - chatwoot-headers
+      tls:
+        certResolver: letsencrypt
+
+    # Backend API router - Medium priority (catches /auth/login, /auth/logout for your app)
     dashboard-backend-auth:
       rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/auth`)"
       service: dashboard-backend
@@ -130,20 +179,6 @@ http:
       entryPoints:
         - web
         - websecure
-      tls:
-        certResolver: letsencrypt
-
-    # Chatwoot Auth Routes (uses /auth/ with trailing slash - different from backend /auth)
-    # Lower priority than backend /auth ensures backend gets /auth/login, /auth/logout, etc.
-    chatwoot-auth:
-      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/auth/`)"
-      service: chatwoot-proxy
-      priority: 90
-      entryPoints:
-        - web
-        - websecure
-      middlewares:
-        - chatwoot-headers
       tls:
         certResolver: letsencrypt
 
