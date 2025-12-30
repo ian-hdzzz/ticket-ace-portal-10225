@@ -29,7 +29,7 @@ http:
     chatwoot-api-v1:
       rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/api/v1/`)"
       service: chatwoot-proxy
-      priority: 100
+      priority: 200
       entryPoints:
         - web
         - websecure
@@ -41,7 +41,7 @@ http:
     chatwoot-api-v2:
       rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/api/v2/`)"
       service: chatwoot-proxy
-      priority: 100
+      priority: 200
       entryPoints:
         - web
         - websecure
@@ -53,7 +53,7 @@ http:
     chatwoot-api-v3:
       rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/api/v3/`)"
       service: chatwoot-proxy
-      priority: 100
+      priority: 200
       entryPoints:
         - web
         - websecure
