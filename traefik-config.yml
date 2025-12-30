@@ -185,4 +185,4 @@ http:
     chatwoot-proxy:
       loadBalancer:
         servers:
-          - url: "https://chatwoot.enayala.dev"
+          - url: "http://chatwoot-rails-1:3000"
