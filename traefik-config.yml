@@ -1,0 +1,171 @@
+http:
+  routers:
+    # Chatwoot /chatwoot prefix entry point (strips prefix)
+    chatwoot-prefix:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/chatwoot`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - chatwoot-stripprefix
+      tls:
+        certResolver: letsencrypt
+
+    # Chatwoot proxy routers (highest priority to avoid conflicts with backend /api)
+    chatwoot-app:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/app/`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-api-v1:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/api/v1/`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-api-v2:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/api/v2/`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-api-v3:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/api/v3/`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-packs:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/packs/`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-vite-assets:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/vite/assets/`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-cable:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/cable`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-rails:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/rails/`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    chatwoot-super-admin:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/super_admin/`)"
+      service: chatwoot-proxy
+      priority: 100
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    # Backend API router - HIGHEST priority to avoid conflicts with Chatwoot /auth/
+    dashboard-backend-auth:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/auth`)"
+      service: dashboard-backend
+      priority: 150
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    dashboard-backend-api:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/api`)"
+      service: dashboard-backend
+      priority: 150
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    # Chatwoot Auth Routes (uses /auth/ with trailing slash - different from backend /auth)
+    # Lower priority than backend /auth ensures backend gets /auth/login, /auth/logout, etc.
+    chatwoot-auth:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/auth/`)"
+      service: chatwoot-proxy
+      priority: 90
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    # Frontend router (lowest priority - catches everything else)
+    dashboard-frontend:
+      rule: "Host(`chatwoot-cea-app.xyz`) && PathPrefix(`/`)"
+      service: dashboard-frontend
+      priority: 1
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+  middlewares:
+    chatwoot-stripprefix:
+      stripPrefix:
+        prefixes:
+          - "/chatwoot"
+
+  services:
+    dashboard-frontend:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5173"
+
+    dashboard-backend:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8081"
+
+    chatwoot-proxy:
+      loadBalancer:
+        servers:
+          - url: "https://chatwoot.enayala.dev"
