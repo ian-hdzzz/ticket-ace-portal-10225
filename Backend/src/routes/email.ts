@@ -308,7 +308,7 @@ IMPORTANTE:
 - Debes cambiarla al iniciar sesión por primera vez
 - No compartas estas credenciales con nadie
 
-Enlace de acceso: https://ticket-ace-frontend-w2yvjfitdq-uc.a.run.app/login
+Enlace de acceso: ${process.env.VITE_FRONTEND_URL}/login
 
 ---
 CEA Querétaro - Sistema de Tickets
