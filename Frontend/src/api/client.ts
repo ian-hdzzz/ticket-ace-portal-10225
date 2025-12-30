@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Base API URL - your backend server
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+// Base API URL - empty string for relative URLs (Traefik/nginx handles routing)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Create axios instance with default config
 export const apiClient = axios.create({
