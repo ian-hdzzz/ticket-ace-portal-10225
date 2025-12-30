@@ -54,7 +54,7 @@ export default class JWTService {
     static setTokenCookies(res: Response, accessToken: string, refreshToken: string): void {
         const cookieOptions = {
             httpOnly: true,
-            secure: false, // Allow HTTP for local deployment
+            secure: process.env.NODE_ENV === "production", // true for HTTPS in production
             sameSite: "lax" as const,
             path: "/",
         };
@@ -78,7 +78,7 @@ export default class JWTService {
     static clearTokenCookies(res: Response): void {
         const cookieOptions = {
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === "production",
             sameSite: "lax" as const,
             path: "/",
         };
