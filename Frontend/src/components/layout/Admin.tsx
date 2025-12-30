@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { supabase } from '../../supabase/client.ts';
 import { createUser, assignUserRole, updateUser, updateUserRole, deleteUser } from "@/api/AdminUsersSupa";
+import { sendTempPasswordEmail } from "@/api/EmailAPI";
 
 const getRoles = async () => {
   try {
@@ -29,6 +30,8 @@ export default function Admin() {
   const [showPasswordStep, setShowPasswordStep] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editingUsersRolesId, setEditingUsersRolesId] = useState(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const [roles, setRoles] = useState([]);
 
@@ -39,7 +42,7 @@ export default function Admin() {
   const fetchUsersWithRoles = async () => {
     const { data, error } = await supabase
       .from('users_roles')
-      .select(`id, user:users!users_roles_user_id_fkey (id, full_name, email, phone), role:roles (id, name), assigned_by:users!users_roles_assigned_by_fkey (full_name)`);
+      .select(`id, user:users!users_roles_user_id_fkey (id, full_name, email, phone, is_temporary_password), role:roles (id, name), assigned_by:users!users_roles_assigned_by_fkey (full_name)`);
     if (error) {
       console.error('Error fetching users with roles:', error);
       setUsers([]);
@@ -65,6 +68,7 @@ export default function Admin() {
           phone: user.phone || "",
           role: role?.name || "",
           assigned_by: assigned_by?.full_name || "",
+          hasLoggedIn: !user.is_temporary_password, // true si ya se logueó (temporary_password = false)
         };
       });
     setUsers(mapped);
@@ -110,6 +114,7 @@ export default function Admin() {
     const password = generatePassword();
     setTempPassword(password);
     setShowPasswordStep(true);
+    setEmailSent(false); // Reset email sent status
   };
 
   // Validación sencilla antes de crear usuario
@@ -128,25 +133,46 @@ export default function Admin() {
       window.alert(errorMsg);
       return;
     }
+    
+    setSendingEmail(true);
+    setEmailSent(false);
+    
     try {
+      // 1. Crear usuario en la base de datos
       const user = await createUser({
         full_name: form.name,
         email: form.email,
         phone: form.phone,
         password: tempPassword
       });
+      
+      // 2. Asignar rol al usuario
       await assignUserRole({
         user_id: user.id,
         role_id: form.role,
         assigned_by: null
       });
-      window.alert("Usuario creado correctamente.");
+      
+      // 3. Intentar enviar correo con credenciales
+      try {
+        await sendTempPasswordEmail(form.email, form.name, tempPassword);
+        setEmailSent(true);
+        window.alert("Usuario creado correctamente y credenciales enviadas por correo.");
+      } catch (emailError) {
+        console.error('Error enviando correo:', emailError);
+        window.alert(`Usuario creado correctamente, pero hubo un error al enviar el correo: ${emailError.message}\n\nLa contraseña temporal es: ${tempPassword}\n\nPor favor compártela manualmente con el usuario.`);
+      }
+      
+      // 4. Limpiar formulario y estados
       setForm({ name: "", email: "", phone: "", role: roles[0]?.id || "" });
       setTempPassword("");
       setShowPasswordStep(false);
       await fetchUsersWithRoles();
+      
     } catch (err) {
       window.alert("Error creando usuario: " + (err.message || err));
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -267,11 +293,21 @@ export default function Admin() {
             </button>
           </div>
           <div className="text-xs text-gray-700">
-            <b>Importante:</b> Copia la contraseña temporal y compártela con el usuario. <br />
-            Esta contraseña solo se mostrará una vez. El usuario deberá cambiarla al iniciar sesión.
+            <b>Importante:</b> Al crear el usuario, se enviará automáticamente un correo con las credenciales a <strong>{form.email}</strong>. <br />
+            Si hay problemas con el envío, se mostrará la contraseña para que puedas compartirla manualmente.
+            {emailSent && (
+              <div className="mt-2 text-green-600 font-medium">
+                ✅ Correo enviado exitosamente con las credenciales
+              </div>
+            )}
           </div>
-          <Button type="button" className="mt-2" onClick={handleCreate}>
-            Entiendo y quiero crear el usuario
+          <Button 
+            type="button" 
+            className="mt-2" 
+            onClick={handleCreate}
+            disabled={sendingEmail}
+          >
+            {sendingEmail ? "Creando usuario y enviando correo..." : "Crear usuario y enviar credenciales"}
           </Button>
         </div>
       )}
@@ -311,19 +347,27 @@ export default function Admin() {
             <tr>
               <th className="p-4 text-left">Nombre</th>
               <th className="p-4 text-left">Rol</th>
-              <th className="p-4 text-left">Asignado por</th>
+              <th className="p-4 text-left">Estado</th>
               <th className="p-4 text-left">Correo</th>
               <th className="p-4 text-left">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers
-              .filter(user => user.name || user.email || user.role || user.assigned_by)
+              .filter(user => user.name || user.email || user.role)
               .map((user, idx) => (
                 <tr key={user.id || idx} className="border-t">
                   <td className="p-2">{user.name || "Sin nombre"}</td>
                   <td className="p-2">{user.role || "Sin rol"}</td>
-                  <td className="p-2">{user.assigned_by || "Sin asignador"}</td>
+                  <td className="p-2">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      user.hasLoggedIn 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {user.hasLoggedIn ? 'Activo' : 'Pendiente'}
+                    </span>
+                  </td>
                   <td className="p-2">{user.email || "Sin correo"}</td>
                   <td className="p-2 flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => handleEdit(user)}>

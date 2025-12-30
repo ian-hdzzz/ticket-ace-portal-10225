@@ -469,7 +469,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="space-y-6 md:col-span-2">
-          <Card className="max-w-[768px]">
+          <Card className="max-w-[780px]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -481,7 +481,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
             </CardContent>
           </Card>
 
-          <Card className="max-w-[768px]">
+          <Card className="max-w-[780px]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
@@ -512,7 +512,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               ) : (
                 // Mostrar iframe con la conversación de Chatwoot
                 <div className="space-y-3">
-                  <div className="relative w-full max-w-[768px]">
+                  <div className="relative w-full max-w-[780px]">
                     <iframe
                       src={`/app/accounts/1/conversations/${ticket.conversation_id}`}
                       width="100%"
