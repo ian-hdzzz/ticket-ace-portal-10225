@@ -308,7 +308,7 @@ IMPORTANTE:
 - Debes cambiarla al iniciar sesión por primera vez
 - No compartas estas credenciales con nadie
 
-Enlace de acceso: ${process.env.VITE_FRONTEND_URL}/login
+Enlace de acceso: ${process.env.VITE_FRONTEND_URL || 'https://chatwoot-cea-app.xyz'}/login
 
 ---
 CEA Querétaro - Sistema de Tickets
