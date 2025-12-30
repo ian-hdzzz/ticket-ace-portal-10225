@@ -42,6 +42,10 @@ create_secret "RESEND_API_KEY" "re_TyjkPw4w_NGVowLV2Z6Tqnr1sguM31ihE"
 create_secret "DEV_EMAIL" "ianhdez2020@gmail.com"
 create_secret "FRONTEND_URL" "https://ticket-ace-frontend-WILL_UPDATE.run.app"
 
+# Gmail configuration for email sending
+create_secret "GMAIL_USER" "tu-email@gmail.com"
+create_secret "GMAIL_PASSWORD" "tu-app-password-aqui"
+
 echo ""
 echo "🎨 Creating Frontend/CEA Secrets..."
 
