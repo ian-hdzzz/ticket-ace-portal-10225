@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTabContext } from "@/contexts/TabContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,6 +119,7 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
   const id = ticketIdProp || idFromParams;
   const navigate = useNavigate();
   const { removeTab, setActiveTab } = useTabContext();
+  const queryClient = useQueryClient();
 
   // Establecer título de la página (se actualizará cuando cargue el ticket)
   const [pageTitle, setPageTitle] = useState("Detalles del Ticket");
@@ -127,6 +129,13 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
   const [ticket, setTicket] = useState<any>(null);
   const [isLoadingTicket, setIsLoadingTicket] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
+
+  // Obtener usuario actual
+  const getCurrentUser = () => {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  };
 
   // Work Order State
   const [isWorkOrderDialogOpen, setIsWorkOrderDialogOpen] = useState(false);
@@ -145,13 +154,56 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
     setError(null);
 
     try {
-
-      const result = await supabase
+      // Intentar obtener ticket con información del usuario asignado
+      let result = await supabase
         .from('tickets')
-        .select('*')
+        .select(`
+          *,
+          assigned_user:users!tickets_assigned_to_fkey (
+            id,
+            full_name,
+            email
+          )
+        `)
         .eq('id', ticketId)
         .single();
 
+      let assignedUserInfo = null;
+      
+      if (result.error) {
+        console.log('Error en JOIN con users, intentando consulta simple...', result.error);
+        
+        // Si falla el JOIN, hacer consulta simple
+        result = await supabase
+          .from('tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
+          
+        if (result.error) {
+          throw result.error;
+        }
+
+        // Si hay un usuario asignado, intentar obtener su información por separado
+        if (result.data.assigned_to) {
+          console.log('Intentando obtener información del usuario asignado:', result.data.assigned_to);
+          const userResult = await supabase
+            .from('users')
+            .select('id, full_name, email')
+            .eq('id', result.data.assigned_to)
+            .single();
+          
+          if (!userResult.error && userResult.data) {
+            assignedUserInfo = userResult.data;
+            console.log('Información del usuario obtenida:', assignedUserInfo);
+          } else {
+            console.log('No se pudo obtener información del usuario:', userResult.error);
+          }
+        }
+      } else {
+        // Si el JOIN funcionó, usar esa información
+        assignedUserInfo = result.data.assigned_user;
+      }
 
       // Transformar datos para compatibilidad con la UI
       const transformedTicket = {
@@ -161,7 +213,9 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
         description: result.data.descripcion || 'Este ticket no tiene descripción disponible. Se recomienda agregar más detalles.',
         status: mapStatusFromDB(result.data.status),
         priority: mapPriorityFromDB(result.data.priority),
-        assignedTo: result.data.assigned_to || 'Sin asignar',
+        assignedTo: assignedUserInfo?.full_name || (result.data.assigned_to ? 'Usuario asignado' : 'Sin asignar'),
+        assigned_to: result.data.assigned_to, // Mantener el ID para operaciones
+        assignedUserEmail: assignedUserInfo?.email || null,
         createdAt: result.data.created_at
           ? new Date(result.data.created_at).toLocaleString("es-MX")
           : 'No disponible',
@@ -297,6 +351,60 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
       toast.error(`Error al crear OT: ${e.message}`);
     } finally {
       setIsCreatingWorkOrder(false);
+    }
+  };
+
+  // Función para tomar el ticket (asignarlo al usuario actual)
+  const handleTakeTicket = async () => {
+    const currentUser = getCurrentUser();
+    if (!currentUser || !ticket?.id) {
+      toast.error("No se pudo obtener la información del usuario o del ticket");
+      return;
+    }
+
+    setIsAssigning(true);
+    try {
+      console.log(`Asignando ticket ${ticket.id} al usuario ${currentUser.full_name} (${currentUser.id})`);
+
+      const updateData = {
+        assigned_to: currentUser.id, // Usar el ID del usuario
+        status: 'en_proceso',
+        assigned_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('tickets')
+        .update(updateData)
+        .eq('id', ticket.id);
+
+      if (error) {
+        console.error('Error al asignar ticket:', error);
+        toast.error("Error al asignar el ticket");
+        return;
+      }
+
+      // Actualizar el estado local inmediatamente con la información del usuario actual
+      setTicket(prevTicket => prevTicket ? {
+        ...prevTicket,
+        assigned_to: currentUser.id,
+        assignedTo: currentUser.full_name,
+        assignedUserEmail: currentUser.email,
+        assigned_at: new Date().toISOString(),
+        status: 'en_proceso'
+      } : null);
+
+      // Invalidar cache de tickets para actualizar la lista
+      await queryClient.invalidateQueries({ queryKey: ["tickets"] });
+
+      toast.success(`Ticket asignado exitosamente a ${currentUser.full_name}`);
+      console.log('Ticket asignado correctamente');
+
+    } catch (e) {
+      console.error('Error al asignar ticket:', e);
+      toast.error("Error inesperado al asignar el ticket");
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -557,9 +665,21 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               <Button
                 className="w-full"
                 variant="outline"
-                onClick={() => updateTicketStatus("en_proceso")}
+                onClick={handleTakeTicket}
+                disabled={isAssigning || !!ticket.assigned_to}
               >
-                Tomar Ticket
+                {isAssigning ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Asignando...
+                  </>
+                ) : ticket.assigned_to === getCurrentUser()?.id ? (
+                  "Asignado a ti ✓"
+                ) : ticket.assigned_to ? (
+                  `Asignado a ${ticket.assignedTo}`
+                ) : (
+                  "Tomar Ticket"
+                )}
               </Button>
 
               {/* 5. Reabrir Ticket */}
@@ -719,6 +839,18 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
                 <span className="text-muted-foreground">Asignado a:</span>
                 <span className="font-medium">{ticket.assignedTo}</span>
               </div>
+              {ticket.assigned_at && (
+                <>
+                  <Separator />
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Asignado el:</span>
+                    <span className="font-medium">
+                      {new Date(ticket.assigned_at).toLocaleString("es-MX")}
+                    </span>
+                  </div>
+                </>
+              )}
               <Separator />
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />

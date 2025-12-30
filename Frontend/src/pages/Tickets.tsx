@@ -192,8 +192,8 @@ export default function Tickets() {
   const getTickets = async () => {
     setIsLoadingSupabase(true);
     try {
-      // Obtener tickets con datos de clientes si existe tabla separada
-      const result = await supabase
+      // Intentar obtener tickets con datos de clientes y usuario asignado
+      let result = await supabase
         .from('tickets')
         .select(`
           *,
@@ -203,29 +203,82 @@ export default function Tickets() {
             full_name,
             nombre,
             nombre_completo
+          ),
+          assigned_user:users!tickets_assigned_to_fkey (
+            id,
+            full_name,
+            email
           )
         `)
-        .order('created_at', { ascending: false }); // Ordenar por fecha de creación, más recientes primero
+        .order('created_at', { ascending: false });
       
       console.log('Datos de Supabase con JOIN - Total registros:', result.data?.length);
       
+      let joinWithUsersWorked = true;
+      
       if (result.error) {
-        console.log('Error en JOIN, intentando consulta simple...', result.error);
+        console.log('Error en JOIN con users, intentando sin JOIN de usuarios...', result.error);
+        joinWithUsersWorked = false;
         
-        // Si falla el JOIN, hacer consulta simple
-        const simpleResult = await supabase
+        // Si falla el JOIN con users, intentar solo con customer
+        result = await supabase
           .from('tickets')
-          .select('*')
-          .order('created_at', { ascending: false }); // También ordenar aquí
+          .select(`
+            *,
+            customer:customer_id (
+              id,
+              name,
+              full_name,
+              nombre,
+              nombre_completo
+            )
+          `)
+          .order('created_at', { ascending: false });
           
-        if (simpleResult.error) {
-          throw simpleResult.error;
+        if (result.error) {
+          console.log('Error en JOIN con customer, intentando consulta simple...', result.error);
+          
+          // Si falla todo, hacer consulta simple
+          const simpleResult = await supabase
+            .from('tickets')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+          if (simpleResult.error) {
+            throw simpleResult.error;
+          }
+          
+          result.data = simpleResult.data;
         }
-        
-        result.data = simpleResult.data;
       }
       
       if (result.data && result.data.length > 0) {
+        // Si el JOIN con users falló, obtener información de usuarios individualmente
+        let usersInfo = {};
+        if (!joinWithUsersWorked) {
+          const uniqueAssignedUsers = [...new Set(result.data
+            .map(ticket => ticket.assigned_to)
+            .filter(id => id !== null && id !== undefined))];
+          
+          if (uniqueAssignedUsers.length > 0) {
+            console.log('Obteniendo información de usuarios asignados:', uniqueAssignedUsers);
+            const { data: usersData, error: usersError } = await supabase
+              .from('users')
+              .select('id, full_name, email')
+              .in('id', uniqueAssignedUsers);
+            
+            if (!usersError && usersData) {
+              usersInfo = usersData.reduce((acc, user) => {
+                acc[user.id] = user;
+                return acc;
+              }, {});
+              console.log('Información de usuarios obtenida:', usersInfo);
+            } else {
+              console.log('Error obteniendo información de usuarios:', usersError);
+            }
+          }
+        }
+
         // Procesar cada ticket individualmente con transformación completa
         const processedTickets = result.data.map((ticket, index) => {
           // Extraer nombre del cliente de múltiples fuentes
@@ -246,6 +299,18 @@ export default function Tickets() {
           } else if (ticket.metadata && ticket.metadata.nombre_cliente) {
             customerName = ticket.metadata.nombre_cliente;
           }
+
+          // Determinar información del usuario asignado
+          let assignedUserName = 'Sin asignar';
+          if (ticket.assigned_to) {
+            if (joinWithUsersWorked && ticket.assigned_user) {
+              assignedUserName = ticket.assigned_user.full_name;
+            } else if (usersInfo[ticket.assigned_to]) {
+              assignedUserName = usersInfo[ticket.assigned_to].full_name;
+            } else {
+              assignedUserName = 'Usuario asignado';
+            }
+          }
             
             const transformedTicket = {
               // Mantener todos los campos originales de la DB
@@ -261,12 +326,13 @@ export default function Tickets() {
               estado: ticket.status || 'abierto', // Usar estado de DB directamente
               prioridad: ticket.priority || 'media',
               grupo_asignacion: ticket.service_type || ticket.ticket_type || 'general',
-              asignado_a: ticket.assigned_to || null,
+              asignado_a: assignedUserName, // Usar el nombre del usuario obtenido
               numero_contrato: ticket.contract_number || null, // Mapear contract_number a numero_contrato
               nombre_cliente: customerName, // Agregar el nombre del cliente extraído
               client_name: ticket.client_name || customerName, // Mantener el campo original de Supabase
               
-              assignedTo: ticket.assigned_to || 'Sin asignar',
+              assignedTo: assignedUserName, // Usar el nombre del usuario obtenido
+              assigned_to: ticket.assigned_to, // Mantener el ID para operaciones
               createdAt: ticket.created_at 
                 ? new Date(ticket.created_at).toLocaleString("es-MX")
                 : 'No disponible',
@@ -333,7 +399,7 @@ export default function Tickets() {
       case "grupo_asignacion":
         return mapAssignmentGroup(ticket.grupo_asignacion || ticket.service_type || ticket.ticket_type) || "-";
       case "asignado_a":
-        return ticket.asignado_a || ticket.assigned_to || "Sin asignar";
+        return ticket.asignado_a || "Sin asignar";
       case "actualizado":
         return ticket.actualizado
           ? new Date(ticket.actualizado).toLocaleString("es-MX")
