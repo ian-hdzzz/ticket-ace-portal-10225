@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
 import TicketDetails from "./pages/TicketDetails";
 import CreateTicket from "./pages/CreateTicket";
+import Orders from "./pages/Orders";
 import { TabProvider } from "./contexts/TabContext";
 // ✅ ACTIVADO: Usar NotificationContextSSE para notificaciones en tiempo real
 import { NotificationProvider } from "./contexts/NotificationContextSSE";
@@ -72,6 +73,16 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredPermissions={["ver_tickets", "view_tickets"]}>
                     <TicketsWithTabs />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Órdenes de Trabajo - Requiere permiso de ver órdenes */}
+              <Route 
+                path="ordenes" 
+                element={
+                  <ProtectedRoute requiredPermissions={["ver_ordenes", "view_orders", "ver_tickets"]}>
+                    <Orders />
                   </ProtectedRoute>
                 } 
               />

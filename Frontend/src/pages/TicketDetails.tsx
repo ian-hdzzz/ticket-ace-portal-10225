@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import TicketOrders from "@/components/TicketOrders";
 
 interface Conversation {
   id: number;
@@ -637,6 +638,18 @@ export default function TicketDetails({ ticketId: ticketIdProp }: TicketDetailsP
               )}
             </CardContent>
           </Card>
+
+          {/* Nueva sección de Órdenes de Trabajo */}
+          <TicketOrders
+            ticketId={ticket.id}
+            ticketData={{
+              numero_ticket: ticket.folio,
+              descripcion_breve: ticket.description,
+              nombre_cliente: ticket.customer_id || 'Sin especificar',
+              direccion: ticket.location || undefined,
+              numero_contrato: ticket.contract_number || undefined,
+            }}
+          />
         </div>
 
 

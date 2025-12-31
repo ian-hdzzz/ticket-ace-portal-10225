@@ -10,6 +10,7 @@ import {
   FileText,
   BarChart3,
   Headset,
+  ClipboardList,
 } from "lucide-react";
 
 import {
@@ -32,6 +33,7 @@ const CUSTOMER_SERVICE_ROLE_ID = 'ca0b30c6-b73d-4cbb-bc04-490f4280b4b1';
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Tickets", url: "/dashboard/tickets", icon: Ticket },
+  { title: "Órdenes", url: "/dashboard/ordenes", icon: ClipboardList },
   { title: "Servicio a Cliente", url: "/dashboard/servicio-cliente", icon: Headset },
   { title: "Reportes", url: "/dashboard/crear-reportes", icon: BarChart3 },
   { title: "Contratos", url: "/dashboard/contratos", icon: FileText },
